@@ -7,6 +7,11 @@ struct SourceFile {
     char * path;
     char * filename;
     char * content;
+    F
 };
+
+struct SourceFile * source_file_read(struct KobaltOptions * options, char * filename);
+
+void source_file_destroy(struct SourceFile * source_file);
 
 #endif
