@@ -25,7 +25,6 @@ void kobalt_options_destroy(struct KobaltOptions * options) {
 
 void parse_argv(struct KobaltOptions * options, int argc, char * argv[]) {
     for(int i = 1; i<argc; i++) {
-        printf("== read source %s\n\n", argv[i]);
-        source_file_read(options, argv[i]);
+        array_push(options->source_files, source_file_read(options, argv[i]));
     }
 }

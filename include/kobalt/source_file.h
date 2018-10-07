@@ -6,8 +6,8 @@
 struct SourceFile {
     char * path;
     char * filename;
+    long length;
     char * content;
-    F
 };
 
 struct SourceFile * source_file_read(struct KobaltOptions * options, char * filename);

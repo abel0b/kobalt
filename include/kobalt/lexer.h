@@ -2,7 +2,8 @@
 #define KOBALT__LEXER__H
 
 #include "array/array.h"
+#include "kobalt/source_file.h"
 
-struct Array * lex (char * source_program);
+struct Array * lex (struct SourceFile * source_file);
 
 #endif

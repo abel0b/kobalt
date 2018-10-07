@@ -1,9 +1,10 @@
 add_executable(
     kbc
     main.c
-    lexer.c
     token.c
     options.c
+    lexer.c
+    parser.c
     source_file.c
 )
 
