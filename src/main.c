@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "kobalt/options.h"
 #include "array/array.h"
 #include "kobalt/lexer.h"
@@ -6,6 +7,11 @@
 
 int main(int argc, char * argv[]) {
     // printf("Kobalt Language Compiler v0.1.0\n\n");
+
+    if (argc == 1) {
+        printf("error: no input file\n");
+        exit(1);
+    }
 
     struct KobaltOptions * options = kobalt_options_make(argc, argv);
 
@@ -19,5 +25,5 @@ int main(int argc, char * argv[]) {
     }
 
 
-    return 0;
+    return EXIT_SUCCESS;
 }

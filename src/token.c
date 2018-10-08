@@ -22,7 +22,7 @@ char * token_string(enum TokenType type) {
             return "IDENTIFIER";
             break;
         case TOKEN_INTEGER:
-            return "IDENTIFIER";
+            return "INTEGER";
             break;
         case TOKEN_FLOAT:
             return "FLOAT";

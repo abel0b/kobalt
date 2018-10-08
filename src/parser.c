@@ -1,4 +1,5 @@
 #include "kobalt/parser.h"
+#include <stdlib.h>
 
 struct Tree * parse (struct Array * tokens) {
     struct ArrayIterator it = array_it_make(tokens);
@@ -9,4 +10,6 @@ struct Tree * parse (struct Array * tokens) {
 
         it = array_it_next(it);
     }
+
+    return NULL;
 }
