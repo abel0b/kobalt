@@ -19,6 +19,11 @@ kobalt_options_make(int argc, char * argv[]) {
 
 void kobalt_options_destroy(struct KobaltOptions * options) {
     free (options->cwd);
+    struct ArrayIterator it = array_it_make(options->source_files);
+    while(!array_it_end(it)) {
+        source_file_destroy(array_it_get(it));
+        it = array_it_next(it);
+    }
     array_destroy (options->source_files);
     free (options);
 }

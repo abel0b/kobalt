@@ -21,9 +21,11 @@ int main(int argc, char * argv[]) {
         struct Array * tokens = lex (source);
         struct Tree * ast = parse (tokens);
 
+        token_array_destroy(tokens);
         it = array_it_next (it);
     }
 
+    kobalt_options_destroy(options);
 
     return EXIT_SUCCESS;
 }

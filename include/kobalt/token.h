@@ -1,6 +1,8 @@
 #ifndef KOBALT__TOKEN__H
 #define KOBALT__TOKEN__H
 
+#include "array/array.h"
+
 enum TokenType {
     TOKEN_IDENTIFIER,
     TOKEN_INTEGER,
@@ -23,6 +25,8 @@ struct Token {
 };
 
 struct Token * token_make(enum TokenType type, char * value);
+
+void token_array_destroy(struct Array * tokens);
 
 char * token_string(enum TokenType type);
 

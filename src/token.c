@@ -60,6 +60,18 @@ char * token_string(enum TokenType type) {
     return "UNDEFINED";
 }
 
+void token_array_destroy(struct Array * tokens) {
+    struct ArrayIterator it = array_it_make(tokens);
+    struct Token * token;
+    while(!array_it_end(it)) {
+        token = array_it_get(it);
+        free(token->value);
+        free(token);
+        it = array_it_next(it);
+    }
+    array_destroy(tokens);
+}
+
 void token_debug(struct Token * token) {
     printf("%s", token_string(token->type));
     if (token->value != NULL) {
