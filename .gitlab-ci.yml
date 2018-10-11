@@ -7,6 +7,8 @@ build:
     image: gcc
     before_script:
         - mkdir build
+        - apt update
+        - apt install cmake
     script:
         - cmake .
         - make
