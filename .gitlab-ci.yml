@@ -6,10 +6,10 @@ build:
     stage: build
     image: gcc
     before_script:
-        mkdir build
+        - mkdir build
     script:
-        cmake .
-        make
+        - cmake .
+        - make
 
 code_quality:
     stage: test
