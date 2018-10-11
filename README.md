@@ -1,9 +1,10 @@
 # Kobalt
+[![pipeline status](https://gitlab.com/abeliam/kobalt/badges/master/pipeline.svg)](https://gitlab.com/abeliam/kobalt/commits/master) [![coverage report](https://gitlab.com/abeliam/kobalt/badges/master/coverage.svg)](https://gitlab.com/abeliam/kobalt/commits/master)
 programming language project
 
 ## Grammar
 ```
-Source      = (Expression | Declaration | "\n") Comment? ("\n" Source)?
+Source      = (Assignment | Expression | Declaration | "\n") Comment? ("\n" Source)?
 Comment     = "--" :text
 Declaration = TYPE :space :identifier (:equal Expression)?
 Type        = ("int" | "float")
