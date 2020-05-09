@@ -1,35 +1,28 @@
-#include "array/array.h"
 #include "kobalt/options.h"
-#include "kobalt/source_file.h"
-#include <stdio.h>
-#define __USE_GNU
-#include <unistd.h>
+#include "kobalt/source.h"
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-
-struct KobaltOptions *
-kobalt_options_make(int argc, char * argv[]) {
-    struct KobaltOptions * options = malloc (sizeof (struct KobaltOptions));
-    options->cwd = get_current_dir_name ();
-    options->source_files = array_make ();
-    parse_argv(options, argc, argv);
+struct kbopts kbopts_make(int argc, char * argv[]) {
+    struct kbopts options;
+    size_t cwdsize = 32;
+    options.cwd = malloc(cwdsize);
+    while(getcwd(options.cwd, cwdsize) == NULL) {
+        cwdsize = 2*cwdsize;
+        options.cwd = realloc(options.cwd, cwdsize);    
+    } 
+    options.num_srcs = argc-1;
+    options.srcs = malloc(sizeof(struct kbsrc) * options.num_srcs);
+    for(int i=0; i<options.num_srcs; i++) {
+        options.srcs[i] = kbsrc_make(&options, argv[1+i]);
+    }
     return options;
 }
 
-void kobalt_options_destroy(struct KobaltOptions * options) {
+void kbopts_destroy(struct kbopts * options) {
     free (options->cwd);
-    struct ArrayIterator it = array_it_make(options->source_files);
-    while(!array_it_end(it)) {
-        source_file_destroy(array_it_get(it));
-        it = array_it_next(it);
-    }
-    array_destroy (options->source_files);
-    free (options);
-}
-
-void parse_argv(struct KobaltOptions * options, int argc, char * argv[]) {
-    for(int i = 1; i<argc; i++) {
-        array_push(options->source_files, source_file_read(options, argv[i]));
+    for(int i=0; i<options->num_srcs; i++) {
+        kbsrc_destroy(&options->srcs[i]);
     }
 }

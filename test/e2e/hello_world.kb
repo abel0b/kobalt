@@ -1,0 +1,10 @@
+/ Hello world in Kobalt
+func display(message: string): void
+    printf(message)
+
+    printf("amessage")
+
+/ Main function
+func main(): bool
+    display("Hello world!")
+    true

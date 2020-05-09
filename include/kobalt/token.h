@@ -1,13 +1,11 @@
-#ifndef KOBALT__TOKEN__H
-#define KOBALT__TOKEN__H
+#ifndef KBTOKEN__H
+#define KBTOKEN__H
 
-#include "array/array.h"
-
-enum TokenType {
+enum kbtoken_kind {
     TOKEN_IDENTIFIER,
     TOKEN_INTEGER,
     TOKEN_FLOAT,
-    TOKEN_STRING_LITERAL,
+    TOKEN_STRLIT,
     TOKEN_INDENT,
     TOKEN_DEDENT,
     TOKEN_LF,
@@ -18,20 +16,18 @@ enum TokenType {
     TOKEN_KEYWORD
 };
 
-struct Token {
-    enum TokenType type;
+struct kbtoken {
+    enum kbtoken_kind kind;
     char * value;
     int size;
 };
 
-struct Token * token_make(enum TokenType type, char * value);
+struct kbtoken kbtoken_make(enum kbtoken_kind kind, char * value);
 
-void token_array_destroy(struct Array * tokens);
+char * kbtoken_string(enum kbtoken_kind type);
 
-char * token_string(enum TokenType type);
+void kbtoken_debug(struct kbtoken * token);
 
-void token_debug(struct Token * token);
-
-void token_destroy(struct Token * token);
+void kbtoken_destroy(struct kbtoken * token);
 
 #endif

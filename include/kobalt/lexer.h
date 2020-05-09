@@ -1,38 +1,23 @@
-#ifndef KOBALT__LEXER__H
-#define KOBALT__LEXER__H
+#ifndef KBLEXER__H
+#define KBLEXER__H
 
-#include "kobalt/lexer.h"
-#include "array/array.h"
-#include "kobalt/source_file.h"
 #include <stdbool.h>
+#include "kobalt/source.h"
+#include "kobalt/token.h"
 
-#define NKEYWORDS 8
+#define NKEYWORDS 10
 
-struct KeywordMatcher {
-    bool done;
-    bool matched;
-    int cursor;
-    bool match[NKEYWORDS];
-};
-
-struct IntegerMatcher {
-    bool first;
-    bool is_integer;
-};
-
-struct FloatMatcher {
-    bool is_float;
-    bool has_dot;
-    bool first;
-};
-
-enum LexerStateType {
+enum kblexer_state {
     LEXER_NEWLINE,
-    LEXER_INLINE
+    LEXER_NEWTOK,
+    LEXER_STRINGLIT,
+    LEXER_NUMLIT,
+    LEXER_COMMENT,
+    LEXER_IDENTIFIER,
 };
 
-struct LexerState {
-    enum LexerStateType type;
+struct kblexer {
+    enum kblexer_state state;
     int indent_level;
     bool newline;
     bool indent_tab;
@@ -40,33 +25,44 @@ struct LexerState {
     int indent_counter;
     int space_indent;
     int line;
-    struct KeywordMatcher keywords;
-    struct IntegerMatcher integer_matcher;
-    struct FloatMatcher float_matcher;
+    struct  {
+        bool done;
+        bool matched;
+        unsigned int cursor;
+        bool match[NKEYWORDS];
+    } kw_match;
+    struct {
+        bool first;
+        bool is_integer;
+    } int_match;
+    struct {
+        bool is_float;
+        bool has_dot;
+        bool first;
+    } float_match;
     int buffer_size;
     int cursor;
     char * buffer;
 };
 
-struct Array * lex (struct SourceFile * source_file);
+struct kblexer kblexer_make();
 
+void kblexer_destroy(struct kblexer * state);
 
-struct KeywordMatcher keyword_matcher_make();
+void kblexer_kw_init(struct kblexer * lexer);
 
-void keyword_matcher_next(struct KeywordMatcher * matcher, char ch);
+void kblexer_kw_next(struct kblexer * lexer, char ch);
 
-struct FloatMatcher float_matcher_make();
+void kblexer_float_init(struct kblexer * lexer);
 
-void float_matcher_next(struct FloatMatcher * matcher, char ch);
+void kblexer_float_next(struct kblexer * lexer, char ch);
 
-struct IntegerMatcher integer_matcher_make();
+void kblexer_int_init(struct kblexer * lexer);
 
-void integer_matcher_next(struct IntegerMatcher * matcher, char ch);
+void kblexer_int_next(struct kblexer * lexer, char ch);
 
-struct LexerState * lexer_state_make();
+void kblexer_next(struct kblexer * lexer, struct kbtoken ** tokens, unsigned int * num_tokens, unsigned int * capacity, char ch);
 
-void lexer_state_destroy(struct LexerState * state);
-
-void lexer_state_next(struct LexerState * state, struct Array * tokens, char ch);
+struct kbtoken * kblexer_start(struct kblexer * lexer, struct kbsrc * src, unsigned int * num_tokens);
 
 #endif

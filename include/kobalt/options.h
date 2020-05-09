@@ -1,17 +1,14 @@
-#ifndef KOBALT__OPTIONS__H
-#define KOBALT__OPTIONS__H
+#ifndef KBOPTIONS__H
+#define KBOPTIONS__H
 
-#include "array/array.h"
-
-struct KobaltOptions {
-    struct Array * source_files;
+struct kbopts {
     char * cwd;
+    int num_srcs;
+    struct kbsrc * srcs;
 };
 
-struct KobaltOptions * kobalt_options_make(int argc, char * argv[]);
+struct kbopts kbopts_make(int argc, char * argv[]);
 
-void  parse_argv(struct KobaltOptions * options, int argc, char * argv[]);
-
-void kobalt_options_destroy(struct KobaltOptions * options);
+void kbopts_destroy(struct kbopts * options);
 
 #endif

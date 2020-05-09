@@ -3,21 +3,21 @@
 #include <string.h>
 #include <stdio.h>
 
-struct Token * token_make(enum TokenType type, char * value) {
-    struct Token * token = malloc (sizeof (struct Token));
-    token->type = type;
+struct kbtoken kbtoken_make(enum kbtoken_kind kind, char * value) {
+    struct kbtoken token;
+    token.kind = kind;
     if (value == NULL) {
-        token->value = NULL;
+        token.value = NULL;
     }
     else {
-        token->value = strdup(value);
+        token.value = malloc(strlen(value)+1);
+        strcpy(token.value, value);
     }
-
     return token;
 }
 
-char * token_string(enum TokenType type) {
-    switch(type) {
+char * kbtoken_string(enum kbtoken_kind kind) {
+    switch(kind) {
         case TOKEN_IDENTIFIER:
             return "IDENTIFIER";
             break;
@@ -27,8 +27,8 @@ char * token_string(enum TokenType type) {
         case TOKEN_FLOAT:
             return "FLOAT";
             break;
-        case TOKEN_STRING_LITERAL:
-            return "STRING_LITERAL";
+        case TOKEN_STRLIT:
+            return "STRLIT";
             break;
         case TOKEN_INDENT:
             return "INDENT";
@@ -60,28 +60,15 @@ char * token_string(enum TokenType type) {
     return "UNDEFINED";
 }
 
-void token_array_destroy(struct Array * tokens) {
-    struct ArrayIterator it = array_it_make(tokens);
-    struct Token * token;
-    while(!array_it_end(it)) {
-        token = array_it_get(it);
-        free(token->value);
-        free(token);
-        it = array_it_next(it);
-    }
-    array_destroy(tokens);
-}
-
-void token_debug(struct Token * token) {
-    printf("%s", token_string(token->type));
+void kbtoken_debug(struct kbtoken * token) {
+    printf("%s", kbtoken_string(token->kind));
     if (token->value != NULL) {
         printf(" %s", token->value);
     }
     printf("\n");
 }
 
-void token_destroy(struct Token * token) {
-    if (token->value)
+void kbtoken_destroy(struct kbtoken * token) {
+    if (token->value != NULL)
         free (token->value);
-    free (token);
 }

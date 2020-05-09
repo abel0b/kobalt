@@ -1,13 +1,12 @@
-#ifndef KOBALT__PARSER__H
-#define KOBALT__PARSER__H
+#ifndef KBPARSER__H
+#define KBPARSER__H
 
-#include "array/array.h"
 #include "kobalt/token.h"
 
-struct Tree {
+struct kbparser {
 
 };
 
-struct Tree * parse (struct Array * tokens);
+struct kbparser kbparser_make();
 
 #endif
