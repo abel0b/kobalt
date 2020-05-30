@@ -5,11 +5,12 @@
 #include "kobalt/source.h"
 #include "kobalt/token.h"
 
-#define NKEYWORDS 10
+extern char * keywords[];
 
 enum kblexer_state {
     LEXER_NEWLINE,
     LEXER_NEWTOK,
+    LEXER_SYM,
     LEXER_STRINGLIT,
     LEXER_NUMLIT,
     LEXER_COMMENT,
@@ -22,15 +23,20 @@ struct kblexer {
     bool newline;
     bool indent_tab;
     bool first_indent;
+    bool use_tabs_indent;
+    bool first_indent_char;
     int indent_counter;
     int space_indent;
     int line;
+    int col;
+    int tokline;
+    int tokcol;
     struct  {
-        bool done;
-        bool matched;
-        unsigned int cursor;
-        bool match[NKEYWORDS];
-    } kw_match;
+        int cursor;
+        bool match[NUM_SPECIALS];
+        int num_matched;
+        int matched;
+    } special_match;
     struct {
         bool first;
         bool is_integer;
@@ -49,9 +55,9 @@ struct kblexer kblexer_make();
 
 void kblexer_destroy(struct kblexer * state);
 
-void kblexer_kw_init(struct kblexer * lexer);
+void kblexer_special_init(struct kblexer * lexer);
 
-void kblexer_kw_next(struct kblexer * lexer, char ch);
+void kblexer_special_next(struct kblexer * lexer, char ch);
 
 void kblexer_float_init(struct kblexer * lexer);
 

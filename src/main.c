@@ -3,24 +3,31 @@
 #include "kobalt/options.h"
 #include "kobalt/lexer.h"
 #include "kobalt/parser.h"
+#include "kobalt/ast.h"
 
 int main(int argc, char * argv[]) {
-    if (argc == 1) {
-        printf("Kobalt Language Compiler v0.1.0\n\n");
-        printf("error: no input file\n");
-        exit(1);
-    }
-
     struct kbopts options = kbopts_make(argc, argv);
-    for(int ii=0; ii<options.num_srcs; ii++) {
+    for(unsigned int ii=0; ii<options.num_srcs; ii++) {
+        // LEX
         struct kblexer lexer = kblexer_make();
         unsigned int num_tokens = 0;
         struct kbtoken * tokens = kblexer_start(&lexer, &options.srcs[ii], &num_tokens);
         kblexer_destroy(&lexer);
-        for(unsigned int jj=0; jj<num_tokens; jj++) {
-            kbtoken_debug(&tokens[jj]);
+        if (options.stage == LEX) {
+            for(unsigned int jj=0; jj<num_tokens; jj++) {
+                kbtoken_display(&tokens[jj]);
+            }
+            kbtoken_destroy_arr(num_tokens, tokens);
+            continue;
         }
-        free(tokens);
+    
+        // PARSE
+        struct kbparser parser = kbparser_make(tokens, &options.srcs[ii]);
+        kbparse(&parser);
+        kbast_display(parser.ast);
+        kbparser_destroy(&parser);
+
+        kbtoken_destroy_arr(num_tokens, tokens);
     }
     kbopts_destroy(&options);
 

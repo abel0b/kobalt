@@ -3,3 +3,7 @@
 
 Kobalt programming language.
 
+## Build
+```shell
+./dev/build.{bash,ps1}
+```

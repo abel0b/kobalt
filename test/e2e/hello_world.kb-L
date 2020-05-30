@@ -1,0 +1,17 @@
+COMMENT=" Hello world program" at 1:1
+IDENTIFIER="fun" at 2:1
+IDENTIFIER="main" at 2:5
+LPAR at 2:9
+IDENTIFIER="args" at 2:10
+COLON at 2:14
+IDENTIFIER="String" at 2:15
+RPAR at 2:21
+RARROW at 2:24
+IDENTIFIER="bool" at 2:26
+INDENT at 3:1
+IDENTIFIER="println" at 3:5
+LPAR at 3:12
+STR="Hello world" at 3:13
+RPAR at 3:26
+DEDENT at 4:0
+END at 4:0

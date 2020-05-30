@@ -1,13 +1,26 @@
 #ifndef KBOPTIONS__H
 #define KBOPTIONS__H
 
+#include <stdio.h>
+#include "kobalt/kobalt.h"
+
+enum kbstage {
+    LEX,
+    PARSE,
+};
+
 struct kbopts {
+    char verbosity;
+    enum kbstage stage;
     char * cwd;
-    int num_srcs;
+    unsigned int num_srcs;
     struct kbsrc * srcs;
+    FILE * output;
 };
 
 struct kbopts kbopts_make(int argc, char * argv[]);
+
+void kbopts_display(struct kbopts * options);
 
 void kbopts_destroy(struct kbopts * options);
 
