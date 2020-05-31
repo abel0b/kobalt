@@ -1,9 +1,8 @@
 # Kobalt
-[![pipeline status](https://gitlab.com/abel0b/kobalt/badges/master/pipeline.svg)](https://gitlab.com/abel0b/kobalt/-/commits/master)
+![build](https://github.com/abel0b/kobalt/workflows/build/badge.svg)
 
 Kobalt programming language.
 
 ## Build
-```shell
-./dev/build.{bash,ps1}
+./build/build.{bash,ps1}
 ```
