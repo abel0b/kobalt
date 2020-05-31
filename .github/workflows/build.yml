@@ -24,3 +24,12 @@ jobs:
 
     - name: Build
       run: ./build/build.bash
+
+ build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build
+      run: .\build\build.ps1

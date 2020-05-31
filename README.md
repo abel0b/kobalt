@@ -4,5 +4,6 @@
 Kobalt programming language.
 
 ## Build
+```shell
 ./build/build.{bash,ps1}
 ```
