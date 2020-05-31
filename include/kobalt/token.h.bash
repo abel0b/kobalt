@@ -2,8 +2,6 @@ cat << END
 #ifndef KBTOKEN__H
 #define KBTOKEN__H
 
-#include <stdbool.h>
-
 #define NUM_SPECIALS $(($(wc -l src/token.txt | awk '{printf $1}')+2))
 
 extern char * specials[NUM_SPECIALS];
@@ -41,9 +39,9 @@ void kbtoken_display(struct kbtoken * token);
 
 void kbtoken_destroy(struct kbtoken * token);
 
-bool is_sep(char c);
+int is_sep(char c);
 
-bool is_delim(char c);
+int is_delim(char c);
 
 #endif
 END

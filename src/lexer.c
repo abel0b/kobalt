@@ -8,11 +8,11 @@ struct kblexer kblexer_make() {
     struct kblexer lexer;
     lexer.state = LEXER_NEWLINE;
     lexer.indent_level = 0;
-    lexer.newline = true;
-    lexer.indent_tab = true;
-    lexer.first_indent = true;
-    lexer.first_indent_char = true;
-    lexer.use_tabs_indent = false;
+    lexer.newline = 1;
+    lexer.indent_tab = 1;
+    lexer.first_indent = 1;
+    lexer.first_indent_char = 1;
+    lexer.use_tabs_indent = 0;
     lexer.indent_counter = 0;
     lexer.space_indent = -1;
     lexer.line = 1;
@@ -35,7 +35,7 @@ void kblexer_special_init(struct kblexer * lexer) {
     lexer->special_match.num_matched = ILLEGAL+1;
     lexer->special_match.cursor = 0;
     for (int i=0; i<=ILLEGAL; ++i) {
-        lexer->special_match.match[i] = true;
+        lexer->special_match.match[i] = 1;
     }
 }
 
@@ -45,7 +45,7 @@ void kblexer_special_next(struct kblexer * lexer, char ch) {
         if (lexer->special_match.match[i]) {
             int speclen = strlen(specials[i]);
             if (speclen <= lexer->special_match.cursor || specials[i][lexer->special_match.cursor] != ch) {
-                lexer->special_match.match[i] = false;
+                lexer->special_match.match[i] = 0;
                 lexer->special_match.num_matched --;
             }
             else if(speclen == lexer->special_match.cursor+1) {
@@ -57,37 +57,37 @@ void kblexer_special_next(struct kblexer * lexer, char ch) {
 }
 
 void kblexer_float_init(struct kblexer * lexer) {
-    lexer->float_match.is_float = true;
-    lexer->float_match.has_dot = false;
-    lexer->float_match.first = true;
+    lexer->float_match.is_float = 1;
+    lexer->float_match.has_dot = 0;
+    lexer->float_match.first = 1;
 }
 
 void kblexer_float_next(struct kblexer * lexer, char ch) {
     if (lexer->float_match.first) {
-        lexer->float_match.first = false;
+        lexer->float_match.first = 0;
         if (ch == '-') return;
     }
     if (!lexer->float_match.has_dot && ch == '.') {
-        lexer->float_match.has_dot = true;
+        lexer->float_match.has_dot = 1;
         return;
     }
     if(!(ch >= '0' && ch <= '9')) {
-        lexer->float_match.is_float = false;
+        lexer->float_match.is_float = 0;
     }
 }
 
 void kblexer_int_init(struct kblexer * lexer) {
-    lexer->int_match.is_integer = true;
-    lexer->int_match.first = true;
+    lexer->int_match.is_integer = 1;
+    lexer->int_match.first = 1;
 }
 
 void kblexer_int_next(struct kblexer * lexer, char ch) {
     if (lexer->int_match.first) {
-        lexer->int_match.first = false;
+        lexer->int_match.first = 0;
         if (ch == '-') return;
     }
     if(!(ch >= '0' && ch <= '9')) {
-        lexer->int_match.is_integer = false;
+        lexer->int_match.is_integer = 0;
     }
 }
 
@@ -137,7 +137,7 @@ char * kblexer_state_str(struct kblexer * lexer) {
     return "UNDEFINED";
 }
 
-static bool is_stmt(struct kbtoken * tok) {
+static int is_stmt(struct kbtoken * tok) {
     return tok->kind != COMMENT;
 }
 
@@ -156,18 +156,18 @@ void kblexer_next(struct kblexer * lexer, struct kbtoken ** tokens, unsigned int
                     fprintf(stderr, "Inconsistent use of tabs and space in indentation\n");
                     exit(1);
                 }
-                lexer->first_indent_char = false;
+                lexer->first_indent_char = 0;
                 lexer->indent_counter ++;
             }
             else if (ch == '\t') {
                 if (lexer->first_indent_char) {
-                    lexer->use_tabs_indent = true;
+                    lexer->use_tabs_indent = 1;
                 }
                 else if (!lexer->use_tabs_indent) {
                     fprintf(stderr, "Inconsistent use of tabs and space in indentation\n");
                     exit(1);
                 }
-                lexer->first_indent_char = false;
+                lexer->first_indent_char = 0;
                 lexer->indent_counter ++;
             }
             else if (ch == '\n') {
@@ -177,7 +177,7 @@ void kblexer_next(struct kblexer * lexer, struct kbtoken ** tokens, unsigned int
                 if (lexer->first_indent) {
                     if (lexer->indent_counter) {
                         lexer->space_indent = (lexer->use_tabs_indent)?1:lexer->indent_counter;
-                        lexer->first_indent = false;
+                        lexer->first_indent = 0;
                         // lexer->indent_level++;
                         // kblexer_push_token(tokens, num_tokens, capacity, kbtoken_make(INDENT, NULL, lexer->line, 1));
                     }

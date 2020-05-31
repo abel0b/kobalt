@@ -5,7 +5,6 @@ cat << END
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <stdbool.h>
 
 char * kbnode_kind_str(enum kbnode_kind kind) {
     switch(kind) {

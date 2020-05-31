@@ -5,8 +5,8 @@
 #include <ctype.h>
 #include <assert.h>
 #if WINDOWS
-#include <winbase.h>
-#define getcwd GetCurrentDirectory
+#include <direct.h>
+#define getcwd _getcwd
 #else
 #include <unistd.h>
 #endif

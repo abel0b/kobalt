@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <stdbool.h>
 
 char * specials[NUM_SPECIALS] = {
     "",
@@ -210,11 +209,11 @@ char * kbtoken_string(enum kbtoken_kind kind) {
     return "UNDEFINED";
 }
 
-bool is_delim(char ch) {
+int is_delim(char ch) {
     return ch == ' ' || ch == '\t' || ch == '\n';
 }
 
-bool is_sep(char c) {
+int is_sep(char c) {
     return c == '?'
         || c == '>'
         || c == '='

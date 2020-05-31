@@ -35,11 +35,11 @@ static struct kbresult mkres(struct kbparser * parser, enum kbnode_kind kind, st
     return res;
 }
 
-static bool ignore(enum kbtoken_kind tokind) {
+static int ignore(enum kbtoken_kind tokind) {
     return tokind == COMMENT;
 }
 
-static bool peek(struct kbparser * parser, enum kbtoken_kind expected_kind, struct kbresult * res) {
+static int peek(struct kbparser * parser, enum kbtoken_kind expected_kind, struct kbresult * res) {
     enum kbtoken_kind actual_kind;
     while(ignore(actual_kind = parser->tokens[parser->cursor].kind)) {
         parser->cursor++;
@@ -51,14 +51,14 @@ static bool peek(struct kbparser * parser, enum kbtoken_kind expected_kind, stru
     return actual_kind == expected_kind;
 }
 
-// static bool peekid(struct kbparser * parser, char * id, struct kbresult * res) {
+// static int peekid(struct kbparser * parser, char * id, struct kbresult * res) {
 //     enum kbtoken_kind target_kind;
 //     while(ignore(target_kind = IDENTIFIER)) {
 //         parser->cursor++;
 //         res->numtoks++;
 //     }
 //     if (target_kind == IDENTIFIER) return !strcmp(parser->tokens[parser->cursor].value, id);
-//     return false;
+//     return 0;
 // }
 
 static struct kbtoken * eat(struct kbparser * parser, enum kbtoken_kind kind, struct kbresult * res) {
@@ -111,14 +111,14 @@ static void backtrack(struct kbparser * parser, struct kbresult * childres) {
     parser->cursor -= childres->numtoks;
 }
 
-static bool make(struct kbresult * res, struct kbnode ** node, struct kbresult childres) {
+static int make(struct kbresult * res, struct kbnode ** node, struct kbresult childres) {
     res->numtoks += childres.numtoks;
     res->numerrs += childres.numerrs;
     (*node) = childres.node;
     return !childres.numerrs;
 }
 
-static bool try_make_push(struct kbparser * parser, struct kbresult * res, struct kbnode *** items, int * numitems, int * itemscap, struct kbresult childres) {
+static int try_make_push(struct kbparser * parser, struct kbresult * res, struct kbnode *** items, int * numitems, int * itemscap, struct kbresult childres) {
     if (*numitems == *itemscap) {
         *items = kbrealloc(*items, sizeof(struct kbnode *) * (*itemscap), sizeof(struct kbnode *) * ((*itemscap > 0)? (*itemscap)*2 : 1));
         *itemscap = (*itemscap)*2;
@@ -135,7 +135,7 @@ static bool try_make_push(struct kbparser * parser, struct kbresult * res, struc
     return !childres.numerrs;
 }
 
-static bool make_push(struct kbresult * res, struct kbnode *** items, int * numitems, int * itemscap, struct kbresult childres) {
+static int make_push(struct kbresult * res, struct kbnode *** items, int * numitems, int * itemscap, struct kbresult childres) {
     if (*numitems == *itemscap) {
         *items = kbrealloc(*items, sizeof(struct kbnode *) * (*itemscap), sizeof(struct kbnode *) * ((*itemscap > 0)? (*itemscap)*2 : 1));
         *itemscap = (*itemscap)*2;
@@ -149,7 +149,7 @@ static bool make_push(struct kbresult * res, struct kbnode *** items, int * numi
     return !childres.numerrs;
 }
 
-static bool try_make(struct kbparser * parser, struct kbresult * res, struct kbnode ** node, struct kbresult childres) {
+static int try_make(struct kbparser * parser, struct kbresult * res, struct kbnode ** node, struct kbresult childres) {
     if (childres.numerrs) {
         backtrack(parser, &childres);
     }

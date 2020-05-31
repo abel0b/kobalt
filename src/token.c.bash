@@ -5,7 +5,6 @@ cat << END
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <stdbool.h>
 
 char * specials[NUM_SPECIALS] = {
     "",
@@ -90,13 +89,13 @@ cat << END
     return "UNDEFINED";
 }
 
-bool is_delim(char ch) {
+int is_delim(char ch) {
     return ch == ' ' || ch == '\t' || ch == '\n';
 }
 
 END
 
-echo "bool is_sep(char c) {"
+echo "int is_sep(char c) {"
 first=1
 for sep in "${!seps[@]}"
 do

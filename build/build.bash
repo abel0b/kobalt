@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
@@ -24,7 +24,7 @@ echo "cflags = $cflags"
 
 distdir="dist/$profile"
 mkdir -p "$distdir"
-for target in dev/*.binary; do
+for target in build/*.binary; do
     compile="$cc $cflags $(egrep .c$ $target | xargs echo) -o $distdir/$(basename ${target//.binary/})"
     echo "$compile"
     $compile

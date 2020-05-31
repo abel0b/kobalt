@@ -1,8 +1,6 @@
 #ifndef KBSYNTAX__H
 #define KBSYNTAX__H
 
-#include <stdbool.h>
-
 enum kbnode_kind {
     NPROG,
     NITEM,

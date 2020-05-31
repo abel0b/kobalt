@@ -1,7 +1,6 @@
 #ifndef KBLEXER__H
 #define KBLEXER__H
 
-#include <stdbool.h>
 #include "kobalt/source.h"
 #include "kobalt/token.h"
 
@@ -20,11 +19,11 @@ enum kblexer_state {
 struct kblexer {
     enum kblexer_state state;
     int indent_level;
-    bool newline;
-    bool indent_tab;
-    bool first_indent;
-    bool use_tabs_indent;
-    bool first_indent_char;
+    int newline;
+    int indent_tab;
+    int first_indent;
+    int use_tabs_indent;
+    int first_indent_char;
     int indent_counter;
     int space_indent;
     int line;
@@ -33,18 +32,18 @@ struct kblexer {
     int tokcol;
     struct  {
         int cursor;
-        bool match[NUM_SPECIALS];
+        int match[NUM_SPECIALS];
         int num_matched;
         int matched;
     } special_match;
     struct {
-        bool first;
-        bool is_integer;
+        int first;
+        int is_integer;
     } int_match;
     struct {
-        bool is_float;
-        bool has_dot;
-        bool first;
+        int is_float;
+        int has_dot;
+        int first;
     } float_match;
     int buffer_size;
     int cursor;

@@ -1,8 +1,8 @@
 #ifndef KBOPTIONS__H
 #define KBOPTIONS__H
 
-#include <stdio.h>
 #include "kobalt/kobalt.h"
+#include <stdio.h>
 
 enum kbstage {
     LEX,
