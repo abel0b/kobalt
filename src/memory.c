@@ -20,7 +20,7 @@ static void * checkptr(void * ptr) {
 
 static size_t checklimit(size_t newmem) {
     if (newmem>memlimit) {
-        fprintf(stderr, "Memory limit %zu reached\n", memlimit);
+        fprintf(stderr, "Memory limit reached\n");
         exit(1);
     }
     return newmem;
@@ -32,9 +32,8 @@ void * kbmalloc(size_t size) {
     return checkptr(malloc(size));
 }
 
-void * kbrealloc(void * ptr, size_t cursize, size_t newsize) {
-    mem = checklimit(mem-cursize+newsize);
-    return checkptr(realloc(ptr, newsize));
+void * kbrealloc(void * ptr, size_t newsize) {
+    return realloc(ptr, newsize);
 }
 
 void  kbfree(void * ptr) {

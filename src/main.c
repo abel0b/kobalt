@@ -1,35 +1,53 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "kobalt/options.h"
+#include "kobalt/ast.h"
 #include "kobalt/lexer.h"
 #include "kobalt/parser.h"
-#include "kobalt/ast.h"
+#include "kobalt/typecheck.h" 
+#include "kobalt/cgen.h"
+#include "kobalt/fs.h"
+#include "kobalt/uid.h"
 
 int main(int argc, char * argv[]) {
-    struct kbopts options = kbopts_make(argc, argv);
-    for(unsigned int ii=0; ii<options.num_srcs; ii++) {
-        // LEX
-        struct kblexer lexer = kblexer_make();
-        unsigned int num_tokens = 0;
-        struct kbtoken * tokens = kblexer_start(&lexer, &options.srcs[ii], &num_tokens);
-        kblexer_destroy(&lexer);
-        if (options.stage == LEX) {
-            for(unsigned int jj=0; jj<num_tokens; jj++) {
-                kbtoken_display(&tokens[jj]);
-            }
-            kbtoken_destroy_arr(num_tokens, tokens);
+    struct kbopts opts;
+    kbopts_new(argc, argv, &opts);
+
+    for(int ii=0; ii<opts.numsrcs; ++ii) {
+        struct kbsrc src;
+        kbsrc_new(opts.srcs[ii], &src);
+
+        struct kbtoken* tokens;
+        int numtokens;
+        kblex(&src, &tokens, &numtokens);
+
+        if (opts.stage == LEX) {
+            for(int jj=0; jj<numtokens; jj++) kbtoken_display(&tokens[jj]);
+            kbtoken_del_arr(numtokens, tokens);
+            kbsrc_del(&src);
             continue;
         }
     
-        // PARSE
-        struct kbparser parser = kbparser_make(tokens, &options.srcs[ii]);
-        kbparse(&parser);
-        kbast_display(parser.ast);
-        kbparser_destroy(&parser);
+        struct kbast ast;
+        kbparse(tokens, &src, &ast);
 
-        kbtoken_destroy_arr(num_tokens, tokens);
+        if (opts.stage == PARSE) {
+            kbast_display(&ast);
+            kbtoken_del_arr(numtokens, tokens);
+            kbast_del(&ast);
+            kbsrc_del(&src);
+            continue;
+        }
+        
+        kbtypecheck(&ast);
+        kbcgen(&opts, &src, &ast);
+
+        kbtoken_del_arr(numtokens, tokens);
+        kbast_del(&ast);
+        kbsrc_del(&src);
     }
-    kbopts_destroy(&options);
+
+    kbopts_del(&opts);
 
     return EXIT_SUCCESS;
 }

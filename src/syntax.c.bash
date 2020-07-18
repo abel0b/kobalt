@@ -14,12 +14,16 @@ while read -r -s line
 do
     tok=($line)
     cat << END
-        case ${tok[0]}:
+        case N${tok[0]}:
             return "${tok[0]}";
 END
-done < src/syntax.txt
+done < src/syntax.csv
 cat << END
     }
     return "UNDEFINED";
+}
+
+int isgroup(struct kbnode *node) {
+    return node->kind == NFile || node->kind == NFunParams || node->kind == NFunBody || node->kind == NCallParams;
 }
 END

@@ -6,41 +6,41 @@ char * kberr_kind_str(enum kberr_kind kind) {
     switch(kind) {
         case ESYNTAX:
             return "ESYNTAX";
+        case ETODO:
+            return "ETODO";
     }
     return "UNDEFINED";
 }
 
 struct kberrvec kberrvec_make() {
-    struct kberrvec errvec = {
-        .numerrs = 0,
-        .capacity = 0,
-        .errs = NULL,
-    };
+    struct kberrvec errvec;
+    errvec.numerrs = 0;
+    errvec.capacity = 0;
+    errvec.errs = NULL;
     return errvec;
 }
 
 struct kberr kberr_make(enum kberr_kind kind, char * msg) {
-    struct kberr err = {
-        .kind = kind,
-        .msg = msg,
-    };
+    struct kberr err;
+    err.kind = kind;
+    err.msg = msg;
     return err;
 }
 
-void kberr_destroy(struct kberr * err) {
+void kberr_del(struct kberr * err) {
     kbfree(err->msg);
 }
 
 void kberrvec_push(struct kberrvec * errvec, struct kberr err) {
     if (errvec->numerrs == errvec->capacity) {
         errvec->capacity = errvec->capacity*2 + 2*(errvec->capacity == 0);
-        errvec->errs = kbrealloc(errvec->errs, 0, sizeof(struct kberr) * errvec->capacity);
+        errvec->errs = kbrealloc(errvec->errs, sizeof(struct kberr) * errvec->capacity);
     }
     errvec->errs[errvec->numerrs++] = err;
 }
 
-void kberrvec_destroy(struct kberrvec * errvec) {
-    for(int ii=0; ii<errvec->numerrs; ++ii) kberr_destroy(&errvec->errs[ii]);
+void kberrvec_del(struct kberrvec * errvec) {
+    for(int ii=0; ii<errvec->numerrs; ++ii) kberr_del(&errvec->errs[ii]);
     if (errvec->errs) kbfree(errvec->errs);
 }
 
@@ -53,7 +53,8 @@ void kberr_display(struct kberr * err) {
 }
 
 void kberrvec_display(struct kberrvec * errvec) {
-    for(int ii=0; ii<errvec->numerrs; ++ii) {
+    int ii;
+    for(ii=0; ii<errvec->numerrs; ++ii) {
         kberr_display(&errvec->errs[ii]);
     }
 }

@@ -1,0 +1,54 @@
+Id
+Float
+Int
+Str
+Char
+Indent
+Dedent
+EndFile
+Comment
+DashDash --
+Semi ;
+Colon :
+LPar (
+RPar )
+LBrack [
+RBrack ]
+LCurly {
+RCurly }
+Plus +
+Minus -
+Star *
+Dash -
+Slash /
+Percent %
+Caret ^
+Exclam !
+Query ?
+And &
+Or |
+AndAnd &&
+LShift <<
+RShift >>
+Eq =
+EqEq ==
+PlusEq +=
+MinusEq -=
+StarEq *=
+SlashEq /=
+PercentEq %=
+CaretEq ^=
+AndEq &=
+OrEq |=
+LShiftEq <<=
+RShiftEq >>=
+Neq !=
+GT >
+LT <
+GEq >=
+LEq <=
+At @
+Dot .
+DotDot ..
+DotDotDot ...
+DotDotEq ..=

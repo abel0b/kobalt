@@ -6,7 +6,7 @@ for program in test/e2e/*.kb
 do
     echo -n ">> $program "
     temp=$(mktemp)
-    command="./dist/test/kbc -L $program"
+    command="./build/test/kbc -L $program"
     $command > $temp 2>&1
     ref=${program//.kb/.kb-L}
     if [[ $? == 0 ]]

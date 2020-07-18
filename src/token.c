@@ -13,6 +13,7 @@ char * specials[NUM_SPECIALS] = {
     "",
     "",
     "",
+    "",
     "--",
     ";",
     ":",
@@ -20,6 +21,8 @@ char * specials[NUM_SPECIALS] = {
     ")",
     "[",
     "]",
+    "{",
+    "}",
     "+",
     "-",
     "*",
@@ -56,7 +59,6 @@ char * specials[NUM_SPECIALS] = {
     "..",
     "...",
     "..=",
-    "->",
     "",
 };
 
@@ -75,7 +77,7 @@ struct kbtoken kbtoken_make(enum kbtoken_kind kind, char * value, int line, int 
     return token;
 }
 
-void kbtoken_destroy_arr(unsigned int num_tokens, struct kbtoken * tokens) {
+void kbtoken_del_arr(unsigned int num_tokens, struct kbtoken * tokens) {
     for(unsigned int ii=0; ii<num_tokens; ii++) {
         if(tokens[ii].value != NULL) free(tokens[ii].value);
     }
@@ -90,120 +92,124 @@ void kbtoken_display(struct kbtoken * token) {
     printf(" at %d:%d\n", token->line, token->col);
 }
 
-void kbtoken_destroy(struct kbtoken * token) {
+void kbtoken_del(struct kbtoken * token) {
     if (token->value != NULL)
         free (token->value);
 }
 
 char * kbtoken_string(enum kbtoken_kind kind) {
     switch(kind) {
-        case NL:
+        case TNL:
             return "NL";
-        case IDENTIFIER:
-            return "IDENTIFIER";
-        case FLOAT:
-            return "FLOAT";
-        case INT:
-            return "INT";
-        case STR:
-            return "STR";
-        case CHAR:
-            return "CHAR";
-        case INDENT:
-            return "INDENT";
-        case DEDENT:
-            return "DEDENT";
-        case END:
-            return "END";
-        case COMMENT:
-            return "COMMENT";
-        case SEMI:
-            return "SEMI";
-        case COLON:
-            return "COLON";
-        case LPAR:
-            return "LPAR";
-        case RPAR:
-            return "RPAR";
-        case LBRACK:
-            return "LBRACK";
-        case RBRACK:
-            return "RBRACK";
-        case PLUS:
-            return "PLUS";
-        case MINUS:
-            return "MINUS";
-        case STAR:
-            return "STAR";
-        case DASH:
-            return "DASH";
-        case SLASH:
-            return "SLASH";
-        case PERCENT:
-            return "PERCENT";
-        case CARET:
-            return "CARET";
-        case EXCLAM:
-            return "EXCLAM";
-        case QUERY:
-            return "QUERY";
-        case AND:
-            return "AND";
-        case OR:
-            return "OR";
-        case ANDAND:
-            return "ANDAND";
-        case LSHIFT:
-            return "LSHIFT";
-        case RSHIFT:
-            return "RSHIFT";
-        case EQ:
-            return "EQ";
-        case EQEQ:
-            return "EQEQ";
-        case PLUSEQ:
-            return "PLUSEQ";
-        case MINUSEQ:
-            return "MINUSEQ";
-        case STAREQ:
-            return "STAREQ";
-        case SLASHEQ:
-            return "SLASHEQ";
-        case PERCENTEQ:
-            return "PERCENTEQ";
-        case CARETEQ:
-            return "CARETEQ";
-        case ANDEQ:
-            return "ANDEQ";
-        case OREQ:
-            return "OREQ";
-        case LSHIFTEQ:
-            return "LSHIFTEQ";
-        case RSHIFTEQ:
-            return "RSHIFTEQ";
-        case NEQ:
-            return "NEQ";
-        case GT:
+        case TId:
+            return "Id";
+        case TFloat:
+            return "Float";
+        case TInt:
+            return "Int";
+        case TStr:
+            return "Str";
+        case TChar:
+            return "Char";
+        case TIndent:
+            return "Indent";
+        case TDedent:
+            return "Dedent";
+        case TEndFile:
+            return "EndFile";
+        case TComment:
+            return "Comment";
+        case TDashDash:
+            return "DashDash";
+        case TSemi:
+            return "Semi";
+        case TColon:
+            return "Colon";
+        case TLPar:
+            return "LPar";
+        case TRPar:
+            return "RPar";
+        case TLBrack:
+            return "LBrack";
+        case TRBrack:
+            return "RBrack";
+        case TLCurly:
+            return "LCurly";
+        case TRCurly:
+            return "RCurly";
+        case TPlus:
+            return "Plus";
+        case TMinus:
+            return "Minus";
+        case TStar:
+            return "Star";
+        case TDash:
+            return "Dash";
+        case TSlash:
+            return "Slash";
+        case TPercent:
+            return "Percent";
+        case TCaret:
+            return "Caret";
+        case TExclam:
+            return "Exclam";
+        case TQuery:
+            return "Query";
+        case TAnd:
+            return "And";
+        case TOr:
+            return "Or";
+        case TAndAnd:
+            return "AndAnd";
+        case TLShift:
+            return "LShift";
+        case TRShift:
+            return "RShift";
+        case TEq:
+            return "Eq";
+        case TEqEq:
+            return "EqEq";
+        case TPlusEq:
+            return "PlusEq";
+        case TMinusEq:
+            return "MinusEq";
+        case TStarEq:
+            return "StarEq";
+        case TSlashEq:
+            return "SlashEq";
+        case TPercentEq:
+            return "PercentEq";
+        case TCaretEq:
+            return "CaretEq";
+        case TAndEq:
+            return "AndEq";
+        case TOrEq:
+            return "OrEq";
+        case TLShiftEq:
+            return "LShiftEq";
+        case TRShiftEq:
+            return "RShiftEq";
+        case TNeq:
+            return "Neq";
+        case TGT:
             return "GT";
-        case LT:
+        case TLT:
             return "LT";
-        case GEQ:
-            return "GEQ";
-        case LEQ:
-            return "LEQ";
-        case AT:
-            return "AT";
-        case DOT:
-            return "DOT";
-        case DOTDOT:
-            return "DOTDOT";
-        case DOTDOTDOT:
-            return "DOTDOTDOT";
-        case DOTDOTEQ:
-            return "DOTDOTEQ";
-        case RARROW:
-            return "RARROW";
-        case ILLEGAL:
+        case TGEq:
+            return "GEq";
+        case TLEq:
+            return "LEq";
+        case TAt:
+            return "At";
+        case TDot:
+            return "Dot";
+        case TDotDot:
+            return "DotDot";
+        case TDotDotDot:
+            return "DotDotDot";
+        case TDotDotEq:
+            return "DotDotEq";
+        case TILLEGAL:
             return "ILLEGAL";
     }
     return "UNDEFINED";
@@ -234,6 +240,8 @@ int is_sep(char c) {
         || c == ']'
         || c == '['
         || c == '@'
+        || c == '}'
         || c == '|'
+        || c == '{'
     ;
 }

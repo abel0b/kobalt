@@ -14,7 +14,7 @@ while read -r -s line
 do
     token=($line)
     echo "    \"${token[1]}\","
-done < src/token.txt
+done < src/token.csv
 
 cat << END
     "",
@@ -35,7 +35,7 @@ struct kbtoken kbtoken_make(enum kbtoken_kind kind, char * value, int line, int 
     return token;
 }
 
-void kbtoken_destroy_arr(unsigned int num_tokens, struct kbtoken * tokens) {
+void kbtoken_del_arr(unsigned int num_tokens, struct kbtoken * tokens) {
     for(unsigned int ii=0; ii<num_tokens; ii++) {
         if(tokens[ii].value != NULL) free(tokens[ii].value);
     }
@@ -50,14 +50,14 @@ void kbtoken_display(struct kbtoken * token) {
     printf(" at %d:%d\\n", token->line, token->col);
 }
 
-void kbtoken_destroy(struct kbtoken * token) {
+void kbtoken_del(struct kbtoken * token) {
     if (token->value != NULL)
         free (token->value);
 }
 
 char * kbtoken_string(enum kbtoken_kind kind) {
     switch(kind) {
-        case NL:
+        case TNL:
             return "NL";
 END
 
@@ -65,7 +65,7 @@ declare -A seps
 
 function parse_line {
     cat << END
-        case $1:
+        case T$1:
             return "$1";
 END
     if [[ ${#2} > 0 ]]  
@@ -80,10 +80,10 @@ END
 while read -r -s line
 do
     parse_line $line 
-done < src/token.txt
+done < src/token.csv
 
 cat << END
-        case ILLEGAL:
+        case TILLEGAL:
             return "ILLEGAL";
     }
     return "UNDEFINED";
