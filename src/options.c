@@ -119,8 +119,11 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
     opts->cachedir[cachedirsize-1] = '\0';
     sprintf(opts->cachedir, "kbcache%c", DS);
     genuid(opts->cachedir + strlen("kbcache") + 1);
+    
     ensuredir("kbcache");
     ensuredir(opts->cachedir);
+    
+    kbcmdcc_new(&opts->cmdcc);
 }
 
 char * kbstage_string(enum kbstage stage) {

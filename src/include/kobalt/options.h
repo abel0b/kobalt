@@ -2,6 +2,7 @@
 #define KBOPTIONS__H
 
 #include "kobalt/kobalt.h"
+#include "kobalt/cmdcc.h"
 #include <stdio.h>
 
 enum kbstage {
@@ -18,6 +19,7 @@ struct kbopts {
     char** srcs;
     FILE* output;
     char* cachedir;
+    struct kbcmdcc cmdcc;
 };
 
 void kbopts_new(int argc, char* argv[], struct kbopts* opts);
