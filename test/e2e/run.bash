@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-./dev/build.bash test
-
 for program in test/e2e/*.kb
 do
     echo -n ">> $program "

@@ -62,9 +62,15 @@ void kbcmdcc_new(struct kbcmdcc* cmdcc) {
                 exit(1);
             }
             close(STDOUT_FILENO);
-            dup(devnull);
+            if (dup(devnull) == -1) {
+                perror("dup");
+                exit(1);
+            }
             close(STDERR_FILENO);
-            dup(devnull);
+            if (dup(devnull) == -1) {
+                perror("dup");
+                exit(1);
+            }
             close(devnull);
             execlp(ccs[icc], ccs[icc], "--version", NULL);
         }
@@ -84,7 +90,10 @@ void kbcmdcc_new(struct kbcmdcc* cmdcc) {
 }
 
 void kbcmdcc_compile(struct kbopts* opts, struct kbcmdcc* cmdcc, char* src, char* bin) {
-    chdir(opts->cachedir);
+    if (chdir(opts->cachedir) == -1) {
+        perror("chdir");
+        exit(1);
+    };
     FILE* cclog = fopen("cc.log", "w");
     if (cclog == NULL) {
         fprintf(stderr, "kbc: error: could not open file '%s/cc.log'\n", opts->cachedir);
@@ -113,9 +122,12 @@ void kbcmdcc_compile(struct kbopts* opts, struct kbcmdcc* cmdcc, char* src, char
         exit(1);
     }
     fclose(cclog);
-    chdir(opts->cwd);
+    if (chdir(opts->cwd) == -1) {
+        perror("chdir");
+        exit(1);
+    };
 }
 
 void kbcmdcc_del(struct kbcmdcc* cmdcc) {
-
+    (void)cmdcc;
 }
