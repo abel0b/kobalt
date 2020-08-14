@@ -1,7 +1,10 @@
 #ifndef KBFS__H
 #define KBFS__H
 
+#include "kobalt/kobalt.h"
+
 void ensuredir(char* path);
 
-#endif
+int isds(char c);
 
+#endif

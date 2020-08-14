@@ -4,9 +4,11 @@
 #include "kobalt/memory.h"
 #include "kobalt/uid.h"
 #include "kobalt/cmdcc.h"
+#include "kobalt/fs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #define TAB "    "
 
@@ -96,16 +98,24 @@ void kbcgenctx_new(struct kbopts* opts, struct kbsrc* src, struct kbcgenctx* cge
     cgenctx->headerpath[lencwd] = '/';
     cgenctx->include = &cgenctx->headerpath[lencwd + 1 + lencachedir + 1];
     for(i = 0; i<(int)strlen(src->filename)-3; i++) {
-        cgenctx->headerpath[lencwd + 1 + lencachedir + 1 + i] = (src->filename[i] != DS)? src->filename[i] : '.';
+        cgenctx->headerpath[lencwd + 1 + lencachedir + 1 + i] = (src->filename[i] != '/')? src->filename[i] : '%';
     }
     cgenctx->headerpath[lencwd + 1 + lencachedir + 1 + i] = '.';
     cgenctx->headerpath[lencwd + 1 + lencachedir + 1 + i + 1] = 'h';
     cgenctx->headerpath[lencwd + 1 + lencachedir + 1 + i + 2] = '\0';
     cgenctx->cheader = fopen(cgenctx->headerpath, "w");
+    if (cgenctx->cheader == NULL) {
+        fprintf(stderr, "kbc: error: couldn't open output file '%s'", cgenctx->headerpath);
+        exit(1);
+    }
    
     strcpy(cgenctx->sourcepath, cgenctx->headerpath);
     cgenctx->sourcepath[lencwd + 1 + lencachedir + 1 + i + 1] = 'c';
     cgenctx->csource = fopen(cgenctx->sourcepath, "w");
+    if (cgenctx->csource == NULL) {
+        fprintf(stderr, "kbc: error: couldn't open file output '%s'", cgenctx->sourcepath);
+        exit(1);
+    }
 }
 
 void kbcgenctx_del(struct kbcgenctx* cgenctx) {
@@ -164,27 +174,46 @@ int kbcgen(struct kbopts* opts, struct kbsrc* src, struct kbast* ast) {
     fflush(cgenctx.cheader);
     fflush(cgenctx.csource);
     
-    
-    char* exe = kbmalloc(sizeof(cgenctx.src->basename[0]) * (strlen(cgenctx.src->basename) + 1 + 1));
-    strcpy(exe, cgenctx.src->basename);
-    int lenbasename = strlen(cgenctx.src->basename);
-    for(int i = 0; i < lenbasename; ++ i) {
-        if (exe[lenbasename-1-i] == '.') {
+    char* exename = cgenctx.src->basename;
+    for(char* c = cgenctx.src->basename; *c != '\0'; ++c) {
+        if (isds(*c)) {
+            exename = c + sizeof(c[0]);
+        }
+    }
+
+    char* exe = kbmalloc(sizeof(exename) * (strlen(exename) + 4));
+    strcpy(exe, exename);
+    int lenexename = strlen(exename);
+    for(int i = 0; i < lenexename; ++ i) {
+        if (exe[lenexename - 1 - i] == '.') {
 #if WINDOWS
-            sprintf(&exe[lenbasename - i], "exe", cgenctx.src->basename);
+            strcpy(&exe[lenexename - i], "exe");
 #else
-            exe[lenbasename - 1 - i] = '\0';
+            exe[lenexename - 1 - i] = '\0';
 #endif
             break;
         }
     }
 
-    kbcmdcc_compile(&opts->cmdcc, cgenctx.sourcepath, exe);
-    
-    kbfree(exe);
+    char* srcname = cgenctx.sourcepath;
+    for(char* p = cgenctx.sourcepath; *p != '\0'; ++p) {
+        if(isds(*p)) {
+            srcname = p + sizeof(p[0]);
+        }
+    }
+    char* tmp = kbmalloc(sizeof(srcname[0]) * (strlen(srcname) + 1));
+    strcpy(tmp, srcname);
+    srcname = tmp;
 
     kbastvisitor_del(&astvisitor);
     kberrvec_del(&errvec);    
     kbcgenctx_del(&cgenctx);
+
+    struct kbcmdcc cmdcc;
+    kbcmdcc_new(&cmdcc);
+    kbcmdcc_compile(opts, &cmdcc, srcname, exe);
+    kbcmdcc_del(&cmdcc);
+    kbfree(exe);
+    kbfree(srcname);
     return 1;
 }

@@ -14,6 +14,7 @@ src/dict.c
 src/fs.c
 src/uid.c
 src/cmdcc.c
+src/proc.c
 src/include/kobalt/options.h
 src/include/kobalt/source.h
 src/include/kobalt/syntax.h
@@ -29,3 +30,4 @@ src/include/kobalt/dict.h
 src/include/kobalt/fs.h
 src/include/kobalt/uid.h
 src/include/kobalt/cmdcc.h
+src/include/kobalt/proc.h

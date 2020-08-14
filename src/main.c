@@ -38,7 +38,7 @@ int main(int argc, char * argv[]) {
             kbsrc_del(&src);
             continue;
         }
-        
+
         kbtypecheck(&ast);
         kbcgen(&opts, &src, &ast);
 

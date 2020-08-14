@@ -2,6 +2,8 @@ cat << END
 #ifndef KBTOKEN__H
 #define KBTOKEN__H
 
+#include "kobalt/kobalt.h"
+
 #define NUM_SPECIALS $(($(wc -l src/token.csv | awk '{printf $1}')+2))
 
 extern char * specials[NUM_SPECIALS];

@@ -1,6 +1,8 @@
 #ifndef KBSYNTAX__H
 #define KBSYNTAX__H
 
+#include "kobalt/kobalt.h"
+
 enum kbnode_kind {
     NFile,
     NFun,

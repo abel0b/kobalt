@@ -1,8 +1,8 @@
-val fibo(n:Int) : Int =
-    if n == 0 || n == 1
+fun fibo(n:Int) : Int =
+    if n == 0 or n == 1
         ret 1
     else
-        ret fibo(n-1) + fibo(n-2)
+        ret (fibo (n - 1)) + (fibo (n - 2))
 
 fun main() =
-    print(fibo(42))
+    print (fibo 42)

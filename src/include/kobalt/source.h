@@ -1,6 +1,7 @@
 #ifndef KBSOURCE__H
 #define KBSOURCE__H
 
+#include "kobalt/kobalt.h"
 #include "kobalt/options.h"
 
 struct kbsrc {

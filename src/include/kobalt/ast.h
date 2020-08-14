@@ -1,6 +1,7 @@
 #ifndef KBAST_H
 #define KBAST_H
 
+#include "kobalt/kobalt.h"
 #include "kobalt/syntax.h"
 
 struct kbast {

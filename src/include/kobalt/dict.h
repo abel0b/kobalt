@@ -1,6 +1,8 @@
 #ifndef KBDICT__H
 #define KBDICT__H
 
+#include "kobalt/kobalt.h"
+
 struct kbdictentry {
     char * key;
     void * value;

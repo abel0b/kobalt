@@ -1,6 +1,8 @@
 #ifndef KBERROR__H
 #define KBERROR__H
 
+#include "kobalt/kobalt.h"
+
 enum kberr_level {
     WARNING,
     ERROR

@@ -402,9 +402,6 @@ void kbparse(struct kbtoken* tokens, struct kbsrc* src, struct kbast* ast) {
 }
 
 void kbparser_run(struct kbparser * parser) {
-    (void)eatany;
-    (void)make_decl; // TODO: remove unused
-
     int group = make_file(parser);
 #ifdef DEBUG
     if(getenv("DEBUG_PARSER")) printf("%d nodes / %d file\n", parser->numnodes, group);

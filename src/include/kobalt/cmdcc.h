@@ -1,5 +1,8 @@
-#ifndef CMDCC__H
-#define CMDCC__H
+#ifndef KBCMDCC__H
+#define KBCMDCC__H
+
+#include "kobalt/kobalt.h"
+#include "kobalt/options.h"
 
 enum kbcc {
     CCGcc = 0,
@@ -14,6 +17,8 @@ struct kbcmdcc {
 
 void kbcmdcc_new(struct kbcmdcc* cmdcc);
 
-void kbcmdcc_compile(struct kbcmdcc* cmdcc, char* src, char* bin);
+void kbcmdcc_compile(struct kbopts* opts, struct kbcmdcc* cmdcc, char* src, char* bin);
+
+void kbcmdcc_del(struct kbcmdcc* cmdcc);
 
 #endif

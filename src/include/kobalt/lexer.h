@@ -1,6 +1,7 @@
 #ifndef KBLEXER__H
 #define KBLEXER__H
 
+#include "kobalt/kobalt.h"
 #include "kobalt/source.h"
 #include "kobalt/token.h"
 

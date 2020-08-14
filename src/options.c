@@ -9,7 +9,6 @@
 #include <assert.h>
 #if WINDOWS
 #include <direct.h>
-#define getcwd _getcwd
 #else
 #include <unistd.h>
 #endif
@@ -59,10 +58,10 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
                         break;
                     default: {
                         if (isprint (optopt)) {
-                            fprintf (stderr, "kbc: error: unknown option '-%c'.\n", optopt);
+                            fprintf (stderr, "kbc: error: unknown option '-%c'\n", optopt);
                         }
                         else {
-                            fprintf(stderr, "kbc: error: unknown option character '\\x%x'.\n", optopt);
+                            fprintf(stderr, "kbc: error: unknown option character '\\x%x'\n", optopt);
                         }
                         exit(1);
                     }
@@ -77,7 +76,7 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
         else {
             if (opts->numsrcs == srcs_capacity) {
                 srcs_capacity = 2 * srcs_capacity;
-                assert(kbrealloc(opts->srcs, sizeof(opts->srcs[0]) * srcs_capacity) != NULL);
+                opts->srcs = kbrealloc(opts->srcs, sizeof(opts->srcs[0]) * srcs_capacity);
             }
             opts->srcs[opts->numsrcs] = argv[jj];
             ++ opts->numsrcs;
@@ -87,11 +86,7 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
 
 #if DEBUG
     if(!opts->numsrcs) {
-#if WINDOWS
-        opts->srcs[opts->numsrcs] = "doc\examples\hello_world.kb";
-#else
         opts->srcs[opts->numsrcs] = "doc/examples/hello_world.kb";
-#endif
         ++ opts->numsrcs;
     }
 #endif
@@ -112,18 +107,24 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
         fprintf(stderr, "kbc: error: allocation");
         exit(1);
     }
+    
+#if WINDOWS
+    for(char* c = opts->cwd; *c != '\0'; c++) {
+        if (*c == '\\') {
+            *c = '/';
+        }
+    }
+#endif
    
     seed(42);
     int cachedirsize = strlen("kbcache") + 1 + 8 + 1;
     opts->cachedir = kbmalloc(sizeof(char) * cachedirsize);
-    opts->cachedir[cachedirsize-1] = '\0';
-    sprintf(opts->cachedir, "kbcache%c", DS);
+    opts->cachedir[cachedirsize - 1] = '\0';
+    strcpy(opts->cachedir, "kbcache/");
     genuid(opts->cachedir + strlen("kbcache") + 1);
     
     ensuredir("kbcache");
     ensuredir(opts->cachedir);
-    
-    kbcmdcc_new(&opts->cmdcc);
 }
 
 char * kbstage_string(enum kbstage stage) {

@@ -1,6 +1,7 @@
 #ifndef KBCGEN_H
 #define KBCGEN_H
 
+#include "kobalt/kobalt.h"
 #include "kobalt/ast.h"
 #include "kobalt/options.h"
 #include "kobalt/source.h"

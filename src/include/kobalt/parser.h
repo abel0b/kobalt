@@ -1,6 +1,7 @@
 #ifndef KBPARSER__H
 #define KBPARSER__H
 
+#include "kobalt/kobalt.h"
 #include "kobalt/token.h"
 #include "kobalt/syntax.h"
 #include "kobalt/error.h"

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <ctype.h>
 
 void kblex(struct kbsrc* src, struct kbtoken** tokens, int* numtokens) {
     struct kblexer lexer;
@@ -109,7 +110,7 @@ void kblexer_push_token(struct kbtoken** tokens, int* numtokens, int* capacity, 
     (*tokens)[*numtokens] = token;
     (*numtokens) ++;
 #if DEBUG
-    if(getenv("DEBUG_LEXER")) printf("push  %s=%s\n", kbtoken_string(token.kind), (token.value)?token.value:"");
+    if(getenv("DEBUG_LEXER")) printf("push  %s=%s\n", kbtoken_string(token.kind), (token.value)? token.value : "");
 #endif
 }
 
@@ -150,257 +151,280 @@ static struct kbtoken * last_token(struct kbtoken** tokens, int* numtokens) {
     return &((*tokens)[(*numtokens)-1]);
 }
 
+static void unexpectedchar(char ch, int line, int col) {
+    if (isprint(ch)) {
+        fprintf (stderr, "lexer:  unexpected character '%c' at %d:%d\n\n", ch, line, col);
+    }
+    else {
+        fprintf (stderr, "lexer:  unexpected character '\\x%x' at %d:%d\n\n", ch, line, col);
+    }
+}
+
 void kblexer_next(struct kblexer* lexer, struct kbtoken** tokens, int* numtokens, int* capacity, char ch) {
 #if DEBUG
-    if(getenv("DEBUG_LEXER")) printf("next  cursor=%c state=%s\n", ch, kblexer_state_str(lexer));
+    if(getenv("DEBUG_LEXER")) printf("lex cursor=%c state=%s\n", ch, kblexer_state_str(lexer));
 #endif
     switch(lexer->state) {
         case LEXER_NEWLINE:
-            if (ch == ' ') {
-                if (!lexer->first_indent_char && lexer->use_tabs_indent) {
-                    fprintf(stderr, "Inconsistent use of tabs and space in indentation\n");
-                    exit(1);
-                }
-                lexer->first_indent_char = 0;
-                lexer->indent_counter ++;
-            }
-            else if (ch == '\t') {
-                if (lexer->first_indent_char) {
-                    lexer->use_tabs_indent = 1;
-                }
-                else if (!lexer->use_tabs_indent) {
-                    fprintf(stderr, "Inconsistent use of tabs and space in indentation\n");
-                    exit(1);
-                }
-                lexer->first_indent_char = 0;
-                lexer->indent_counter ++;
-            }
-            else if (ch == '\n') {
-                lexer->indent_counter = 0;
-            }
-            else {
-                if (lexer->first_indent) {
-                    if (lexer->indent_counter) {
-                        lexer->space_indent = (lexer->use_tabs_indent)?1:lexer->indent_counter;
-                        lexer->first_indent = 0;
+            {
+                if (ch == ' ') {
+                    if (!lexer->first_indent_char && lexer->use_tabs_indent) {
+                        fprintf(stderr, "error: inconsistent use of tabs and space in indentation\n");
+                        exit(1);
                     }
+                    lexer->first_indent_char = 0;
+                    lexer->indent_counter ++;
                 }
-                else if(lexer->indent_counter % lexer->space_indent != 0) {
-                    fprintf(stderr, "Unexpected indentation at %d:%d\n", lexer->line, lexer->col);
-                    exit(1);
+                else if (ch == '\t') {
+                    if (lexer->first_indent_char) {
+                        lexer->use_tabs_indent = 1;
+                    }
+                    else if (!lexer->use_tabs_indent) {
+                        fprintf(stderr, "error: inconsistent use of tabs and space in indentation\n");
+                        exit(1);
+                    }
+                    lexer->first_indent_char = 0;
+                    lexer->indent_counter ++;
                 }
-
-                // printf("dbgindent %d %d %d %d %d\n", lexer->indent_level, lexer->indent_counter, lexer->space_indent, lexer->indent_counter % lexer->space_indent, lexer->indent_counter/lexer->space_indent < lexer->indent_level);
-
-                if ((lexer->indent_counter % lexer->space_indent == 0) && (lexer->indent_counter/lexer->space_indent > lexer->indent_level)) {
-                    for(int kk=0; kk<(lexer->indent_counter / lexer->space_indent - lexer->indent_level); ++kk)
-                        kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(TIndent, NULL, lexer->line, 1));
-                    lexer->indent_level = lexer->indent_counter / lexer->space_indent;
+                else if (ch == '\n') {
+                    lexer->indent_counter = 0;
                 }
+                else {
+                    if (lexer->first_indent) {
+                        if (lexer->indent_counter) {
+                            lexer->space_indent = (lexer->use_tabs_indent)?1:lexer->indent_counter;
+                            lexer->first_indent = 0;
+                        }
+                    }
+                    else if(lexer->indent_counter % lexer->space_indent != 0) {
+                        fprintf(stderr, "error: unexpected indentation at %d:%d\n", lexer->line, lexer->col);
+                        exit(1);
+                    }
 
-                if((*numtokens) && last_token(tokens, numtokens)->kind != TComment && last_token(tokens, numtokens)->kind != TIndent) {
-                    kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(TSemi, NULL, lexer->line-1, -1));
+                    // printf("dbgindent %d %d %d %d %d\n", lexer->indent_level, lexer->indent_counter, lexer->space_indent, lexer->indent_counter % lexer->space_indent, lexer->indent_counter/lexer->space_indent < lexer->indent_level);
+
+                    if ((lexer->indent_counter % lexer->space_indent == 0) && (lexer->indent_counter/lexer->space_indent > lexer->indent_level)) {
+                        for(int kk=0; kk<(lexer->indent_counter / lexer->space_indent - lexer->indent_level); ++kk)
+                            kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(TIndent, NULL, lexer->line, 1));
+                        lexer->indent_level = lexer->indent_counter / lexer->space_indent;
+                    }
+
+                    if((*numtokens) && last_token(tokens, numtokens)->kind != TComment && last_token(tokens, numtokens)->kind != TIndent) {
+                        kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(TSemi, NULL, lexer->line-1, -1));
+                    }
+
+                    if ((lexer->indent_counter % lexer->space_indent == 0) && (lexer->indent_counter/lexer->space_indent < lexer->indent_level)) {
+                        for(int kk=0; kk<(lexer->indent_level - lexer->indent_counter / lexer->space_indent); ++kk)
+                            kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(TDedent, NULL, lexer->line, 1));
+                        lexer->indent_level = lexer->indent_counter / lexer->space_indent;
+                    }
+
+                    lexer->indent_counter = 0;
+                    lexer->state = LEXER_NEWTOK;
+                    kblexer_next(lexer, tokens, numtokens, capacity, ch);
                 }
-
-                if ((lexer->indent_counter % lexer->space_indent == 0) && (lexer->indent_counter/lexer->space_indent < lexer->indent_level)) {
-                    for(int kk=0; kk<(lexer->indent_level - lexer->indent_counter / lexer->space_indent); ++kk)
-                        kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(TDedent, NULL, lexer->line, 1));
-                    lexer->indent_level = lexer->indent_counter / lexer->space_indent;
-                }
-
-                lexer->indent_counter = 0;
-                lexer->state = LEXER_NEWTOK;
-                kblexer_next(lexer, tokens, numtokens, capacity, ch);
             }
             break;
         case LEXER_SYM:
-            if (is_delim(ch)) {
-                kblexer_push_char(lexer, '\0');
-                
-                if (lexer->special_match.matched == TDashDash) {
-                    lexer->state = LEXER_COMMENT;
-                }
-                else {
-                    kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(lexer->special_match.matched, (lexer->special_match.matched == TILLEGAL)? lexer->buffer : NULL, lexer->tokline, lexer->tokcol));
-                }
+            {
+                if (is_delim(ch)) {
+                    kblexer_push_char(lexer, '\0');
+                    
+                    if (lexer->special_match.matched == TDashDash) {
+                        lexer->state = LEXER_COMMENT;
+                    }
+                    else {
+                        kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(lexer->special_match.matched, (lexer->special_match.matched == TILLEGAL)? lexer->buffer : NULL, lexer->tokline, lexer->tokcol));
+                    }
 
-                kblexer_buf_init(lexer);
-                kblexer_special_init(lexer);
+                    kblexer_buf_init(lexer);
+                    kblexer_special_init(lexer);
 
-                if (ch == '\n') {
-                    lexer->state = LEXER_NEWLINE;
-                    kblexer_next(lexer, tokens, numtokens, capacity, ch);
+                    if (ch == '\n') {
+                        lexer->state = LEXER_NEWLINE;
+                        kblexer_next(lexer, tokens, numtokens, capacity, ch);
+                    }
+                    else {
+                        lexer->state = LEXER_NEWTOK;
+                    }
                 }
-                else {
-                    lexer->state = LEXER_NEWTOK;
-                }
-            }
-            else if (is_sep(ch)) {
-                int prevmatched = lexer->special_match.matched;
-                kblexer_special_next(lexer, ch); 
-                if (lexer->special_match.nummatched == 0) {
-                    if (lexer->cursor > 0) {
-                        if (prevmatched == TDashDash) {
+                else if (is_sep(ch)) {
+                    int prevmatched = lexer->special_match.matched;
+                    kblexer_special_next(lexer, ch); 
+                    if (lexer->special_match.nummatched == 0) {
+                        if (lexer->cursor > 0) {
+                            if (prevmatched == TDashDash) {
+                                lexer->state = LEXER_COMMENT;
+                            }
+                            else {
+                                lexer->state = LEXER_NEWTOK;
+                                kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(prevmatched, (prevmatched == TILLEGAL)? lexer->buffer : NULL, lexer->line, lexer->col));
+                            }       
+                            
+                            kblexer_special_init(lexer);
+                            kblexer_buf_init(lexer);
+                            kblexer_next(lexer, tokens, numtokens, capacity, ch);
+                        }
+                        else {
+                            unexpectedchar(ch, lexer->line, lexer->col);
+                            exit(1);
+                        }
+                    }
+                    else if (lexer->special_match.nummatched == 1 && lexer->special_match.matched != TILLEGAL) {
+                        if (lexer->special_match.matched == TDashDash) {
                             lexer->state = LEXER_COMMENT;
                         }
                         else {
                             lexer->state = LEXER_NEWTOK;
-                            kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(prevmatched, (prevmatched == TILLEGAL)? lexer->buffer : NULL, lexer->line, lexer->col));
-                        }       
-                        
-                        kblexer_special_init(lexer);
+                            kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(lexer->special_match.matched, NULL, lexer->line, lexer->col));
+                        }
                         kblexer_buf_init(lexer);
-                        kblexer_next(lexer, tokens, numtokens, capacity, ch);
+                        kblexer_special_init(lexer);
                     }
                     else {
-                        fprintf(stderr, "Unexpected character at %d:%d\n", lexer->line, lexer->col);
-                        exit(1);
+                        kblexer_push_char(lexer, ch);
                     }
                 }
-                else if (lexer->special_match.nummatched == 1 && lexer->special_match.matched != TILLEGAL) {
+                else if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '_') {
+                    kblexer_push_char(lexer, '\0');
                     if (lexer->special_match.matched == TDashDash) {
                         lexer->state = LEXER_COMMENT;
                     }
                     else {
                         lexer->state = LEXER_NEWTOK;
-                        kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(lexer->special_match.matched, NULL, lexer->line, lexer->col));
+                        kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(lexer->special_match.matched, NULL, lexer->tokline, lexer->tokcol));
                     }
                     kblexer_buf_init(lexer);
                     kblexer_special_init(lexer);
+                    kblexer_next(lexer, tokens, numtokens, capacity, ch);
+                }
+                else {
+                    unexpectedchar(ch, lexer->line, lexer->col);
+                    exit(1);
+                }
+            }
+            break;
+        case LEXER_NEWTOK:
+            {
+                lexer->tokline = lexer->line;
+                lexer->tokcol = lexer->col;
+                if (ch == '"') {
+                    lexer->state = LEXER_STRINGLIT;
+                }
+                else if (is_delim(ch)) {
+                    if(ch == '\n') {
+                        lexer->state = LEXER_NEWLINE;
+                        kblexer_next(lexer, tokens, numtokens, capacity, ch);
+                    }
+                }
+                else if (is_sep(ch)) { 
+                    lexer->state = LEXER_SYM; 
+                    kblexer_next(lexer, tokens, numtokens, capacity, ch);
+                }
+                else if (ch >= '0' && ch <= '9') {
+                    lexer->state = LEXER_NUMLIT;
+                    kblexer_next(lexer, tokens, numtokens, capacity, ch);
+                }
+                else if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '_') {
+                    lexer->state = LEXER_IDENTIFIER;
+                    kblexer_next(lexer, tokens, numtokens, capacity, ch);
+                }
+                else {
+                    unexpectedchar(ch, lexer->line, lexer->col);
+                    exit(1);
+                }
+            }
+            break;
+        case LEXER_NUMLIT:
+            {
+                if ((ch >= '0' && ch <= '9') || ch == '.') {
+                    kblexer_push_char(lexer, ch);
+                    kblexer_int_next(lexer, ch);
+                    kblexer_float_next(lexer, ch);
+                    if (!lexer->int_match.is_integer && !lexer->float_match.is_float) {
+                        unexpectedchar(ch, lexer->line, lexer->col);
+                        exit(1);
+                    }
+                }
+                else if(is_delim(ch) || is_sep(ch)) {
+                    kblexer_push_char(lexer, '\0');
+                    kblexer_push_token(tokens, numtokens, capacity, kbtoken_make((lexer->int_match.is_integer)?TInt:TFloat, lexer->buffer, lexer->tokline, lexer->tokcol));
+                    kblexer_buf_init(lexer);
+
+                    kblexer_int_init(lexer);
+                    kblexer_float_init(lexer);
+
+                    if (is_sep(ch)) {
+                        lexer->state = LEXER_SYM;
+                        kblexer_next(lexer, tokens, numtokens, capacity, ch);
+                    }
+                    else if(ch == '\n') {
+                        lexer->state = LEXER_NEWLINE;
+                        kblexer_next(lexer, tokens, numtokens, capacity, ch);
+                    }
+                    else {
+                        lexer->state = LEXER_NEWTOK;
+                    }
+                }
+                else {
+                    unexpectedchar(ch, lexer->line, lexer->col);
+                    exit(1);
+                }
+            }
+            break;
+        case LEXER_IDENTIFIER:
+            {
+                if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9') || ch == '_') {
+                    kblexer_push_char(lexer, ch);
+                }
+                else if(is_delim(ch) || is_sep(ch)) {
+                    kblexer_push_char(lexer, '\0');
+                    kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(TId, lexer->buffer, lexer->tokline, lexer->tokcol));
+                    kblexer_buf_init(lexer);
+
+                    if (is_sep(ch)) {
+                        lexer->state = LEXER_SYM;
+                        kblexer_next(lexer, tokens, numtokens, capacity, ch);
+                    }
+                    else if(ch == '\n') {
+                        lexer->state = LEXER_NEWLINE;
+                        kblexer_next(lexer, tokens, numtokens, capacity, ch);
+                    }
+                    else {
+                        lexer->state = LEXER_NEWTOK;
+                    }
+                }
+                else {
+                    unexpectedchar(ch, lexer->line, lexer->col);
+                    exit(1);
+                }
+            }
+            break;
+        case LEXER_STRINGLIT:
+            {
+                if (ch == '"') {
+                    kblexer_push_char(lexer, '\0');
+                    kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(TStr, lexer->buffer, lexer->tokline, lexer->tokcol));
+                    kblexer_buf_init(lexer);
+                    lexer->state = LEXER_NEWTOK;
                 }
                 else {
                     kblexer_push_char(lexer, ch);
                 }
             }
-            else if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '_') {
-                kblexer_push_char(lexer, '\0');
-                if (lexer->special_match.matched == TDashDash) {
-                    lexer->state = LEXER_COMMENT;
-                }
-                else {
-                    lexer->state = LEXER_NEWTOK;
-                    kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(lexer->special_match.matched, NULL, lexer->tokline, lexer->tokcol));
-                }
-                kblexer_buf_init(lexer);
-                kblexer_special_init(lexer);
-                kblexer_next(lexer, tokens, numtokens, capacity, ch);
-            }
-            else {
-                fprintf(stderr, "Unexpected token %c at %d:%d\n", ch, lexer->line, lexer->col);
-                exit(1);
-            }
-            break;
-        case LEXER_NEWTOK:
-            lexer->tokline = lexer->line;
-            lexer->tokcol = lexer->col;
-            if (ch == '"') {
-                lexer->state = LEXER_STRINGLIT;
-            }
-            else if (is_delim(ch)) {
-                if(ch == '\n') {
-                    lexer->state = LEXER_NEWLINE;
-                    kblexer_next(lexer, tokens, numtokens, capacity, ch);
-                }
-            }
-            else if (is_sep(ch)) { 
-                lexer->state = LEXER_SYM; 
-                kblexer_next(lexer, tokens, numtokens, capacity, ch);
-            }
-            else if (ch >= '0' && ch <= '9') {
-                lexer->state = LEXER_NUMLIT;
-                kblexer_next(lexer, tokens, numtokens, capacity, ch);
-            }
-            else if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '_') {
-                lexer->state = LEXER_IDENTIFIER;
-                kblexer_next(lexer, tokens, numtokens, capacity, ch);
-            }
-            else {
-                fprintf(stderr, "Unexpected token %c at %d:%d\n", ch, lexer->line, lexer->col);
-                exit(1);
-            }
-            break;
-        case LEXER_NUMLIT:
-            if ((ch >= '0' && ch <= '9') || ch == '.') {
-                kblexer_push_char(lexer, ch);
-                kblexer_int_next(lexer, ch);
-                kblexer_float_next(lexer, ch);
-                if (!lexer->int_match.is_integer && !lexer->float_match.is_float) {
-                    fprintf(stderr, "Unexpected token %c at %d:%d\n", ch, lexer->line, lexer->col);
-                    exit(1);
-                }
-            }
-            else if(is_delim(ch) || is_sep(ch)) {
-                kblexer_push_char(lexer, '\0');
-                kblexer_push_token(tokens, numtokens, capacity, kbtoken_make((lexer->int_match.is_integer)?TInt:TFloat, lexer->buffer, lexer->tokline, lexer->tokcol));
-                kblexer_buf_init(lexer);
-
-                kblexer_int_init(lexer);
-                kblexer_float_init(lexer);
-
-                if (is_sep(ch)) {
-                    lexer->state = LEXER_SYM;
-                    kblexer_next(lexer, tokens, numtokens, capacity, ch);
-                }
-                else if(ch == '\n') {
-                    lexer->state = LEXER_NEWLINE;
-                    kblexer_next(lexer, tokens, numtokens, capacity, ch);
-                }
-                else {
-                    lexer->state = LEXER_NEWTOK;
-                }
-            }
-            else {
-                fprintf(stderr, "Unexpected token %c at %d:%d\n", ch, lexer->line, lexer->col);
-                exit(1);
-            }
-            break;
-        case LEXER_IDENTIFIER:
-            if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9') || ch == '_') {
-                kblexer_push_char(lexer, ch);
-            }
-            else if(is_delim(ch) || is_sep(ch)) {
-                kblexer_push_char(lexer, '\0');
-                kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(TId, lexer->buffer, lexer->tokline, lexer->tokcol));
-                kblexer_buf_init(lexer);
-
-                if (is_sep(ch)) {
-                    lexer->state = LEXER_SYM;
-                    kblexer_next(lexer, tokens, numtokens, capacity, ch);
-                }
-                else if(ch == '\n') {
-                    lexer->state = LEXER_NEWLINE;
-                    kblexer_next(lexer, tokens, numtokens, capacity, ch);
-                }
-                else {
-                    lexer->state = LEXER_NEWTOK;
-                }
-            }
-            else {
-                fprintf(stderr, "Unexpected token %c at %d:%d\n", ch, lexer->line, lexer->col);
-                exit(1);
-            }
-            break;
-        case LEXER_STRINGLIT:
-            if (ch == '"') {
-                kblexer_push_char(lexer, '\0');
-                kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(TStr, lexer->buffer, lexer->tokline, lexer->tokcol));
-                kblexer_buf_init(lexer);
-                lexer->state = LEXER_NEWTOK;
-            }
-            else {
-                kblexer_push_char(lexer, ch);
-            }
             break;
         case LEXER_COMMENT:
-            if (ch == '\n') {
-                kblexer_push_char(lexer, '\0');
-                kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(TComment, lexer->buffer, lexer->tokline, lexer->tokcol));
-                kblexer_buf_init(lexer);
-                lexer->state = LEXER_NEWLINE;
-                kblexer_next(lexer, tokens, numtokens, capacity, ch);
-            }
-            else {
-                kblexer_push_char(lexer, ch);
+            {
+                if (ch == '\n') {
+                    kblexer_push_char(lexer, '\0');
+                    kblexer_push_token(tokens, numtokens, capacity, kbtoken_make(TComment, lexer->buffer, lexer->tokline, lexer->tokcol));
+                    kblexer_buf_init(lexer);
+                    lexer->state = LEXER_NEWLINE;
+                    kblexer_next(lexer, tokens, numtokens, capacity, ch);
+                }
+                else {
+                    kblexer_push_char(lexer, ch);
+                }
             }
             break;
     }

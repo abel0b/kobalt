@@ -14,7 +14,7 @@ If (-Not $vsfound) {
 }
 $vspath = & $vswhere -property installationPath
 Push-Location "$vspath\Common7\Tools"
-cmd /c "VsDevCmd.bat&set" | Foreach {
+cmd /c "VsDevCmd.bat -arch=amd64&set" | Foreach {
     If ($_ -match "=") {
         $v = $_.split("="); Set-Item -force -path "ENV:\$($v[0])" -value "$($v[1])"
     }
