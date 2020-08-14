@@ -101,7 +101,7 @@ void kbcmdcc_compile(struct kbopts* opts, struct kbcmdcc* cmdcc, char* src, char
     }
     char* argv[] = {ccs[cmdcc->cc], ccoptextra[cmdcc->cc], binopt, src, NULL};
 #else
-    char* argv[] = {ccs[cmdcc->cc], ccoptextra[cmdcc->cc], ccoptoutput[cmdcc->icc], bin, src, NULL};
+    char* argv[] = {ccs[cmdcc->cc], ccoptextra[cmdcc->cc], ccoptoutput[cmdcc->cc], bin, src, NULL};
 #endif
 
     int exitstatus = kbspawn(argv, cclog);

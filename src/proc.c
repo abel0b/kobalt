@@ -59,16 +59,12 @@ int kbspawn(char* argv[], FILE* stdoutlog) {
     }
     else if (pid == 0) {
         int fd = fileno(stdoutlog);
-        if (cclog == -1) {
-            perror("error: open");
-            exit(1);
-        }
         close(STDOUT_FILENO);
         dup(fd);
         // close(STDERR_FILENO);
         // dup(fd);
         close(fd);
-        execvp(argv);
+        execvp(argv[0], argv);
     }
     else {
         int exitstatus;
