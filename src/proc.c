@@ -1,5 +1,7 @@
+#define _POSIX_C_SOURCE 1
 #include "kobalt/proc.h"
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #if WINDOWS
 #include <process.h>
@@ -11,7 +13,7 @@
 #endif
 
 int kbspawn(char* argv[], FILE* stdoutlog) {
-    int exitstatus;
+    int exitstatus = 1;
 #if WINDOWS
     char command[512];
     int cur = 0;
@@ -60,7 +62,10 @@ int kbspawn(char* argv[], FILE* stdoutlog) {
     else if (pid == 0) {
         int fd = fileno(stdoutlog);
         close(STDOUT_FILENO);
-        dup(fd);
+        if (dup(fd) == -1) {
+            perror("dup");
+            exit(1);
+        };
         // close(STDERR_FILENO);
         // dup(fd);
         close(fd);
