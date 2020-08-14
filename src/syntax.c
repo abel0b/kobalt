@@ -5,34 +5,48 @@
 
 char * kbnode_kind_str(enum kbnode_kind kind) {
     switch(kind) {
-        case NPROG:
-            return "NPROG";
-        case NITEM:
-            return "NITEM";
-        case NFUN:
-            return "NFUN";
-        case NARG:
-            return "NARG";
-        case NFUNBODY:
-            return "NFUNBODY";
-        case NDECL:
-            return "NDECL";
-        case NTYPE:
-            return "NTYPE";
-        case NEXPR:
-            return "NEXPR";
-        case NTERM:
-            return "NTERM";
-        case NBINEXPR:
-            return "NBINEXPR";
-        case NLIT:
-            return "NLIT";
-        case NFUNCALL:
-            return "NFUNCALL";
-        case NASSIGN:
-            return "NASSIGN";
-        case NID:
-            return "NID";
+        case NFile:
+            return "File";
+        case NFun:
+            return "Fun";
+        case NFunParams:
+            return "FunParams";
+        case NFunParam:
+            return "FunParam";
+        case NFunBody:
+            return "FunBody";
+        case NDecl:
+            return "Decl";
+        case NType:
+            return "Type";
+        case NExpr:
+            return "Expr";
+        case NTerm:
+            return "Term";
+        case NBinExpr:
+            return "BinExpr";
+        case NStrLit:
+            return "StrLit";
+        case NIntLit:
+            return "IntLit";
+        case NFloatLit:
+            return "FloatLit";
+        case NCharLit:
+            return "CharLit";
+        case NCall:
+            return "Call";
+        case NCallParams:
+            return "CallParams";
+        case NCallParam:
+            return "CallParam";
+        case NAssign:
+            return "Assign";
+        case NId:
+            return "Id";
     }
     return "UNDEFINED";
+}
+
+int isgroup(struct kbnode *node) {
+    return node->kind == NFile || node->kind == NFunParams || node->kind == NFunBody || node->kind == NCallParams;
 }

@@ -1,9 +1,10 @@
 # Kobalt
 ![build](https://github.com/abel0b/kobalt/workflows/build/badge.svg)
 
-Kobalt programming language.
+Kobalt is a programming language.
 
-## Build
+## Build from sources
+Run the appropriate script for your platform.
 ```shell
-./build/build.{bash,ps1}
+./dev/build.{bash,ps1}
 ```
