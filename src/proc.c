@@ -11,6 +11,7 @@
 #endif
 
 int kbspawn(char* argv[], FILE* stdoutlog) {
+    int exitstatus;
 #if WINDOWS
     char command[512];
     int cur = 0;
@@ -43,7 +44,6 @@ int kbspawn(char* argv[], FILE* stdoutlog) {
         fputs(buf, stdoutlog);
     }
 
-    int exitstatus;
     if (feof(vpipe)) {
         exitstatus = _pclose(vpipe);
     }
@@ -67,7 +67,6 @@ int kbspawn(char* argv[], FILE* stdoutlog) {
         execvp(argv[0], argv);
     }
     else {
-        int exitstatus;
         wait(&exitstatus);
     }
 #endif
