@@ -1,6 +1,7 @@
 #include "kobalt/lexer.h"
 #include "kobalt/source.h"
 #include "kobalt/memory.h"
+#include "kobalt/log.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -153,10 +154,10 @@ static struct kbtoken * last_token(struct kbtoken** tokens, int* numtokens) {
 
 static void unexpectedchar(char ch, int line, int col) {
     if (isprint(ch)) {
-        fprintf (stderr, "lexer:  unexpected character '%c' at %d:%d\n\n", ch, line, col);
+        kbelog("unexpected character '%c' at %d:%d", ch, line, col);
     }
     else {
-        fprintf (stderr, "lexer:  unexpected character '\\x%x' at %d:%d\n\n", ch, line, col);
+        kbelog("unexpected character '\\x%x' at %d:%d", ch, line, col);
     }
 }
 
@@ -169,7 +170,7 @@ void kblexer_next(struct kblexer* lexer, struct kbtoken** tokens, int* numtokens
             {
                 if (ch == ' ') {
                     if (!lexer->first_indent_char && lexer->use_tabs_indent) {
-                        fprintf(stderr, "error: inconsistent use of tabs and space in indentation\n");
+                        kbelog("inconsistent use of tabs and space in indentation");
                         exit(1);
                     }
                     lexer->first_indent_char = 0;
@@ -180,7 +181,7 @@ void kblexer_next(struct kblexer* lexer, struct kbtoken** tokens, int* numtokens
                         lexer->use_tabs_indent = 1;
                     }
                     else if (!lexer->use_tabs_indent) {
-                        fprintf(stderr, "error: inconsistent use of tabs and space in indentation\n");
+                        kbelog("inconsistent use of tabs and space in indentation");
                         exit(1);
                     }
                     lexer->first_indent_char = 0;
@@ -197,7 +198,7 @@ void kblexer_next(struct kblexer* lexer, struct kbtoken** tokens, int* numtokens
                         }
                     }
                     else if(lexer->indent_counter % lexer->space_indent != 0) {
-                        fprintf(stderr, "error: unexpected indentation at %d:%d\n", lexer->line, lexer->col);
+                        kbelog("unexpected indentation at %d:%d", lexer->line, lexer->col);
                         exit(1);
                     }
 

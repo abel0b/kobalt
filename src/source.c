@@ -1,5 +1,6 @@
 #include "kobalt/source.h"
 #include "kobalt/memory.h"
+#include "kobalt/log.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,7 +11,7 @@ void kbsrc_new(char* filename, struct kbsrc* src) {
     strcpy(src->filename, filename);
     FILE * file = fopen(src->filename, "rb");
     if (file == NULL) {
-        perror("Error opening file");
+        kbelog("could not open source file");
         exit(1);
     }
 

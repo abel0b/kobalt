@@ -1,6 +1,7 @@
 #include "kobalt/cmdcc.h"
 #include "kobalt/memory.h"
 #include "kobalt/proc.h"
+#include "kobalt/log.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -30,12 +31,12 @@ void kbcmdcc_new(struct kbcmdcc* cmdcc) {
 #if WINDOWS
         char command[64];
         if (snprintf(command, 32, "%s /help", ccs[icc]) >= 32) {
-            fprintf(stderr, "error: unexpected error\n");
+            kbelog("unexpected error");
             exit(1);
         }
         FILE* vpipe = _popen(command, "r");
         if (vpipe == NULL) {
-            fprintf(stderr, "error: spawn failed\n");
+            kbelog("spawn failed");
             exit(1);
         }
         
@@ -79,13 +80,13 @@ void kbcmdcc_new(struct kbcmdcc* cmdcc) {
         int exitstatus = WEXITSTATUS(status);
 #endif
 	    if (exitstatus == 0) {
-	        printf("info: found C compiler '%s'\n", ccs[icc]);
+	        kbilog("found C compiler '%s'", ccs[icc]);
             cmdcc->cc = icc;
             return;
         }
     }
 
-    fprintf(stderr, "error: could not find C compiler\n");
+    kbelog("could not find C compiler");
     exit(1);
 }
 
@@ -96,7 +97,7 @@ void kbcmdcc_compile(struct kbopts* opts, struct kbcmdcc* cmdcc, char* src, char
     };
     FILE* cclog = fopen("cc.log", "w");
     if (cclog == NULL) {
-        fprintf(stderr, "kbc: error: could not open file '%s/cc.log'\n", opts->cachedir);
+        kbelog("could not open file '%s/cc.log'", opts->cachedir);
         exit(1);
     }
     
@@ -105,7 +106,7 @@ void kbcmdcc_compile(struct kbopts* opts, struct kbcmdcc* cmdcc, char* src, char
     char binopt[1024];
     int ret = snprintf(binopt, 1024, "%s%s", ccoptoutput[cmdcc->cc], bin);
     if (ret < 0 || ret > 1024) {
-        fprintf(stderr, "error: unexpected error, probably because of too long path\n");
+        kbelog("unexpected error, probably because of too long path");
         exit(1);
     }
     char* argv[] = {ccs[cmdcc->cc], ccoptextra[cmdcc->cc], binopt, src, NULL};
@@ -115,7 +116,7 @@ void kbcmdcc_compile(struct kbopts* opts, struct kbcmdcc* cmdcc, char* src, char
 
     int exitstatus = kbspawn(argv, cclog);
     if (exitstatus == 0) {
-        printf("info: succesfully compiled %s\n", bin);
+        kbilog("succesfully compiled %s", bin);
     }
     else {
         printf("error: C compilation exited with %d status, logs saved in '%s/cc.log'", exitstatus, opts->cachedir);

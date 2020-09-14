@@ -5,6 +5,7 @@
 #include "kobalt/uid.h"
 #include "kobalt/cmdcc.h"
 #include "kobalt/fs.h"
+#include "kobalt/log.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -105,7 +106,7 @@ void kbcgenctx_new(struct kbopts* opts, struct kbsrc* src, struct kbcgenctx* cge
     cgenctx->headerpath[lencwd + 1 + lencachedir + 1 + i + 2] = '\0';
     cgenctx->cheader = fopen(cgenctx->headerpath, "w");
     if (cgenctx->cheader == NULL) {
-        fprintf(stderr, "kbc: error: couldn't open output file '%s'", cgenctx->headerpath);
+        kbelog("couldn't open output file '%s'", cgenctx->headerpath);
         exit(1);
     }
    
@@ -113,7 +114,7 @@ void kbcgenctx_new(struct kbopts* opts, struct kbsrc* src, struct kbcgenctx* cge
     cgenctx->sourcepath[lencwd + 1 + lencachedir + 1 + i + 1] = 'c';
     cgenctx->csource = fopen(cgenctx->sourcepath, "w");
     if (cgenctx->csource == NULL) {
-        fprintf(stderr, "kbc: error: couldn't open file output '%s'", cgenctx->sourcepath);
+        kbelog("couldn't open file output '%s'", cgenctx->sourcepath);
         exit(1);
     }
 }
