@@ -1,5 +1,6 @@
 #define _POSIX_C_SOURCE 1
 #include "kobalt/proc.h"
+#include "kobalt/log.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -12,7 +13,7 @@
 #include <unistd.h>
 #endif
 
-int kbspawn(char* argv[], FILE* stdoutlog) {
+int kbspawn(char* argv[], FILE* logfile) {
     int exitstatus = 1;
 #if WINDOWS
     char command[512];
@@ -22,7 +23,7 @@ int kbspawn(char* argv[], FILE* stdoutlog) {
         if (**arg == '\0') continue;
         int add = strlen(*arg) + 1;
         if (cur + add >= 512) {
-            fprintf(stderr, "error: unexepected error");
+            kbelog("unexepected error");
             exit(1);
         }
         strcpy(&command[cur], *arg);
@@ -30,27 +31,24 @@ int kbspawn(char* argv[], FILE* stdoutlog) {
         command[cur - 1] = ' ';
     }
     command[cur - 1] = '\0';
-    fprintf(stdout, "CC %s\n", command);
-
     FILE* vpipe = _popen(command, "r");
 
     if (vpipe == NULL) {
-        fprintf(stderr, "error: could not create subprocess\n");
-        perror("popen");
+        kbelog("could not create subprocess");
         exit(1);
     }
 
     char buf[128];
 
     while(fgets(buf, 128, vpipe)) {
-        fputs(buf, stdoutlog);
+        fputs(buf, logfile);
     }
 
     if (feof(vpipe)) {
         exitstatus = _pclose(vpipe);
     }
     else{
-        fprintf(stderr, "error: Failed to read the pipe to the end\n");
+        kbelog("Failed to read the pipe to the end");
         exit(1);
     }
 #else
@@ -60,14 +58,14 @@ int kbspawn(char* argv[], FILE* stdoutlog) {
         exit(1);
     }
     else if (pid == 0) {
-        int fd = fileno(stdoutlog);
+        int fd = fileno(logfile);
         close(STDOUT_FILENO);
         if (dup(fd) == -1) {
             perror("dup");
             exit(1);
         };
-        // close(STDERR_FILENO);
-        // dup(fd);
+        close(STDERR_FILENO);
+        dup(fd);
         close(fd);
         execvp(argv[0], argv);
     }

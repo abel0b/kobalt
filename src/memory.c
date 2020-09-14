@@ -1,4 +1,5 @@
 #include "kobalt/memory.h"
+#include "kobalt/log.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -12,7 +13,7 @@ static int size_max(size_t a, size_t b) {
 
 static void * checkptr(void * ptr) {
     if (ptr == NULL) {
-        fprintf(stderr, "error: dynamic memory allocation failed\n");
+        kbelog("dynamic memory allocation failed");
         exit(1);
     }
     return ptr;
@@ -20,7 +21,7 @@ static void * checkptr(void * ptr) {
 
 static size_t checklimit(size_t newmem) {
     if (newmem > memlimit) {
-        fprintf(stderr, "error: memory limit reached\n");
+        kbelog("memory limit reached");
         exit(1);
     }
     return newmem;

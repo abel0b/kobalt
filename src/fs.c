@@ -1,4 +1,5 @@
 #include "kobalt/fs.h"
+#include "kobalt/log.h"
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -16,7 +17,7 @@ void ensuredir(char* path) {
 #else
         if (mkdir(path, 0700) == -1) {
 #endif
-            fprintf(stderr, "error: couldn't create directory '%s'\n", path);
+            kbelog("couldn't create directory '%s'", path);
             exit(1);
         }
     }
@@ -25,7 +26,7 @@ void ensuredir(char* path) {
 #else
     else if (S_ISREG(st.st_mode)) {
 #endif
-        fprintf(stderr, "kbc: error: couldn't create directory %s, path already exists\n", path);
+        kbelog("couldn't create directory %s, path already exists", path);
         exit(1);
     }
 }

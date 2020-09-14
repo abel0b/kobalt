@@ -1,6 +1,7 @@
 #include "kobalt/options.h"
 #include "kobalt/source.h"
 #include "kobalt/memory.h"
+#include "kobalt/log.h"
 #include "kobalt/fs.h"
 #include "kobalt/uid.h"
 #include <stdlib.h>
@@ -46,22 +47,22 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
                     case 'o': {
                         ii++;
                         if (optarg == NULL) {
-                            fprintf(stderr, "Argument to '-o' is missing\n");
+                            kbelog("argument to '-o' is missing");
                             exit(1);
                         }
                         opts->output = fopen(optarg, "w");
                         if (opts->output == NULL) {
-                            perror("kbc: error: can't output file");
+                            kbelog("can't open output file '%s'", optarg);
                             exit(1);
                         }
                     }
                         break;
                     default: {
                         if (isprint (optopt)) {
-                            fprintf (stderr, "kbc: error: unknown option '-%c'\n", optopt);
+                            kbelog("unknown option '-%c'", optopt);
                         }
                         else {
-                            fprintf(stderr, "kbc: error: unknown option character '\\x%x'\n", optopt);
+                            kbelog("unknown option character '\\x%x'", optopt);
                         }
                         exit(1);
                     }
@@ -69,7 +70,7 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
                 }
             }
             else {
-                fprintf (stderr, "kbc: error: unknown option '%s'\n", argv[jj]);
+                kbelog("unknown option '%s'", argv[jj]);
                 exit(1);
             }
         }
@@ -92,7 +93,7 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
 #endif
 
     if (!opts->numsrcs) {
-        printf("error: no input file\n");
+        kbelog("no input file");
         exit(1);
     }
 
@@ -104,7 +105,7 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
         opts->cwd = kbrealloc(opts->cwd, cwdsize);    
     } 
     if (maxiter == 0) {
-        fprintf(stderr, "kbc: error: allocation");
+        kbelog("allocation");
         exit(1);
     }
     
