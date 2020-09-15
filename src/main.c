@@ -8,10 +8,13 @@
 #include "kobalt/cgen.h"
 #include "kobalt/fs.h"
 #include "kobalt/uid.h"
+#include "kobalt/time.h"
+#include "kobalt/log.h"
 
 int main(int argc, char * argv[]) {
     struct kbopts opts;
     kbopts_new(argc, argv, &opts);
+    struct kbtimer timer;
 
     for(int ii=0; ii<opts.numsrcs; ++ii) {
         struct kbsrc src;
@@ -19,7 +22,9 @@ int main(int argc, char * argv[]) {
 
         struct kbtoken* tokens;
         int numtokens;
+        kbtimer_start(&timer);
         kblex(&src, &tokens, &numtokens);
+        kbilog("step lex done in %dus", kbtimer_end(&timer));
 
         if (opts.stage == LEX) {
             for(int jj=0; jj<numtokens; jj++) kbtoken_display(&tokens[jj]);
@@ -29,7 +34,9 @@ int main(int argc, char * argv[]) {
         }
     
         struct kbast ast;
+        kbtimer_start(&timer);
         kbparse(tokens, &src, &ast);
+        kbilog("step parse done in %dus", kbtimer_end(&timer));
 
         if (opts.stage == PARSE) {
             kbast_display(&ast);
