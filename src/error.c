@@ -1,6 +1,5 @@
 #include "kobalt/error.h"
 #include "kobalt/memory.h"
-#include "kobalt/log.h"
 #include <stdio.h>
 
 char * kberr_kind_str(enum kberr_kind kind) {
@@ -50,7 +49,7 @@ void kberrvec_shrink(struct kberrvec * errvec, int diffsize) {
 }
 
 void kberr_display(struct kberr * err) {
-    kbelog("%s %s\n", kberr_kind_str(err->kind), err->msg);
+    fprintf(stderr, "%s %s\n", kberr_kind_str(err->kind), err->msg);
 }
 
 void kberrvec_display(struct kberrvec * errvec) {

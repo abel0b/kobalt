@@ -3,6 +3,7 @@
 
 #include "kobalt/kobalt.h"
 #include "kobalt/syntax.h"
+#include <stdio.h>
 
 struct kbast {
     struct kbnode* nodes;
@@ -28,7 +29,7 @@ void kbast_del(struct kbast* ast);
 
 struct kbnode* kbast_getnode(struct kbast* ast, int nid);
 
-void kbast_display(struct kbast* ast);
+void kbast_display(FILE* out, struct kbast* ast);
 
 void kbastvisitor_new(struct kbast* ast, void* ctx, int (*visit)(struct kbastvisitor *), struct kbastvisitor* astvisitor);
 

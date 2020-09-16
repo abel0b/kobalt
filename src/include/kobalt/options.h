@@ -16,7 +16,7 @@ struct kbopts {
     char* cwd;
     int numsrcs;
     char** srcs;
-    FILE* output;
+    char* output;
     char* cachedir;
 };
 
