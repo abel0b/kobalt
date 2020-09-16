@@ -1,0 +1,11 @@
+File
+    Fun
+        Id "main"
+        FunParams
+        FunBody
+            Expr
+                Call
+                    Id "println"
+                    CallParams
+                        CallParam
+                            StrLit "Hello world"

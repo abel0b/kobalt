@@ -214,6 +214,34 @@ int kbcgen(struct kbopts* opts, struct kbsrc* src, struct kbast* ast) {
     kbcmdcc_new(&cmdcc);
     kbcmdcc_compile(opts, &cmdcc, srcname, exe);
     kbcmdcc_del(&cmdcc);
+    
+    if (opts->output != NULL) {
+        char* exefull = kbmalloc(sizeof(exefull[0]) * (strlen(opts->cachedir) + 1 + strlen(exe) + 1));
+        strcpy(exefull, opts->cachedir);
+        exefull[strlen(opts->cachedir)] = '/';
+        strcpy(&exefull[strlen(opts->cachedir) + 1], exe);
+        rename(exefull, opts->output);
+        // TODO: create a file copy function in fs.c
+        // FILE* srcexe = fopen(exefull, "rb");
+        // if (srcexe == NULL) {
+        //     kbelog("could not open file '%s'", exefull);
+        //     exit(1);
+        // }
+        // FILE* destexe = fopen(opts->output, "wb");
+        // if (destexe == NULL) {
+        //     kbelog("could not open file '%s'", opts->output);
+        //     exit(1);
+        // }
+        // char ch;
+        // while ((ch = fgetc(srcexe)) != EOF) {
+        //     fputc(ch, destexe);
+        // }
+        // fflush(destexe);
+        // fclose(srcexe);
+        // fclose(destexe);
+        kbfree(exefull);
+    }
+
     kbfree(exe);
     kbfree(srcname);
     return 1;

@@ -49,9 +49,9 @@ static void pushall(struct kbastvisitor* astvisitor, struct kbnode* node) {
     }
 }
 
-static void indent(int level) {
+static void indent(FILE* out, int level) {
     for (int ii=0; ii<level; ++ii) {
-        printf("    ");
+        fprintf(out, "    ");
     }
 }
 
@@ -126,73 +126,74 @@ void kbastvisitor_del(struct kbastvisitor* astvisitor) {
 
 static int display_aux(struct kbastvisitor* astvisitor) {
     struct kbnode * node = kbast_getnode(astvisitor->ast, astvisitor->cur.nid);
-    indent(astvisitor->cur.depth);
-    printf("%s", kbnode_kind_str(node->kind));
+    FILE* out = (FILE*)astvisitor->ctx;
+    indent(out, astvisitor->cur.depth);
+    fprintf(out, "%s", kbnode_kind_str(node->kind));
     switch(node->kind) {
         case NFile:
-            printf("\n");
+            fprintf(out, "\n");
             break;
         case NFun:
-            printf("\n");
+            fprintf(out, "\n");
             break;
         case NFunParam:
-            printf("\n");
+            fprintf(out, "\n");
             break;
         case NFunParams:
-            printf("\n");
+            fprintf(out, "\n");
             break;
         case NFunBody:
-            printf("\n");
+            fprintf(out, "\n");
             break;
         case NDecl:
-            printf("\n");
+            fprintf(out, "\n");
             break;
         case NType:
-            printf("\n");
+            fprintf(out, "\n");
             break;
         case NExpr:
-            printf("\n");
+            fprintf(out, "\n");
             break;
         case NTerm:
-            printf("\n");
+            fprintf(out, "\n");
             break;
         case NBinExpr:
-            printf("\n");
+            fprintf(out, "\n");
             break;
         case NStrLit:
-            printf(" \"%s\"\n", node->data.strlit.value);
+            fprintf(out, " \"%s\"\n", node->data.strlit.value);
             break;
         case NIntLit:
-            printf(" %d\n", node->data.intlit.value);
+            fprintf(out, " %d\n", node->data.intlit.value);
             break;
         case NFloatLit:
-            printf(" %f\n", node->data.floatlit.value);
+            fprintf(out, " %f\n", node->data.floatlit.value);
             break;
         case NCharLit:
-            printf(" \'%c\'\n", node->data.charlit.value);
+            fprintf(out, " \'%c\'\n", node->data.charlit.value);
             break;
         case NCall:
-            printf("\n");
+            fprintf(out, "\n");
             break;
         case NAssign:
-            printf("\n");
+            fprintf(out, "\n");
             break;
         case NId:
-            printf(" \"%s\"\n", node->data.id.name);
+            fprintf(out, " \"%s\"\n", node->data.id.name);
             break;
         case NCallParams:
-            printf("\n");
+            fprintf(out, "\n");
             break;
         case NCallParam:
-            printf("\n");
+            fprintf(out, "\n");
             break;
     }
     return 1;
 }
 
-void kbast_display(struct kbast* ast) {
+void kbast_display(FILE* out, struct kbast* ast) {
     struct kbastvisitor visdisp;
-    kbastvisitor_new(ast, NULL, display_aux, &visdisp);
+    kbastvisitor_new(ast, out, display_aux, &visdisp);
     kbastvisitor_run(&visdisp);
     kbastvisitor_del(&visdisp);
 }

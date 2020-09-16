@@ -2,6 +2,7 @@
 #define KBTOKEN__H
 
 #include "kobalt/kobalt.h"
+#include <stdio.h>
 
 #define NUM_SPECIALS 56
 
@@ -73,15 +74,15 @@ struct kbtoken {
     int col;
 };
 
-struct kbtoken kbtoken_make(enum kbtoken_kind kind, char * value, int line, int col);
+struct kbtoken kbtoken_make(enum kbtoken_kind kind, char* value, int line, int col);
 
 char * kbtoken_string(enum kbtoken_kind type);
 
-void kbtoken_del_arr(unsigned int num_tokens, struct kbtoken * tokens);
+void kbtoken_del_arr(unsigned int num_tokens, struct kbtoken* tokens);
 
-void kbtoken_display(struct kbtoken * token);
+void kbtoken_display(FILE* file, struct kbtoken* token);
 
-void kbtoken_del(struct kbtoken * token);
+void kbtoken_del(struct kbtoken* token);
 
 int is_sep(char c);
 

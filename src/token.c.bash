@@ -42,12 +42,12 @@ void kbtoken_del_arr(unsigned int num_tokens, struct kbtoken * tokens) {
     free(tokens);
 }
 
-void kbtoken_display(struct kbtoken * token) {
-    printf("%s", kbtoken_string(token->kind));
+void kbtoken_display(FILE* file, struct kbtoken* token) {
+    fprintf(file, "%s", kbtoken_string(token->kind));
     if (token->value != NULL) {
-        printf("=\"%s\"", token->value);
+        fprintf(file, "=\"%s\"", token->value);
     }
-    printf(" at %d:%d\\n", token->line, token->col);
+    fprintf(file, " at %d:%d\\n", token->line, token->col);
 }
 
 void kbtoken_del(struct kbtoken * token) {

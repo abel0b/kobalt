@@ -16,7 +16,7 @@
 
 void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
     opts->stage = CODEGEN;
-    opts->output = stdout;
+    opts->output = NULL;
     opts->numsrcs = 0;
     int srcs_capacity = 1;
     opts->srcs = kbmalloc(sizeof(opts->srcs[0]) * srcs_capacity);
@@ -50,11 +50,8 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
                             kbelog("argument to '-o' is missing");
                             exit(1);
                         }
-                        opts->output = fopen(optarg, "w");
-                        if (opts->output == NULL) {
-                            kbelog("can't open output file '%s'", optarg);
-                            exit(1);
-                        }
+                        opts->output = (char*)kbmalloc(sizeof(opts->output[0]) * (strlen(optarg) + 1));
+                        strcpy(opts->output, optarg);
                     }
                         break;
                     default: {
@@ -140,7 +137,7 @@ char * kbstage_string(enum kbstage stage) {
     return "UNDEFINED";
 }
 
-void kbopts_display(struct kbopts * opts) {
+void kbopts_display(struct kbopts* opts) {
     fprintf(stderr, "kbopts {\n");
     fprintf(stderr, "  stage = %s\n", kbstage_string(opts->stage));
     fprintf(stderr, "  cwd = %s\n", opts->cwd);
@@ -149,8 +146,10 @@ void kbopts_display(struct kbopts * opts) {
     fprintf(stderr, "}\n");
 }
 
-void kbopts_del(struct kbopts * opts) {
+void kbopts_del(struct kbopts* opts) {
     kbfree(opts->cwd);
     kbfree(opts->srcs);
     kbfree(opts->cachedir);
+    if (opts->output != NULL)
+        kbfree(opts->output);
 }

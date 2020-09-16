@@ -27,7 +27,13 @@ int main(int argc, char * argv[]) {
         kbilog("step lex done in %dus", kbtimer_end(&timer));
 
         if (opts.stage == LEX) {
-            for(int jj=0; jj<numtokens; jj++) kbtoken_display(&tokens[jj]);
+            FILE* out = (opts.output == NULL)? stdout: fopen(opts.output, "w");
+            if (out == NULL) {
+                kbelog("could not open output file '%s'", opts.output);
+                exit(1);
+            }
+            for(int jj=0; jj<numtokens; jj++) kbtoken_display(out, &tokens[jj]);
+            if (opts.output != NULL) fclose(out);
             kbtoken_del_arr(numtokens, tokens);
             kbsrc_del(&src);
             continue;
@@ -39,7 +45,13 @@ int main(int argc, char * argv[]) {
         kbilog("step parse done in %dus", kbtimer_end(&timer));
 
         if (opts.stage == PARSE) {
-            kbast_display(&ast);
+            FILE* out = (opts.output == NULL)? stdout: fopen(opts.output, "w");
+            if (out == NULL) {
+                kbelog("could not open output file '%s'", opts.output);
+                exit(1);
+            }
+            kbast_display(out, &ast);
+            if (opts.output != NULL) fclose(out);
             kbtoken_del_arr(numtokens, tokens);
             kbast_del(&ast);
             kbsrc_del(&src);
