@@ -24,7 +24,7 @@ jobs:
       run: ./premake5 --os=linux gmake2
 
     - name: Compile
-      run: make config=debug_linux -j$(nproc)`
+      run: make config=debug_linux -j$(nproc)
       
   build-macos:
     runs-on: macos-latest
