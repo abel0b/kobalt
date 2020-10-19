@@ -24,8 +24,8 @@ jobs:
 
     - name: Install premake
       run : |
-        wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-${osname}.tar.gz
-        tar xvzf premake-5.0.0-alpha15-${osname}.tar.gz
+        wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz
+        tar xvzf premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz
 
     - name: Generate project file
       run: ./premake5 gmake2
