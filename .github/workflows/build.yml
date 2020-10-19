@@ -7,8 +7,12 @@ on:
     branches: [ master, develop ]
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
+  build-unix:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        configuration: [release]
 
     steps:
     - uses: actions/checkout@v2
@@ -17,29 +21,13 @@ jobs:
       run : |
         wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-linux.tar.gz
         tar xvzf premake-5.0.0-alpha15-linux.tar.gz
+        chmod u+x premake5.exe
 
     - name: Generate project file
-      run: ./premake5 --os=linux gmake2
+      run: ./premake5 gmake2
 
     - name: Compile
-      run: make config=release -j$(nproc)
-      
-  build-macos:
-    runs-on: macos-latest
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Install premake
-      run : |
-        wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-linux.tar.gz
-        tar xvzf premake-5.0.0-alpha15-linux.tar.gz
-
-    - name: Generate project file
-      run: ./premake5 --os=macos gmake2
-
-    - name: Compile
-      run: make config=release -j$(nproc)
+      run: make config=${{ matrix.config }} -j$(nproc)
 
   build-windows:
     runs-on: windows-latest
@@ -59,4 +47,4 @@ jobs:
       run: ./premake5.exe --os=windows vs2019
 
     - name: Compile
-      run: $MSBUILD_PATH\MSBuild.exe kobalt.sln -m
+      run: "$MSBUILD_PATH\MSBuild.exe" kobalt.sln -m -p:Configuration=${{ matrix.config }}
