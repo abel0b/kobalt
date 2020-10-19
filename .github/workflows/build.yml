@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        configuration: [release]
+        config: [release]
 
     steps:
     - uses: actions/checkout@v2
@@ -31,9 +31,10 @@ jobs:
 
   build-windows:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        config: [release]
 
-    env:
-      MSBUILD_PATH: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin
     steps:
     - uses: actions/checkout@v2
 
@@ -47,4 +48,6 @@ jobs:
       run: ./premake5.exe --os=windows vs2019
 
     - name: Compile
-      run: "$MSBUILD_PATH\MSBuild.exe" kobalt.sln -m -p:Configuration=${{ matrix.config }}
+      run: |
+        .\tools\vsenv.ps1
+        MSBuild.exe kobalt.sln -m -p:Configuration=${{ matrix.config }}
