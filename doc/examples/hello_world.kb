@@ -1,2 +1,3 @@
-fun main() =
-    print("hello")
+fun main () : int =
+    print "Hello world!\n"
+    0

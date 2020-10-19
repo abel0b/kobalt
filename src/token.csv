@@ -6,10 +6,12 @@ Char
 Indent
 Dedent
 EndFile
+LineFeed
 Comment
 DashDash --
-Semi ;
+Hash #
 Colon :
+Unit ()
 LPar (
 RPar )
 LBrack [
@@ -17,7 +19,6 @@ RBrack ]
 LCurly {
 RCurly }
 Plus +
-Minus -
 Star *
 Dash -
 Slash /
@@ -30,10 +31,11 @@ Or |
 AndAnd &&
 LShift <<
 RShift >>
+Assign :=
 Eq =
 EqEq ==
 PlusEq +=
-MinusEq -=
+DashEq -=
 StarEq *=
 SlashEq /=
 PercentEq %=
@@ -42,7 +44,7 @@ AndEq &=
 OrEq |=
 LShiftEq <<=
 RShiftEq >>=
-Neq !=
+ExclamEq !=
 GT >
 LT <
 GEq >=

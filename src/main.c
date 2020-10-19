@@ -10,8 +10,12 @@
 #include "kobalt/uid.h"
 #include "kobalt/time.h"
 #include "kobalt/log.h"
+#include "repl.h"
 
 int main(int argc, char * argv[]) {
+    if (argc == 1) {
+        return kb_repl();
+    }
     struct kbopts opts;
     kbopts_new(argc, argv, &opts);
     struct kbtimer timer;
@@ -41,11 +45,11 @@ int main(int argc, char * argv[]) {
     
         struct kbast ast;
         kbtimer_start(&timer);
-        kbparse(tokens, &src, &ast);
+        kbparse(tokens, numtokens, &src, &ast);
         kbilog("step parse done in %dus", kbtimer_end(&timer));
 
         if (opts.stage == PARSE) {
-            FILE* out = (opts.output == NULL)? stdout: fopen(opts.output, "w");
+            FILE* out = (opts.output == NULL)? stdout : fopen(opts.output, "w");
             if (out == NULL) {
                 kbelog("could not open output file '%s'", opts.output);
                 exit(1);
@@ -58,8 +62,13 @@ int main(int argc, char * argv[]) {
             continue;
         }
 
+        kbtimer_start(&timer);
         kbtypecheck(&ast);
+        kbilog("step typecheck done in %dus", kbtimer_end(&timer));
+
+        kbtimer_start(&timer);
         kbcgen(&opts, &src, &ast);
+        kbilog("step cgen and compile done in %dus", kbtimer_end(&timer));
 
         kbtoken_del_arr(numtokens, tokens);
         kbast_del(&ast);

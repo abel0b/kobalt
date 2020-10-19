@@ -8,7 +8,7 @@ for program in test/e2e/*.kb; do
     if [[ -f "$reftok" ]]; then
         filetok=$(mktemp)
         outtok=$(mktemp)
-        command="./build/test/kbc -L $program -o $filetok"
+        command="./bin/debug/kobalt -L $program -o $filetok"
         $command > $outtok 2>&1
         exittok=$?
         tot=$(($tot+1))
@@ -37,7 +37,7 @@ for program in test/e2e/*.kb; do
     if [[ -f "$refast" ]]; then
         fileast=$(mktemp)
         outast=$(mktemp)
-        command="./build/test/kbc -T $program -o $fileast"
+        command="./bin/debug/kobalt -T $program -o $fileast"
         $command > $outast 2>&1
         exitast=$?
         tot=$(($tot+1))
@@ -68,7 +68,7 @@ for program in test/e2e/*.kb; do
         chmod u+x $fileexe
         out=$(mktemp)
         filestdout=$(mktemp)
-        command="./build/test/kbc $program -o tmpexe"
+        command="./bin/debug/kobalt $program -o tmpexe"
         $command > $out 2>&1
         exitstatus=$?
         ./tmpexe > $filestdout
