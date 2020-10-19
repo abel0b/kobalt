@@ -13,8 +13,18 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Build
-      run: ./dev/build.bash
+    - name: Install premake
+      run : |
+        sudo apt-get update
+        sudo apt-get install -y wget
+        wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-linux.tar.gz
+        tar xvzf premake-5.0.0-alpha15-linux.tar.gz
+
+    - name: Generate project file
+      run: ./premake5 --os=linux gmake2
+
+    - name: Compile
+      run: make config=debug_linux -j$(nproc)`
       
   build-macos:
     runs-on: macos-latest
@@ -22,14 +32,35 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Build
-      run: ./dev/build.bash
+    - name: Install premake
+      run : |
+        sudo apt-get update
+        sudo apt-get install -y wget
+        wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-linux.tar.gz
+        tar xvzf premake-5.0.0-alpha15-linux.tar.gz
+
+    - name: Generate project file
+      run: ./premake5 --os=macos gmake2
+
+    - name: Compile
+      run: make config=debug_macos -j$(nproc)
 
   build-windows:
     runs-on: windows-latest
 
+    env:
+      MSBUILD_PATH: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin
     steps:
     - uses: actions/checkout@v2
 
-    - name: Build
-      run: .\dev\build.ps1
+    - name: Install premake
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-windows.zip" -OutFile "premake-5.0.0-alpha14-windows.zip"
+        Expand-Archive -DestinationPath . -Path premake-5.0.0-alpha15-windows.zip
+
+
+    - name: Generate project file
+      run: ./premake5.exe --os=windows vs2019
+
+    - name: Compile
+      run: $MSBUILD_PATH\MSBuild.exe kobalt.sln -m

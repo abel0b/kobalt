@@ -1,13 +1,15 @@
 Id="fun" at 1:1
 Id="main" at 1:5
-LPar at 1:9
-RPar at 1:10
-Eq at 1:12
+Unit at 1:11
+Colon at 1:13
+Id="int" at 1:15
+Eq at 1:19
+LineFeed at 1:-1
 Indent at 2:1
-Id="println" at 2:5
-LPar at 2:12
-Str="Hello world" at 2:13
-RPar at 2:26
-Semi at 2:-1
-Dedent at 3:0
-EndFile at 3:0
+Id="print" at 2:5
+Str="hello" at 2:11
+LineFeed at 2:-1
+Int="0" at 3:5
+LineFeed at 3:-1
+Dedent at 4:0
+EndFile at 4:0

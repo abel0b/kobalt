@@ -4,7 +4,10 @@
 Kobalt is a programming language.
 
 ## Build from sources
-Run the appropriate script for your platform.
+Kobalt use [premake5](https://premake.github.io/) to generate platform-specific project files.
+It supports GNU make, Visual Studio [and more](https://github.com/premake/premake-core/wiki/Using-Premake).
+
 ```shell
-./dev/build.{bash,ps1}
+premake5 gmake2
+make config=release
 ```

@@ -2,10 +2,14 @@ File
     Fun
         Id "main"
         FunParams
-        FunBody
-            Expr
-                Call
-                    Id "println"
-                    CallParams
-                        CallParam
-                            StrLit "Hello world"
+            FunParam
+                Id "_"
+                Type "()"
+        Type "int"
+        Seq
+            Call
+                Id "print"
+                CallParams
+                    CallParam
+                        StrLit "hello"
+            IntLit 0

@@ -1,2 +1,7 @@
-/build
-kbcache
+/bin
+/obj
+/tmp
+/kbcache
+*.make
+Makefile
+*.sln

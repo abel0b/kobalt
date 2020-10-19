@@ -16,6 +16,8 @@
 
 void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
     opts->stage = CODEGEN;
+    opts->optim = 0;
+    opts->run = 0;
     opts->output = NULL;
     opts->numsrcs = 0;
     int srcs_capacity = 1;
@@ -40,6 +42,9 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
                         break;
                     case 'V':
                         opts->verbosity = 2;
+                        break;
+                    case 'r':
+                        opts->run = 1;
                         break;
                     case 'h':
                         printf("Kobalt Language Compiler v%s\n\n", KBVERSION);
@@ -81,13 +86,6 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
         }
         ii++;
     }
-
-#if DEBUG
-    if(!opts->numsrcs) {
-        opts->srcs[opts->numsrcs] = "doc/examples/hello_world.kb";
-        ++ opts->numsrcs;
-    }
-#endif
 
     if (!opts->numsrcs) {
         kbelog("no input file");

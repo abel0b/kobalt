@@ -1,0 +1,3 @@
+name = "linenoise"
+repository = "https://github.com/msteveb/linenoise.git"
+commit = "317697f254676513bcc8f65fedf96c5e28ad1b60"
