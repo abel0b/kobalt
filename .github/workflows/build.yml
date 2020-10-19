@@ -15,8 +15,6 @@ jobs:
 
     - name: Install premake
       run : |
-        sudo apt-get update
-        sudo apt-get install -y wget
         wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-linux.tar.gz
         tar xvzf premake-5.0.0-alpha15-linux.tar.gz
 
@@ -24,7 +22,7 @@ jobs:
       run: ./premake5 --os=linux gmake2
 
     - name: Compile
-      run: make config=debug_linux -j$(nproc)
+      run: make config=release -j$(nproc)
       
   build-macos:
     runs-on: macos-latest
@@ -34,8 +32,6 @@ jobs:
 
     - name: Install premake
       run : |
-        sudo apt-get update
-        sudo apt-get install -y wget
         wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-linux.tar.gz
         tar xvzf premake-5.0.0-alpha15-linux.tar.gz
 
@@ -43,7 +39,7 @@ jobs:
       run: ./premake5 --os=macos gmake2
 
     - name: Compile
-      run: make config=debug_macos -j$(nproc)
+      run: make config=release -j$(nproc)
 
   build-windows:
     runs-on: windows-latest
@@ -55,7 +51,7 @@ jobs:
 
     - name: Install premake
       run: |
-        Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-windows.zip" -OutFile "premake-5.0.0-alpha14-windows.zip"
+        Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-windows.zip" -OutFile "premake-5.0.0-alpha15-windows.zip"
         Expand-Archive -DestinationPath . -Path premake-5.0.0-alpha15-windows.zip
 
 
