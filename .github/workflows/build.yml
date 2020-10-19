@@ -13,15 +13,19 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         config: [release]
+        include:
+          - os: ubuntu-latest
+            osname: "linux"
+          - os: macos-latest
+            osname: "macos"
 
     steps:
     - uses: actions/checkout@v2
 
     - name: Install premake
       run : |
-        wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-linux.tar.gz
-        tar xvzf premake-5.0.0-alpha15-linux.tar.gz
-        chmod u+x premake5
+        wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-${osname}.tar.gz
+        tar xvzf premake-5.0.0-alpha15-${osname}.tar.gz
 
     - name: Generate project file
       run: ./premake5 gmake2
