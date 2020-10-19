@@ -21,7 +21,7 @@ jobs:
       run : |
         wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-linux.tar.gz
         tar xvzf premake-5.0.0-alpha15-linux.tar.gz
-        chmod u+x premake5.exe
+        chmod u+x premake5
 
     - name: Generate project file
       run: ./premake5 gmake2
