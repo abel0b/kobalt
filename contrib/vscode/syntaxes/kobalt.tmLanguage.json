@@ -1,0 +1,90 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Kobalt",
+	"patterns": [
+		{ "include": "#keywords" },
+		{ "include": "#strings" },
+		{ "include": "#chars" },
+		{ "include": "#numbers" },
+		{ "include": "#literals" },
+		{ "include": "#comment" },
+		{ "include": "#identifiers" }
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.kobalt",
+				"match": "\\b(if|while|for|ret|set|fun|else|then|case|of|val)\\b"
+			}]
+		},
+		"strings": {
+			"name": "string.quoted.double.kobalt",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.kobalt",
+					"match": "\\\\."
+				}
+			]
+		},
+		"chars": {
+			"name": "string.quoted.single.kobalt",
+			"begin": "'",
+			"end": "'",
+			"patterns": [
+				{
+					"name": "constant.character.escape.kobalt",
+					"match": "\\\\."
+				}
+			]
+		},
+		"numbers": {
+			"name": "numbers.kobalt",
+			"patterns": [
+				{
+					"comment": "floating point decimal literal",
+					"name": "constant.numeric.decimal.float.kobalt",
+					"match": "\\b([[:digit:]][[:digit:]_]*\\.[[:digit:]_]*[g-zG-Z]?)\\b"
+				},
+				{
+					"comment": "decimal integer literal",
+					"name": "constant.numeric.decimal.integer.kobalt",
+					"match": "\\b([[:digit:]][[:digit:]_]*[lLng-zG-Z]?)\\b"
+				}
+			]
+		},
+		"literals": {
+			"patterns": [
+				{
+					"comment": "unit literal",
+					"name": "constant.language.unit.kobalt",
+					"match": "\\(\\)"
+				}
+			]
+		},
+		"comment": {
+			"patterns": [
+			  {
+				"name": "comment.line.kobalt",
+				"match": ";.*$"
+			  }
+			]
+		},
+		"identifiers": {
+			"patterns": [
+				{
+					"comment": "capital identifier",
+					"name": "constant.language.capital-identifier.kobalt",
+					"match": "\\b[[:upper:]][[:word:]']*('|\\b)"
+				},
+				{
+					"comment": "lower identifier",
+					"name": "constant.language.lower-identifier.kobalt",
+					"match": "\\b[[:lower:]][[:word:]']*('|\\b)"
+				}
+			]
+		}
+	},
+	"scopeName": "source.kobalt"
+}
