@@ -61,7 +61,7 @@ int kbspawn(char* prog, char* args[], FILE* logfile) {
             fputs(buf, logfile);
         }
         else {
-            fputs(buf, stdout)
+            fputs(buf, stdout);
         }
     }
 
