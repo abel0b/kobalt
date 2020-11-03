@@ -14,7 +14,7 @@ while read -r -s line
 do
     token=($line)
     echo "    \"${token[1]}\","
-done < src/token.csv
+done < lib/kobalt/token.csv
 
 cat << END
     "",
@@ -80,7 +80,7 @@ END
 while read -r -s line
 do
     parse_line $line 
-done < src/token.csv
+done < lib/kobalt/token.csv
 
 cat << END
         case TILLEGAL:

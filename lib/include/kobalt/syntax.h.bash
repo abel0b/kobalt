@@ -15,7 +15,7 @@ do
     cat << END
     N${line[0]},
 END
-done < src/syntax.csv
+done < lib/kobalt/syntax.csv
 
 cat << END
 };

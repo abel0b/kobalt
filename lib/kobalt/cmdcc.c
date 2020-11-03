@@ -90,7 +90,7 @@ void kbcmdcc_new(struct kbcmdcc* cmdcc) {
     exit(1);
 }
 
-void kbcmdcc_compile(struct kbopts* opts, struct kbcmdcc* cmdcc, char* src, char* bin) {
+void kbcmdcc_compile(struct kbopts* opts, struct kbcmdcc* cmdcc, char* src, struct kbstr* bin) {
     if (chdir(opts->cachedir) == -1) {
         perror("chdir");
         exit(1);
@@ -104,19 +104,19 @@ void kbcmdcc_compile(struct kbopts* opts, struct kbcmdcc* cmdcc, char* src, char
 #if WINDOWS
     // TODO: remove static path size limit
     char binopt[1024];
-    int ret = snprintf(binopt, 1024, "%s%s", ccoptoutput[cmdcc->cc], bin);
+    int ret = snprintf(binopt, 1024, "%s%s", ccoptoutput[cmdcc->cc], bin->data);
     if (ret < 0 || ret > 1024) {
         kbelog("unexpected error, probably because of too long path");
         exit(1);
     }
-    char* argv[] = {ccs[cmdcc->cc], ccoptextra[cmdcc->cc], binopt, src, NULL};
+    char* args[] = {ccoptextra[cmdcc->cc], binopt, src, NULL};
 #else
-    char* argv[] = {ccs[cmdcc->cc], ccoptextra[cmdcc->cc], ccoptoutput[cmdcc->cc], bin, src, NULL};
+    char* args[] = {ccoptextra[cmdcc->cc], ccoptoutput[cmdcc->cc], bin->data, src, NULL};
 #endif
 
-    int exitstatus = kbspawn(argv, cclog);
+    int exitstatus = kbspawn(ccs[cmdcc->cc], args, cclog);
     if (exitstatus == 0) {
-        kbilog("succesfully compiled %s", bin);
+        kbilog("succesfully compiled %s", bin->data);
     }
     else {
         kbelog("C compilation exited with %d status. See logs saved in '%s/cc.log'", exitstatus, opts->cachedir);

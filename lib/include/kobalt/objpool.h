@@ -20,5 +20,6 @@ void* kbobjpool_pop(struct kbobjpool* objpool);
 void* kbobjpool_arrpop(struct kbobjpool* objpool, int n);
 void* kbobjpool_peek(struct kbobjpool* objpool);
 void* kbobjpool_arrpeek(struct kbobjpool* objpool, int n);
+void* kbobjpool_get(struct kbobjpool* objpool, int idx);
 
 #endif

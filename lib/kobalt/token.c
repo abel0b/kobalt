@@ -15,7 +15,7 @@ char * specials[NUM_SPECIALS] = {
     "",
     "",
     "",
-    "--",
+    ";",
     "#",
     ":",
     "()",
@@ -123,8 +123,8 @@ char * kbtoken_string(enum kbtoken_kind kind) {
             return "LineFeed";
         case TComment:
             return "Comment";
-        case TDashDash:
-            return "DashDash";
+        case TSemi:
+            return "Semi";
         case THash:
             return "Hash";
         case TColon:
@@ -230,6 +230,7 @@ int is_sep(char c) {
         || c == '>'
         || c == '='
         || c == '<'
+        || c == ';'
         || c == ':'
         || c == '/'
         || c == '.'

@@ -13,7 +13,7 @@ do
         case ${tok[0]}:
             return "${tok[0]}";
 END
-done < src/errors.csv
+done < lib/kobalt/errors.csv
 
 cat << END
     }

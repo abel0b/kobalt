@@ -17,7 +17,7 @@ do
         case N${tok[0]}:
             return "${tok[0]}";
 END
-done < src/syntax.csv
+done < lib/kobalt/syntax.csv
 
 cat << END
     }

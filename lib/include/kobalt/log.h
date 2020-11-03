@@ -83,4 +83,12 @@
         fflush(stdout);\
     } while(0)
 
+#define kbdlog(...)\
+    do {\
+        fprintf(stdout, BGRN "debug:" RESET " ");\
+        fprintf(stdout, __VA_ARGS__);\
+        fprintf(stdout, "\n");\
+        fflush(stdout);\
+    } while(0)
+
 #endif

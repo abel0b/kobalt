@@ -3,6 +3,7 @@
 
 #include "kobalt/kobalt.h"
 #include "kobalt/options.h"
+#include "kobalt/str.h"
 
 enum kbcc {
     CCGcc = 0,
@@ -18,7 +19,7 @@ struct kbcmdcc {
 
 void kbcmdcc_new(struct kbcmdcc* cmdcc);
 
-void kbcmdcc_compile(struct kbopts* opts, struct kbcmdcc* cmdcc, char* src, char* bin);
+void kbcmdcc_compile(struct kbopts* opts, struct kbcmdcc* cmdcc, char* src, struct kbstr* bin);
 
 void kbcmdcc_del(struct kbcmdcc* cmdcc);
 

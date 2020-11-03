@@ -1,3 +1,4 @@
+; fibonacci function
 fun fibo (n : int) : int =
     if <= n 1 then
         n

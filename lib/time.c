@@ -1,4 +1,5 @@
 #include "kobalt/time.h"
+#include "kobalt/log.h"
 
 #if WINDOWS
 // credit: https://stackoverflow.com/a/26085827
@@ -23,7 +24,6 @@ int gettimeofday(struct timeval * tp, struct timezone * tzp) {
 }
 #endif
 
-
 void kbtimer_start(struct kbtimer* timer) {
     int rc = gettimeofday(&timer->start, NULL);
     if (rc != 0) exit(1);
@@ -32,6 +32,26 @@ void kbtimer_start(struct kbtimer* timer) {
 int kbtimer_end(struct kbtimer* timer) { 
     int rc = gettimeofday(&timer->end, NULL);
     if (rc != 0) exit(1);
-    int time_ns = (timer->end.tv_sec - timer->start.tv_sec) * 1000000 + (timer->end.tv_usec - timer->start.tv_usec);
-    return time_ns;
+    int time_us = (timer->end.tv_sec - timer->start.tv_sec) * 1000000 + (timer->end.tv_usec - timer->start.tv_usec);
+    return time_us;
+}
+
+int kbtime_get() {
+    struct timeval tv;
+    int rc = gettimeofday(&tv, NULL);
+    if (rc != 0) {
+        kbelog("could not get time");
+        exit(1);
+    }
+    return tv.tv_sec;
+}
+
+uint64_t kbtime_get_us() {
+    struct timeval tv;
+    int rc = gettimeofday(&tv, NULL);
+    if (rc != 0) {
+        kbelog("could not get time");
+        exit(1);
+    }
+    return tv.tv_sec * 1000000 + tv.tv_usec;
 }

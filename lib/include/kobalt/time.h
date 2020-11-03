@@ -24,4 +24,7 @@ struct kbtimer {
 void kbtimer_start(struct kbtimer* timer);
 int kbtimer_end(struct kbtimer* timer);
 
+int kbtime_get();
+uint64_t kbtime_get_us();
+
 #endif
