@@ -8,34 +8,29 @@
 #include "kobalt/log.h"
 #include "kobalt/type.h"
 #include "kobalt/strpool.h"
+#include "kobalt/str.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <assert.h>
 
-#define TAB "    "
-
-struct kbfunctx {
-    int hasreturn;
-};
-
-void kbfunctx_new(void* annot) {
-    struct kbfunctx* functx = (struct kbfunctx*) annot;
-    functx->hasreturn = 0;
-}
-
-void kbfunctx_del(void* functx) {
-    unused(functx);
+bool is_letter(char c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
 
 struct kbcgenctx {
     struct kbsrc* src;
-    char* headerpath;
+    struct kbstr headerpath;
     FILE* cheader;
-    char* sourcepath;
-    char* include;
+    struct kbstr sourcepath;
+    struct kbstr include;
     FILE* csource;
+    struct kbstr h_code;
+    struct kbstr src_code;
+    struct kbstr main_code;
+    struct kbstr* cur_code;
     int valcount;
     struct kbstrpool vals;
     struct kbvec tmpvals;
@@ -66,221 +61,290 @@ void dedent(struct kbcgenctx* ctx) {
     ctx->indent[ctx->indent_level] = '\0';
 }
 
-static int cgen_rec(struct kbast* ast, struct kbcgenctx* ctx, int nid) {
-    struct kbnode* node = kbast_getnode(ast, nid);
+static int cgen_rec(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid);
 
-    kbilog("cgen %s", kbnode_kind_str(node->kind));
+static void cgen_callparams(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+    struct kbnode* node = &ast->nodes[nid];
+    for(int i = 0; i < node->data.group.numitems; ++i) {
+        cgen_rec(ast, astinfo, ctx, node->data.group.items[i]);
+    }
+}
 
-    switch(node->kind) {
-        case NFile:
-            for(int i = 0; i < node->data.group.numitems; ++i) {
-                cgen_rec(ast, ctx, node->data.group.items[i]);
+static void cgen_file(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+    struct kbnode* node = &ast->nodes[nid];
+    indent(ctx);
+    for(int i = 0; i < node->data.group.numitems; ++i) {
+        cgen_rec(ast, astinfo, ctx, node->data.group.items[i]);
+    }
+    dedent(ctx);
+    // if (ctx->vals.lens.num_elems > 0) {
+    //     kbelog("unexpected state");
+    //     kbelog("%d elements expected in vals objpool, got %d", 0, ctx->vals.lens.num_elems);
+    //     exit(1);
+    // }
+}
+
+static void cgen_seq(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+    struct kbnode* node = &ast->nodes[nid];
+    for(int i = 0; i < node->data.group.numitems - 1; ++i) {
+        cgen_rec(ast, astinfo, ctx, node->data.group.items[i]);
+        kbstrpool_pop(&ctx->vals);
+         // TODO: display warning when expresion result is unused
+    }
+    cgen_rec(ast, astinfo, ctx, node->data.group.items[node->data.group.numitems - 1]);
+}
+
+static void cgen_callparam(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+    struct kbnode* node = &ast->nodes[nid];
+    cgen_rec(ast, astinfo, ctx, node->data.callparam.expr);
+}
+
+static void cgen_fun(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+    struct kbstr* prev_code = ctx->cur_code;
+    ctx->cur_code = &ctx->src_code;
+
+    struct kbnode* node = &ast->nodes[nid];
+    char* name = ast->nodes[node->data.fun.id].data.id.name;
+
+    struct kbtype* type = (struct kbtype*)kbscope_resolve(astinfo, (uintptr_t)name, nid);
+	{
+		char* out_type_str;
+		switch (type->data.fun.out_type->kind) {
+			case Unit:
+			out_type_str = "void";
+			break;
+			case Int:
+			out_type_str = "int";
+			break;
+			default:
+			todo();  // TODO: handle other type cases
+			break;
+		}
+		kbstr_catf(ctx->cur_code, "\n%s %s(", out_type_str, name);
+	}
+
+	int numparams = ast->nodes[node->data.fun.funparams].data.group.numitems;
+	int firstparam = 1;
+	for (int i = 0; i < numparams; ++i) {
+        struct kbtype* in_type = *(struct kbtype**)kbvec_get(&type->data.fun.in_types, i);
+        if (in_type->kind != Unit) {
+            char* paramname = ast->nodes[ast->nodes[ast->nodes[node->data.fun.funparams].data.group.items[i]].data.funparam.id].data.id.name;
+            char* in_type_str;
+            switch (in_type->kind) {
+            case Unit:
+                in_type_str = "void";
+                break;
+            case Int:
+                in_type_str = "int";
+                break;
+            default:
+                printf("%d\n", in_type->kind);
+                todo();	 // TODO: handle other type cases
+                break;
             }
-            if (ctx->vals.objpool.num_elems > 0) {
-                kbelog("unexpected state");
+            if (!firstparam) {
+                kbstr_catf(ctx->cur_code, ", ");
+                firstparam = 0;
+            }
+            kbstr_catf(ctx->cur_code, "%s %s", in_type_str, paramname);
+        }
+        else if (numparams == 1) {
+            kbstr_catf(ctx->cur_code, "void");
+        }
+	}
+
+	kbstr_catf(ctx->cur_code, ")\n{\n");
+
+	cgen_rec(ast, astinfo, ctx, node->data.fun.funbody);
+
+	if (type->data.fun.out_type->kind != Unit) {
+	    char* val = kbstrpool_pop(&ctx->vals);
+	    kbstr_catf(ctx->cur_code, "%sreturn %s;\n", ctx->indent, val);
+	}
+	kbstr_catf(ctx->cur_code, "}\n");
+    ctx->cur_code = prev_code;
+}
+
+static void cgen_strlit(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+    struct kbnode* node = &ast->nodes[nid];
+    kbstrpool_push(&ctx->vals, "\"%s\"", node->data.strlit.value);
+}
+
+static void cgen_charlit(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+    struct kbnode* node = &ast->nodes[nid];
+    kbstrpool_push(&ctx->vals, "%s", node->data.charlit.value);
+}
+
+static void cgen_intlit(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+    struct kbnode* node = &ast->nodes[nid];
+    kbstrpool_push(&ctx->vals, "%s", node->data.intlit.value);
+}
+
+static void cgen_floatlit(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+    struct kbnode* node = &ast->nodes[nid];
+	kbstrpool_push(&ctx->vals, "%s", node->data.floatlit.value);
+}
+
+static void cgen_id(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+	struct kbnode* node = &ast->nodes[nid];
+    kbstrpool_push(&ctx->vals, "%s", node->data.id.name);
+}
+
+static void cgen_call(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+	struct kbnode* node = &ast->nodes[nid];
+	cgen_rec(ast, astinfo, ctx, node->data.call.callparams);
+	struct kbnode* sym = &ast->nodes[node->data.call.id];
+	
+    char *kbname = sym->data.id.name;
+	int retval = ctx->valcount++;
+
+    kbstr_catf(ctx->cur_code, "%s%s val%d = ", ctx->indent, "int", retval);
+
+	if (is_letter(kbname[0])) {
+		char *cname;
+		if (strcmp(kbname, "print") == 0) {
+			cname = "printf";
+		}
+		else {
+			kbelog("undefined function %s", kbname);
+			// exit(1);
+			cname = kbname;
+		}
+
+		if (strcmp(kbname, "print") == 0) {
+			kbstr_catf(ctx->cur_code, "%s(\"%%s\", ", cname);
+		}
+        else {
+			kbstr_catf(ctx->cur_code, "%s(", cname);
+		}
+
+        for(int i = 0; i < ast->nodes[node->data.call.callparams].data.group.numitems; ++i) {
+            if (i != 0) {
+                kbstr_catf(ctx->cur_code, ", ");
+            }
+		    char* val = kbstrpool_pop(&ctx->vals);
+		    kbstr_catf(ctx->cur_code, "%s", val);
+        }
+		kbstr_catf(ctx->cur_code, ");\n");
+	}
+	else {
+        if (strcmp(sym->data.id.name, "+") == 0 || strcmp(sym->data.id.name, "-") == 0 || strcmp(sym->data.id.name, "<=") == 0) {
+            if (ast->nodes[node->data.call.callparams].data.group.numitems != 2) {
+                kbelog("expected 2 parameters for binary function '%s'", sym->data.id.name);
                 exit(1);
             }
+            char* val2 = kbstrpool_pop(&ctx->vals);
+            char* val1 = kbstrpool_pop(&ctx->vals);
+
+            kbstr_catf(ctx->cur_code, "%s %s %s;\n", val1, sym->data.id.name, val2);
+        }
+        else {
+            kbelog("undefined builtin function %s", sym->data.id.name);
+            exit(1);
+        }
+	}
+    kbstrpool_push(&ctx->vals, "val%d", retval);
+}
+
+static void cgen_ifelse(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+	struct kbnode* node = &ast->nodes[nid];
+    int val = ctx->valcount++;
+    kbstr_catf(ctx->cur_code, "%s%s val%d;\n", ctx->indent, "int", val);
+    kbvec_push(&ctx->tmpvals, &val);
+    for(int i = 0; i < node->data.group.numitems; ++i) {
+        cgen_rec(ast, astinfo, ctx, node->data.group.items[i]);
+    }
+    kbvec_pop(&ctx->tmpvals, NULL);
+    kbstrpool_push(&ctx->vals, "val%d", val);
+}
+
+static void cgen_ifbranch(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+	struct kbnode* node = &ast->nodes[nid];
+	int retval;
+	kbvec_peek(&ctx->tmpvals, &retval);
+	cgen_rec(ast, astinfo, ctx, node->data.ifbranch.cond);
+	char *condval = kbstrpool_pop(&ctx->vals);
+	if (node->kind == NElifBranch) {
+		kbstr_catf(ctx->cur_code, "%selse\n%s{\n", ctx->indent, ctx->indent);
+		indent(ctx);
+	}
+	kbstr_catf(ctx->cur_code, "%sif (%s)\n\t{\n", ctx->indent, condval);
+	indent(ctx);
+
+	cgen_rec(ast, astinfo, ctx, node->data.ifbranch.conseq);
+	char *branchval = kbstrpool_pop(&ctx->vals);
+	kbstr_catf(ctx->cur_code, "%sval%d = %s;\n", ctx->indent, retval, branchval);
+	dedent(ctx);
+	kbstr_catf(ctx->cur_code, "%s}\n", ctx->indent);
+	if (node->kind == NElifBranch) {
+		dedent(ctx);
+		kbstr_catf(ctx->cur_code, "%s}\n", ctx->indent);
+	}
+}
+
+static void cgen_elsebranch(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+	struct kbnode* node = &ast->nodes[nid];
+    int retval;
+    kbvec_peek(&ctx->tmpvals, &retval);
+    kbstr_catf(ctx->cur_code, "%selse\n%s{\n", ctx->indent, ctx->indent);
+    indent(ctx);
+    cgen_rec(ast, astinfo, ctx, node->data.ifbranch.conseq);
+    char* branchval = kbstrpool_pop(&ctx->vals);
+    kbstr_catf(ctx->cur_code, "%sval%d = %s;\n", ctx->indent, retval, branchval);
+    dedent(ctx);
+    kbstr_catf(ctx->cur_code, "%s}\n", ctx->indent);
+}
+
+static int cgen_rec(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+    struct kbnode* node = &ast->nodes[nid];
+
+#if DEBUG
+	// TODO: cgen debug mode
+    kbdlog("cgen %s valcount=%d", kbnode_kind_str(node->kind), ctx->valcount);
+#endif
+    switch(node->kind) {
+        case NFile:
+            cgen_file(ast, astinfo, ctx, nid);
             break;
         case NCallParams:
-            for(int i = 0; i < node->data.group.numitems; ++i) {
-                cgen_rec(ast, ctx, node->data.group.items[i]);
-            }
+            cgen_callparams(ast, astinfo, ctx, nid);
             break;
         case NSeq:
-            {
-                for(int i = 0; i < node->data.group.numitems - 1; ++i) {
-                    cgen_rec(ast, ctx, node->data.group.items[i]);
-                    kbstrpool_pop(&ctx->vals);
-                    // TODO: display warning when expresion result is unused
-                }
-                cgen_rec(ast, ctx, node->data.group.items[node->data.group.numitems - 1]);
-            }
+            cgen_seq(ast, astinfo, ctx, nid);
             break;
         case NCallParam:
-            cgen_rec(ast, ctx, node->data.callparam.expr);
+            cgen_callparam(ast, astinfo, ctx, nid);
             break;
         case NFun:
-            {
-                struct kbdict* scope = kbscope_get(ast, nid);
-                char* name = kbast_getnode(ast, node->data.fun.id)->data.id.name;
-                struct kbtype* type = kbdict_get(scope, name);
-                {
-                    char* out_type_str;
-                    switch(type->data.fun.out_type->kind) {
-                        case Unit:
-                            out_type_str = "void";
-                            break;
-                        case Int:
-                            out_type_str = "int";
-                            break;
-                        default:
-                            todo(); // TODO: handle other type cases
-                            break;
-                    }
-                    emit(ctx->csource, "\n%s%s %s(", ctx->indent, out_type_str, name);
-                }
-
-                int numparams = kbast_getnode(ast, node->data.fun.funparams)->data.group.numitems;
-                int firstparam = 1;
-                for(int i = 0; i < numparams; ++i) {
-                    struct kbtype* in_type = * (struct kbtype**) kbvec_get(&type->data.fun.in_types, i);
-                    if (in_type->kind != Unit) {
-                        char* paramname = kbast_getnode(ast, kbast_getnode(ast, kbast_getnode(ast, node->data.fun.funparams)->data.group.items[i])->data.funparam.id)->data.id.name;
-                        
-                        char* in_type_str;
-                        switch(in_type->kind) {
-                            case Unit:
-                                in_type_str = "void";
-                                break;
-                            case Int:
-                                in_type_str = "int";
-                                break;
-                            default:
-                                printf("%d\n", in_type->kind);
-                                todo(); // TODO: handle other type cases
-                                break;
-                        }
-                        if (!firstparam) {
-                                emit(ctx->csource, ", ");
-                                firstparam = 0;
-                        }
-                        emit(ctx->csource, "%s %s", in_type_str, paramname);
-                    }
-                    else if (numparams == 1) {
-                        emit(ctx->csource, "void");
-                    }
-                }
-
-                emit(ctx->csource, ")\n{\n");
-                
-                indent(ctx);
-                cgen_rec(ast, ctx, node->data.fun.funbody);
-
-                if (type->data.fun.out_type->kind != Unit) {
-                    char* val = kbstrpool_pop(&ctx->vals);
-                    emit(ctx->csource, "%sreturn %s;\n", ctx->indent, val);
-                }
-                dedent(ctx);
-                emit(ctx->csource, "}\n");
-            }
+            cgen_fun(ast, astinfo, ctx, nid);
             break;
         case NStrLit:
-            {
-                kbstrpool_push(&ctx->vals, "\"%s\"", node->data.strlit.value);
-            }
+            cgen_strlit(ast, astinfo, ctx, nid);
             break;
         case NIntLit:
-            {
-                kbstrpool_push(&ctx->vals, "%s", node->data.intlit.value);
-            }
+            cgen_intlit(ast, astinfo, ctx, nid);
             break;
         case NFloatLit:
-            {
-                kbstrpool_push(&ctx->vals, "%s", node->data.floatlit.value);
-            }
+            cgen_floatlit(ast, astinfo, ctx, nid);
             break;
         case NCharLit:
-            {
-                kbstrpool_push(&ctx->vals, "%s", node->data.charlit.value);
-            }
+            cgen_charlit(ast, astinfo, ctx, nid);
             break;
         case NId:
-            {
-                kbstrpool_push(&ctx->vals, "%s", node->data.id.name);
-            }
+			cgen_id(ast, astinfo, ctx, nid);
             break;
         case NCall:
-            {
-                cgen_rec(ast, ctx, node->data.call.callparams);
-                struct kbnode* sym = kbast_getnode(ast, node->data.call.id);
-                if (sym->kind == NId) {
-                    char* kbname = sym->data.id.name;
-                    char* cname;
-                    if (strcmp(kbname, "print") == 0) {
-                        cname = "printf";
-                    }
-                    else {
-                        kbelog("undefined function %s", kbname);
-                        // exit(1);
-                        cname = kbname;
-                    }
-
-                    int retval = ctx->valcount ++;
-                    
-                    emit(ctx->csource, "%s%s val%d = ", ctx->indent, "int", retval);
-                    if (strcmp(kbname, "print") == 0) {
-                        emit(ctx->csource, "%s(\"%%s\", ", cname);
-                    }
-                    else {
-                        emit(ctx->csource, "%s(", cname);
-                    }
-
-                    char* val = kbstrpool_pop(&ctx->vals);
-                    emit(ctx->csource, "%s", val);
-                    emit(ctx->csource, ");\n");
-                    
-                    kbstrpool_push(&ctx->vals, "val%d", retval);
-                }
-                else {
-                    assert(sym->kind == NSym);
-                    char* op = specials[sym->data.sym.kind];
-                    int retval = ctx->valcount++;
-                    char* val2 = kbstrpool_pop(&ctx->vals);
-                    char* val1 = kbstrpool_pop(&ctx->vals);
-                    emit(ctx->csource, "%s%s val%d = %s %s %s;\n", ctx->indent, "int", retval, val1, op, val2);
-                    kbstrpool_push(&ctx->vals, "val%d", retval);
-                }
-            }
+			cgen_call(ast, astinfo, ctx, nid);
             break;
         case NIfElse:
-            {
-                int val = ctx->valcount++;
-                emit(ctx->csource, "%s%s val%d;\n", ctx->indent, "int", val);
-                kbvec_push(&ctx->tmpvals, &val);
-                for(int i = 0; i < node->data.group.numitems; ++i) {
-                    cgen_rec(ast, ctx, node->data.group.items[i]);
-                }
-                kbvec_pop(&ctx->tmpvals, NULL);
-                kbstrpool_push(&ctx->vals, "val%d");
-            }
+			cgen_ifelse(ast, astinfo, ctx, nid);
             break;
         case NIfBranch:
         case NElifBranch:
-            {
-                int retval;
-                kbvec_peek(&ctx->tmpvals, &retval);
-                cgen_rec(ast, ctx, node->data.ifbranch.cond);
-                char* condval = kbstrpool_pop(&ctx->vals);
-                if (node->kind == NElifBranch) {
-                    emit(ctx->csource, "%selse\n%s{\n", ctx->indent, ctx->indent);
-                    indent(ctx);
-                }
-                emit(ctx->csource, "%sif (%s)\n\t{\n", ctx->indent, condval);
-                indent(ctx);
-
-                cgen_rec(ast, ctx, node->data.ifbranch.conseq);
-                char* branchval = kbstrpool_pop(&ctx->vals);
-                emit(ctx->csource, "%sval%d = %s;\n", ctx->indent, retval, branchval);
-                dedent(ctx);
-                emit(ctx->csource, "%s}\n", ctx->indent);
-                if (node->kind == NElifBranch) {
-                    dedent(ctx);
-                    emit(ctx->csource, "%s}\n", ctx->indent);
-                }
-            }
+			cgen_ifbranch(ast, astinfo, ctx, nid);
             break;
         case NElseBranch:
-            {
-                int retval;
-                kbvec_peek(&ctx->tmpvals, &retval);
-                emit(ctx->csource, "%selse\n%s{\n", ctx->indent, ctx->indent);
-                indent(ctx);
-                cgen_rec(ast, ctx, node->data.ifbranch.conseq);
-                char* branchval = kbstrpool_pop(&ctx->vals);
-                emit(ctx->csource, "%sval%d = %s;\n", ctx->indent, retval, branchval);
-                dedent(ctx);
-                emit(ctx->csource, "%s}\n", ctx->indent);
-            }
+			cgen_elsebranch(ast, astinfo, ctx, nid);
             break;
         default:
             break;
@@ -289,35 +353,42 @@ static int cgen_rec(struct kbast* ast, struct kbcgenctx* ctx, int nid) {
 }
 
 void kbcgenctx_new(struct kbopts* opts, struct kbsrc* src, struct kbcgenctx* cgenctx) {
+    kbstr_new(&cgenctx->h_code);
+    kbstr_new(&cgenctx->src_code);
+    kbstr_new(&cgenctx->main_code);
+    cgenctx->cur_code = &cgenctx->main_code;
     cgenctx->src = src;
-    int lencwd = strlen(opts->cwd);
     int lencachedir = strlen(opts->cachedir);
-    int srcsize = lencwd + 1 + lencachedir + 1 + strlen(src->filename);
+    int srcsize = lencachedir + 1 + strlen(src->filename);
     
-    cgenctx->headerpath = kbmalloc(sizeof(char) * srcsize);
-    cgenctx->sourcepath = kbmalloc(sizeof(char) * srcsize);
-    
-    sprintf(cgenctx->headerpath, "%s/%s/", opts->cwd, opts->cachedir);
+    kbstr_new(&cgenctx->headerpath);
+    kbstr_new(&cgenctx->sourcepath);
+    kbstr_new(&cgenctx->include);
+    kbstr_catf(&cgenctx->headerpath, "%s/", opts->cachedir);
+
     int i;
-    cgenctx->headerpath[lencwd] = '/';
-    cgenctx->include = &cgenctx->headerpath[lencwd + 1 + lencachedir + 1];
-    for(i = 0; i<(int)strlen(src->filename)-3; i++) {
-        cgenctx->headerpath[lencwd + 1 + lencachedir + 1 + i] = (isds(src->filename[i]))? '%' : src->filename[i];
+    for(i = 0; i < (int)strlen(src->filename)-3; i++) {
+        char c = (isds(src->filename[i]))? '%' : src->filename[i];
+        kbstr_catf(&cgenctx->headerpath, "%c", c);
+        kbstr_catf(&cgenctx->include, "%c", c);
     }
-    cgenctx->headerpath[lencwd + 1 + lencachedir + 1 + i] = '.';
-    cgenctx->headerpath[lencwd + 1 + lencachedir + 1 + i + 1] = 'h';
-    cgenctx->headerpath[lencwd + 1 + lencachedir + 1 + i + 2] = '\0';
-    cgenctx->cheader = fopen(cgenctx->headerpath, "w");
+    
+    kbstr_catf(&cgenctx->headerpath, ".h");
+    kbstr_catf(&cgenctx->include, ".h");
+
+    kbilog("HH %s", cgenctx->include.data);
+
+    cgenctx->cheader = fopen(cgenctx->headerpath.data, "w");
     if (cgenctx->cheader == NULL) {
-        kbelog("couldn't open output file '%s'", cgenctx->headerpath);
+        kbelog("couldn't open output file '%s'", cgenctx->headerpath.data);
         exit(1);
     }
    
-    strcpy(cgenctx->sourcepath, cgenctx->headerpath);
-    cgenctx->sourcepath[lencwd + 1 + lencachedir + 1 + i + 1] = 'c';
-    cgenctx->csource = fopen(cgenctx->sourcepath, "w");
+    kbstr_catf(&cgenctx->sourcepath, "%s", cgenctx->headerpath.data);
+    cgenctx->sourcepath.data[cgenctx->sourcepath.len - 1] = 'c';
+    cgenctx->csource = fopen(cgenctx->sourcepath.data, "w");
     if (cgenctx->csource == NULL) {
-        kbelog("couldn't open file output '%s'", cgenctx->sourcepath);
+        kbelog("couldn't open file output '%s'", cgenctx->sourcepath.data);
         exit(1);
     }
     cgenctx->valcount = 1;
@@ -330,16 +401,20 @@ void kbcgenctx_new(struct kbopts* opts, struct kbsrc* src, struct kbcgenctx* cge
 }
 
 void kbcgenctx_del(struct kbcgenctx* cgenctx) {
-    fclose(cgenctx->cheader);
-    fclose(cgenctx->csource);
-    kbfree(cgenctx->headerpath);
-    kbfree(cgenctx->sourcepath);
+    kbstr_del(&cgenctx->h_code);
+    kbstr_del(&cgenctx->src_code);
+    kbstr_del(&cgenctx->main_code);
+    kbstr_del(&cgenctx->include);
+    kbstr_del(&cgenctx->headerpath);
+    kbstr_del(&cgenctx->sourcepath);
+    // fclose(cgenctx->cheader);
+    // fclose(cgenctx->csource);
     kbstrpool_del(&cgenctx->vals);
     kbvec_del(&cgenctx->tmpvals);
     kbfree(cgenctx->indent);
 }
 
-int kbcgen(struct kbopts* opts, struct kbsrc* src, struct kbast* ast) {
+int kbcgen(struct kbopts* opts, struct kbsrc* src, struct kbast* ast, struct kbastinfo* astinfo, struct kbstr* exe) {
     struct kberrvec errvec = kberrvec_make();
     
     struct kbcgenctx cgenctx;
@@ -351,7 +426,7 @@ int kbcgen(struct kbopts* opts, struct kbsrc* src, struct kbast* ast) {
     memset(headername, 0, sizeof(char) * (strlen(src->basename) + 2 + 8 + 1));
     {
         int cur = 0;
-        for(int ii = 0; ii < (int)strlen(src->basename)-3; ++ii) {
+        for(int ii = 0; ii < (int)strlen(src->basename) - 3; ++ii) {
             if (src->basename[ii] >= 'a' && src->basename[ii] <= 'z') {
                 headername[cur++] = src->basename[ii] + 'A' - 'a';
             }
@@ -374,82 +449,69 @@ int kbcgen(struct kbopts* opts, struct kbsrc* src, struct kbast* ast) {
     kbfree(headername);
     
     emit(cgenctx.csource, "// This file was generated by Kobalt compiler v%s\n", KBVERSION);
-    emit(cgenctx.csource, "#include \"%s\"\n", cgenctx.include);
+    emit(cgenctx.csource, "#include \"%s\"\n", cgenctx.include.data);
     
-    cgen_rec(ast, &cgenctx, 0);
+    cgen_rec(ast, astinfo, &cgenctx, 0);
+
+    emit(cgenctx.csource, cgenctx.src_code.data);
+    emit(cgenctx.csource, "\nint main() {\n");
+    if (cgenctx.main_code.data) {
+        emit(cgenctx.csource, cgenctx.main_code.data);
+        emit(cgenctx.csource, "\tprintf(\"program terminate\\n\");\n");
+        emit(cgenctx.csource, "\treturn 0;\n");
+    }
+    emit(cgenctx.csource, "}\n");
    
     emit(cgenctx.cheader, "#endif\n");
     
     fflush(cgenctx.cheader);
     fflush(cgenctx.csource);
-    
-    char* exename = cgenctx.src->basename;
-    for(char* c = cgenctx.src->basename; *c != '\0'; ++c) {
-        if (isds(*c)) {
-            exename = c + sizeof(c[0]);
-        }
-    }
 
-    char* exe = kbmalloc(sizeof(exename) * (strlen(exename) + 4));
-    strcpy(exe, exename);
-    int lenexename = strlen(exename);
-    for(int i = 0; i < lenexename; ++ i) {
-        if (exe[lenexename - 1 - i] == '.') {
+    fclose(cgenctx.cheader);
+    fclose(cgenctx.csource);
+
+    kbstr_new(exe);
+    kbstr_catf(exe, opts->cachedir);
+    kbstr_catf(exe, "/");
+    kbstr_catf(exe, src->basename);
 #if WINDOWS
-            strcpy(&exe[lenexename - i], "exe");
+    kbstr_catf(exe, "0");
+    strcpy(&exe->data[exe->len - 3], "exe");
 #else
-            exe[lenexename - 1 - i] = '\0';
+    exe->data[exe->len - 3] = '\0';
 #endif
-            break;
-        }
-    }
 
-    char* srcname = cgenctx.sourcepath;
-    for(char* p = cgenctx.sourcepath; *p != '\0'; ++p) {
-        if(isds(*p)) {
-            srcname = p + sizeof(p[0]);
-        }
-    }
-    char* tmp = kbmalloc(sizeof(srcname[0]) * (strlen(srcname) + 1));
-    strcpy(tmp, srcname);
-    srcname = tmp;
-
-    kberrvec_del(&errvec);    
-    kbcgenctx_del(&cgenctx);
+    kbilog("executable will be produced at %s", exe->data);
 
     struct kbcmdcc cmdcc;
     kbcmdcc_new(&cmdcc);
-    kbcmdcc_compile(opts, &cmdcc, srcname, exe);
+    kbcmdcc_compile(opts, &cmdcc, &cgenctx.sourcepath, exe);
     kbcmdcc_del(&cmdcc);
     
     if (opts->output != NULL) {
-        char* exefull = kbmalloc(sizeof(exefull[0]) * (strlen(opts->cachedir) + 1 + strlen(exe) + 1));
-        strcpy(exefull, opts->cachedir);
-        exefull[strlen(opts->cachedir)] = '/';
-        strcpy(&exefull[strlen(opts->cachedir) + 1], exe);
-        rename(exefull, opts->output);
-        // TODO: create a file copy function in fs.c
-        // FILE* srcexe = fopen(exefull, "rb");
-        // if (srcexe == NULL) {
-        //     kbelog("could not open file '%s'", exefull);
-        //     exit(1);
-        // }
-        // FILE* destexe = fopen(opts->output, "wb");
-        // if (destexe == NULL) {
-        //     kbelog("could not open file '%s'", opts->output);
-        //     exit(1);
-        // }
-        // char ch;
-        // while ((ch = fgetc(srcexe)) != EOF) {
-        //     fputc(ch, destexe);
-        // }
-        // fflush(destexe);
-        // fclose(srcexe);
-        // fclose(destexe);
-        kbfree(exefull);
+        rename(exe->data, opts->output);
     }
-
-    kbfree(exe);
-    kbfree(srcname);
+        
+    // TODO: create a file copy function in fs.c
+    // FILE* srcexe = fopen(exefull, "rb");
+    // if (srcexe == NULL) {
+    //     kbelog("could not open file '%s'", exefull);
+    //     exit(1);
+    // }
+    // FILE* destexe = fopen(opts->output, "wb");
+    // if (destexe == NULL) {
+    //     kbelog("could not open file '%s'", opts->output);
+    //     exit(1);
+    // }
+    // char ch;
+    // while ((ch = fgetc(srcexe)) != EOF) {
+    //     fputc(ch, destexe);
+    // }
+    // fflush(destexe);
+    // fclose(srcexe);
+    // fclose(destexe);
+    // kbfree(exe);
+    kberrvec_del(&errvec);    
+    kbcgenctx_del(&cgenctx);
     return 1;
 }

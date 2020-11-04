@@ -13,11 +13,10 @@ void kbdict_new(struct kbdict* dict) {
     memset(dict->sizes, 0, sizeof(dict->sizes[0]) * dict->numbuckets);
     dict->capacities = kbmalloc(sizeof(dict->capacities[0]) * dict->numbuckets);
     memset(dict->capacities, 0, sizeof(dict->capacities[0]) * dict->numbuckets);
-    dict->buckets = NULL;   
+    dict->buckets = NULL;
 }
 
-static int hash(struct kbdict* dict, char* key) {
-    // TODO: check hash function efficiency
+static int hashstr(struct kbdict* dict, char* key) {
     int hashval = 0;
     for(; *key != '\0'; ++ key) {
         hashval += *key * 11;
@@ -25,9 +24,16 @@ static int hash(struct kbdict* dict, char* key) {
     return hashval % dict->numbuckets;
 }
 
-void kbdict_set(struct kbdict* dict, char* key, void* value) {
+static int hash(struct kbdict* dict, uintptr_t key) {
+    // TODO: perf: better hashing
+    return key % NUMBUCKETS;
+}
+
+void kbdict_set(struct kbdict* dict, uintptr_t key, void* value) {
     int bucketid = hash(dict, key);
-    if (!dict->buckets) dict->buckets = kbmalloc(sizeof(dict->buckets[0]) * dict->numbuckets);
+    if (!dict->buckets) {
+        dict->buckets = kbmalloc(sizeof(dict->buckets[0]) * dict->numbuckets);
+    }
     if (!dict->capacities[bucketid]) {
         dict->capacities[bucketid] = INITBUCKETCAPACITY;
         dict->buckets[bucketid] = kbmalloc(sizeof(dict->buckets[0][0]) * dict->capacities[bucketid]);
@@ -42,10 +48,10 @@ void kbdict_set(struct kbdict* dict, char* key, void* value) {
     ++ dict->sizes[bucketid];
 }
 
-void* kbdict_get(struct kbdict* dict, char* key) {
-    int bucketid = hash(dict, key);
+void* kbdict_get(struct kbdict* dict, uintptr_t key) {
+    int bucketid = hash(dict, (uintptr_t)key);
     for(int ii = 0; ii < dict->sizes[bucketid]; ++ ii) {
-        if (strcmp(key, dict->buckets[bucketid][ii].key) == 0) {
+        if (key == dict->buckets[bucketid][ii].key) {
             return dict->buckets[bucketid][ii].value;
         }
     }
@@ -65,7 +71,7 @@ void kbdict_display(struct kbdict* dict) {
     for(int ii = 0; ii < dict->numbuckets; ++ ii) {
         if (dict->sizes[ii]) {
             for(int jj = 0; jj < dict->sizes[ii]; ++ jj) {
-                printf("%s => %p\n", dict->buckets[ii][jj].key, dict->buckets[ii][jj].value);
+                printf("%p => %p\n", (void*)dict->buckets[ii][jj].key, dict->buckets[ii][jj].value);
             }
         }
     }

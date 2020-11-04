@@ -9,7 +9,7 @@ int eval(char* prog) {
 }
 
 int kb_repl() {
-    printf("Kobalt v0.1.0 experimental REPL\n");
+    printf("Kobalt v0.1.0\n");
     const char *prompt = "> ";
     char *line;
     int loop = 1;

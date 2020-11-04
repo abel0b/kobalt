@@ -2,15 +2,15 @@ workspace "kobalt"
     configurations { "debug", "release" }
     
     if os.host() == "windows" then
-        defines { "WINDOWS=1", "_CRT_SECURE_NO_WARNINGS" }
+        defines { "WINDOWS=1", "_CRT_SECURE_NO_WARNINGS", "_CRT_NONSTDC_NO_WARNINGS" }
     end
 
     filter { "configurations:debug", "toolset:clang" }
-        buildoptions { "-ggdb3", "-fno-omit-frame-pointer", "-fno-optimize-sibling-calls" }
-        linkoptions { "-fsanitize=address,leak,undefined" }
+        buildoptions { "-funwind-tables", "-fasynchronous-unwind-tables", "-ggdb3", "-fno-omit-frame-pointer", "-fno-optimize-sibling-calls" }
+        linkoptions { "-Wl,--export-dynamic", "-fsanitize=address,leak,undefined" }
 
     filter { "configurations:debug", "toolset:gcc" }
-        buildoptions { "-ggdb3" }
+        buildoptions { "-ggdb3", "-rdynamic" }
 
     filter "configurations:debug"
         defines { "DEBUG=1" }

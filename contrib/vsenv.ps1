@@ -1,5 +1,3 @@
-#!/usr/bin/env pwsh
-
 if (Test-Path env:VisualStudioVersion) {
     Exit 0
 }

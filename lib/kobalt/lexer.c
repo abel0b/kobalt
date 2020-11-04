@@ -233,7 +233,7 @@ void kblexer_next(struct kblexer* lexer, struct kbtoken** tokens, int* numtokens
                 if (is_delim(ch)) {
                     kblexer_push_char(lexer, '\0');
                     
-                    if (lexer->special_match.matched == TDashDash) {
+                    if (lexer->special_match.matched == TSemi) {
                         lexer->state = LEXER_COMMENT;
                     }
                     else {
@@ -256,7 +256,7 @@ void kblexer_next(struct kblexer* lexer, struct kbtoken** tokens, int* numtokens
                     kblexer_special_next(lexer, ch); 
                     if (lexer->special_match.nummatched == 0) {
                         if (lexer->cursor > 0) {
-                            if (prevmatched == TDashDash) {
+                            if (prevmatched == TSemi) {
                                 lexer->state = LEXER_COMMENT;
                             }
                             else {
@@ -274,7 +274,7 @@ void kblexer_next(struct kblexer* lexer, struct kbtoken** tokens, int* numtokens
                         }
                     }
                     else if (lexer->special_match.nummatched == 1 && lexer->special_match.matched != TILLEGAL) {
-                        if (lexer->special_match.matched == TDashDash) {
+                        if (lexer->special_match.matched == TSemi) {
                             lexer->state = LEXER_COMMENT;
                         }
                         else {
@@ -290,7 +290,7 @@ void kblexer_next(struct kblexer* lexer, struct kbtoken** tokens, int* numtokens
                 }
                 else if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '_') {
                     kblexer_push_char(lexer, '\0');
-                    if (lexer->special_match.matched == TDashDash) {
+                    if (lexer->special_match.matched == TSemi) {
                         lexer->state = LEXER_COMMENT;
                     }
                     else {

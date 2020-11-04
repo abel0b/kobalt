@@ -4,15 +4,40 @@
 #include "kobalt/ast.h"
 #include "kobalt/lexer.h"
 #include "kobalt/parser.h"
-#include "kobalt/typecheck.h" 
+#include "kobalt/typecheck.h"
+#include "kobalt/typeinfer.h"
 #include "kobalt/cgen.h"
 #include "kobalt/fs.h"
+#include "kobalt/astinfo.h"
 #include "kobalt/uid.h"
 #include "kobalt/time.h"
 #include "kobalt/log.h"
+#include "kobalt/proc.h"
 #include "repl.h"
+#include <stdlib.h>
+
+#if UNIX
+#include <execinfo.h>
+#include <signal.h>
+#include <unistd.h>
+
+void handler(int sig) {
+    void* array[10];
+    size_t size;
+
+    size = backtrace(array, 10);
+
+    fprintf(stderr, "error: signal %d:\n", sig);
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+    exit(1);
+}
+#endif
 
 int main(int argc, char * argv[]) {
+#if UNIX
+    signal(SIGABRT, handler);
+#endif
+
     if (argc == 1) {
         return kb_repl();
     }
@@ -62,17 +87,32 @@ int main(int argc, char * argv[]) {
             continue;
         }
 
+        struct kbastinfo astinfo;
         kbtimer_start(&timer);
-        kbtypecheck(&ast);
+        kbtypeinfer(&ast, &astinfo);
+        kbilog("step typeinfer done in %dus", kbtimer_end(&timer));
+
+        kbtimer_start(&timer);
+        kbtypecheck(&ast, &astinfo);
         kbilog("step typecheck done in %dus", kbtimer_end(&timer));
 
+        struct kbstr exe;
         kbtimer_start(&timer);
-        kbcgen(&opts, &src, &ast);
+        kbcgen(&opts, &src, &ast, &astinfo, &exe);
         kbilog("step cgen and compile done in %dus", kbtimer_end(&timer));
 
+        kbtimer_start(&timer);
+
         kbtoken_del_arr(numtokens, tokens);
+        kbastinfo_del(&astinfo);
         kbast_del(&ast);
+
+        int status = kbspawn(exe.data, (char**)opts.exe_argv.elems, NULL);
+        kbilog("step execute done in %dus", kbtimer_end(&timer));
+        kbilog("process returned %d", status);
+
         kbsrc_del(&src);
+        kbstr_del(&exe);
     }
 
     kbopts_del(&opts);

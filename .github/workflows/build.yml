@@ -47,11 +47,10 @@ jobs:
         Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-windows.zip" -OutFile "premake-5.0.0-alpha15-windows.zip"
         Expand-Archive -DestinationPath . -Path premake-5.0.0-alpha15-windows.zip
 
-
     - name: Generate project file
       run: ./premake5.exe --os=windows vs2019
 
     - name: Compile
       run: |
-        .\tools\vsenv.ps1
+        .\contrib\vsenv.ps1
         MSBuild.exe kobalt.sln -m -p:Configuration=${{ matrix.config }}

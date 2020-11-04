@@ -1,6 +1,7 @@
 #include "kobalt/source.h"
 #include "kobalt/memory.h"
 #include "kobalt/log.h"
+#include "kobalt/fs.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -20,7 +21,9 @@ void kbsrc_new(char* filename, struct kbsrc* src) {
         int i = 0;
         char * filenameit = filename;
         while(*filenameit != '\0') {
-            if (*filenameit == DS) base = i+1;
+            if (isds(*filenameit)){
+                base = i+1;
+            }
             ++ i;
             ++ filenameit;
         }

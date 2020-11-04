@@ -18,7 +18,7 @@ do
     cat << END
     ${token[0]},
 END
-done < src/errors.csv
+done < lib/kobalt/errors.csv
 cat << END
 };
 

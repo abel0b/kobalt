@@ -60,3 +60,8 @@ void* kbobjpool_arrpeek(struct kbobjpool* objpool, int n) {
     void* obj = (void*) (objpool->data + objpool->elem_size * (objpool->num_elems - n));
     return obj;
 }
+
+void* kbobjpool_get(struct kbobjpool* objpool, int idx) {
+    void* obj = (void*) (objpool->data + objpool->elem_size * idx);
+    return obj;
+}

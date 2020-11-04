@@ -17,7 +17,7 @@ function metabuild {
         echo "Error in template source"
         exit 1
     fi
-    echo "Rule($target $metasrc)"
+    echo "$target: $metasrc"
     echo "$out" > $target
 }
 

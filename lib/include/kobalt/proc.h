@@ -3,6 +3,6 @@
 
 #include <stdio.h>
 
-int kbspawn(char* argv[], FILE* stdoutlog);
+int kbspawn(char* prog, char* argv[], FILE* stdoutlog);
 
 #endif

@@ -1,6 +1,8 @@
 #define _POSIX_C_SOURCE 1
 #include "kobalt/proc.h"
 #include "kobalt/log.h"
+#include "kobalt/str.h"
+#include "kobalt/memory.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,25 +15,42 @@
 #include <unistd.h>
 #endif
 
-int kbspawn(char* argv[], FILE* logfile) {
+int kbspawn(char* prog, char* args[], FILE* logfile) {
+    char** argv = NULL;
+    {
+        int numarg = 0;
+        kbdlog("spawn %s", prog);
+        while(args[numarg] != NULL) {
+            kbdlog("arg.%d = %s", numarg, args[numarg]);
+            numarg++;
+        }
+        argv = kbmalloc(sizeof(argv[0]) * (numarg + 1 + 1));
+        argv[0] = prog;
+        for(int i = 0; i < numarg + 1; ++i) {
+            argv[i + 1] = args[i];
+        }
+        argv[numarg + 1] = NULL;
+    }
+
     int exitstatus = 1;
 #if WINDOWS
-    char command[512];
+    struct kbstr command;
+    kbstr_new(&command);
+
+    kbstr_catf(&command, "start /b /w ");
     int cur = 0;
-    
     for(char** arg = argv; *arg != NULL; ++arg) {
-        if (**arg == '\0') continue;
-        int add = strlen(*arg) + 1;
-        if (cur + add >= 512) {
-            kbelog("unexepected error");
-            exit(1);
+        if (**arg == '\0') {
+            continue;
         }
-        strcpy(&command[cur], *arg);
-        cur += add;
-        command[cur - 1] = ' ';
+        if (arg != argv) {
+            kbstr_catf(&command, " ");
+        }
+        kbstr_catf(&command, "%s", *arg);
     }
-    command[cur - 1] = '\0';
-    FILE* vpipe = _popen(command, "r");
+
+    FILE* vpipe = _popen(command.data, "r");
+    kbstr_del(&command);
 
     if (vpipe == NULL) {
         kbelog("could not create subprocess");
@@ -41,7 +60,12 @@ int kbspawn(char* argv[], FILE* logfile) {
     char buf[128];
 
     while(fgets(buf, 128, vpipe)) {
-        fputs(buf, logfile);
+        if (logfile) {
+            fputs(buf, logfile);
+        }
+        else {
+            fputs(buf, stdout);
+        }
     }
 
     if (feof(vpipe)) {
@@ -58,20 +82,43 @@ int kbspawn(char* argv[], FILE* logfile) {
         exit(1);
     }
     else if (pid == 0) {
-        int fd = fileno(logfile);
-        close(STDOUT_FILENO);
-        if (dup(fd) == -1) {
-            perror("dup");
-            exit(1);
-        };
-        close(STDERR_FILENO);
-        dup(fd);
-        close(fd);
+        if (logfile != NULL) {
+            int fd = fileno(logfile);
+            if (logfile != stdout) {
+                close(STDOUT_FILENO);
+                if (dup(fd) == -1) {
+                    perror("dup");
+                    exit(1);
+                };
+            }
+            if (logfile != stderr) {
+                close(STDERR_FILENO);
+                dup(fd);
+            }
+            close(fd);
+        }
         execvp(argv[0], argv);
+        exit(127);
     }
     else {
-        wait(&exitstatus);
+        int wstatus;
+        wait(&wstatus);
+        if(WIFEXITED(wstatus)) {
+            exitstatus = WEXITSTATUS(wstatus);
+            if (exitstatus == 127) {
+                kbelog("spawn process failed");
+                exit(1);
+            }
+        }
+        else {
+            if (exitstatus == 127) {
+                kbelog("spawn process failed");
+                exit(1);
+            }
+        }
+
     }
 #endif
+    kbfree(argv);
     return exitstatus;
 }

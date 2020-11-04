@@ -1,0 +1,25 @@
+{
+    "name": "kobalt",
+    "displayName": "Kobalt",
+    "description": "Kobalt language support",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.50.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "kobalt",
+            "aliases": ["Kobalt", "kobalt"],
+            "extensions": [".kb"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "kobalt",
+            "scopeName": "source.kobalt",
+            "path": "./syntaxes/kobalt.tmLanguage.json"
+        }]
+    }
+}

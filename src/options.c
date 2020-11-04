@@ -4,8 +4,10 @@
 #include "kobalt/log.h"
 #include "kobalt/fs.h"
 #include "kobalt/uid.h"
+#include "kobalt/time.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <ctype.h>
 #include <assert.h>
 #if WINDOWS
@@ -23,10 +25,16 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
     int srcs_capacity = 1;
     opts->srcs = kbmalloc(sizeof(opts->srcs[0]) * srcs_capacity);
     opts->verbosity = 1;
+    kbvec_new(&opts->exe_argv, sizeof(char*));
+
     unsigned int ii = 1;
+    bool endopts = false;
     while (ii<(unsigned int)argc) {
         unsigned int jj = ii;
-        if (argv[jj][0] == '-') {
+        if (strcmp(argv[jj], "--") == 0) {
+            endopts = true;
+        }
+        else if (argv[jj][0] == '-') {
             if (strlen(argv[jj]) == 2) {
                 char optopt = argv[jj][1];
                 char * optarg = NULL;
@@ -40,6 +48,10 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
                     case 'T':
                         opts->stage = PARSE;
                         break;
+                    case 'v':
+                        printf("Kobalt Language Compiler v%s\n\n", KBVERSION);
+                        exit(0);
+                        break;
                     case 'V':
                         opts->verbosity = 2;
                         break;
@@ -47,17 +59,25 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
                         opts->run = 1;
                         break;
                     case 'h':
-                        printf("Kobalt Language Compiler v%s\n\n", KBVERSION);
+                        printf("Usage: %s [file...]\n", argv[0]);
+                        printf("Options:\n");
+                        printf("  -o  output file\n");
+                        printf("  -V  enable verbose mode\n");
+                        printf("  -v  display version\n");
+                        printf("  -L  lexing stage\n");
+                        printf("  -T  parsing stage\n");
+                        exit(0);
                         break;
-                    case 'o': {
-                        ii++;
-                        if (optarg == NULL) {
-                            kbelog("argument to '-o' is missing");
-                            exit(1);
+                    case 'o':
+                        {
+                            ii++;
+                            if (optarg == NULL) {
+                                kbelog("argument to '-o' is missing");
+                                exit(1);
+                            }
+                            opts->output = (char*)kbmalloc(sizeof(opts->output[0]) * (strlen(optarg) + 1));
+                            strcpy(opts->output, optarg);
                         }
-                        opts->output = (char*)kbmalloc(sizeof(opts->output[0]) * (strlen(optarg) + 1));
-                        strcpy(opts->output, optarg);
-                    }
                         break;
                     default: {
                         if (isprint (optopt)) {
@@ -77,15 +97,29 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
             }
         }
         else {
-            if (opts->numsrcs == srcs_capacity) {
-                srcs_capacity = 2 * srcs_capacity;
-                opts->srcs = kbrealloc(opts->srcs, sizeof(opts->srcs[0]) * srcs_capacity);
+            if (endopts) {
+                kbvec_push(&opts->exe_argv, &argv[jj]);
             }
-            opts->srcs[opts->numsrcs] = argv[jj];
-            ++ opts->numsrcs;
+            else {
+                if (opts->numsrcs == srcs_capacity) {
+                    srcs_capacity = 2 * srcs_capacity;
+                    opts->srcs = kbrealloc(opts->srcs, sizeof(opts->srcs[0]) * srcs_capacity);
+                }
+                int st = 1;
+                if (argv[jj][0] == '.') {
+                    while(isds(argv[jj][st])) {
+                        st ++;
+                    }
+                }
+                // TODO: check if it is a file
+                opts->srcs[opts->numsrcs] = &argv[jj][st];
+                ++ opts->numsrcs;
+            }
         }
         ii++;
     }
+
+    kbvec_push(&opts->exe_argv, &(void*){NULL});
 
     if (!opts->numsrcs) {
         kbelog("no input file");
@@ -112,14 +146,28 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
     }
 #endif
    
-    seed(42);
+    seed(kbtime_get());
+
+#if UNIX
+    char* home = getenv("HOME");
+    assert(home != NULL);
+
+    int cachedirsize = strlen(home) + strlen("/.cache/kobalt") + 1 + 8 + 1;
+    opts->cachedir = kbmalloc(cachedirsize);
+    
+    strcpy(opts->cachedir, home);
+    strcat(opts->cachedir, "/.cache");
+    ensuredir(opts->cachedir);
+
+    strcat(opts->cachedir, "/kobalt/");
+#else
     int cachedirsize = strlen("kbcache") + 1 + 8 + 1;
     opts->cachedir = kbmalloc(sizeof(char) * cachedirsize);
-    opts->cachedir[cachedirsize - 1] = '\0';
     strcpy(opts->cachedir, "kbcache/");
-    genuid(opts->cachedir + strlen("kbcache") + 1);
-    
-    ensuredir("kbcache");
+#endif
+    ensuredir(opts->cachedir);
+    opts->cachedir[cachedirsize - 1] = '\0';
+    genuid(opts->cachedir + strlen(opts->cachedir));
     ensuredir(opts->cachedir);
 }
 
@@ -135,19 +183,13 @@ char * kbstage_string(enum kbstage stage) {
     return "UNDEFINED";
 }
 
-void kbopts_display(struct kbopts* opts) {
-    fprintf(stderr, "kbopts {\n");
-    fprintf(stderr, "  stage = %s\n", kbstage_string(opts->stage));
-    fprintf(stderr, "  cwd = %s\n", opts->cwd);
-    fprintf(stderr, "  numsrcs = %d\n", opts->numsrcs);
-    fprintf(stderr, "  srcs[%d] = [array]\n", opts->numsrcs);
-    fprintf(stderr, "}\n");
-}
-
 void kbopts_del(struct kbopts* opts) {
     kbfree(opts->cwd);
     kbfree(opts->srcs);
     kbfree(opts->cachedir);
-    if (opts->output != NULL)
+    if (opts->output != NULL) {
         kbfree(opts->output);
+    }
+    kbfree(*(char**)kbvec_get(&opts->exe_argv, 0));
+    kbvec_del(&opts->exe_argv);
 }

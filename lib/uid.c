@@ -1,4 +1,5 @@
 #include "kobalt/uid.h"
+#include "kobalt/time.h"
 #include <stdio.h>
 
 static uint64_t state = 1;
@@ -6,7 +7,7 @@ static uint64_t state = 1;
 void seed(uint64_t s) {
     state = s;
 }
-
+ 
 uint64_t genuint64() {
     uint64_t x = state;
     x ^= x << 13;
@@ -15,16 +16,16 @@ uint64_t genuint64() {
     return state = x;
 }
 
-static void genuid_aux(char uid[8], char alphabet[36]) {
-    uint64_t num = genuint64();
+static void genuid_aux(char uid[8], char alphabet[16]) {
+    uint64_t num = kbtime_get_us();
     unsigned char* buf = (unsigned char*)&num;
-    for(int ii=0; ii<8; ++ii) {
-        uid[ii] = alphabet[(int)(buf[ii] / 7.28)];
+    for(int i = 0; i < 8; ++i) {
+        uid[i] = alphabet[(int)buf[7 - i] / 16];
     }
 }
 
 void genuid(char uid[8]) {
-    genuid_aux(uid, "abcdefghijklmnopqrstuvwxyz0123456789");
+    genuid_aux(uid, "0123456789abcdef");
 }
 
 void genuidmaj(char uid[8]) {

@@ -22,7 +22,7 @@ enum kbtoken_kind {
     TEndFile,
     TLineFeed,
     TComment,
-    TDashDash,
+    TSemi,
     THash,
     TColon,
     TUnit,

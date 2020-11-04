@@ -5,7 +5,7 @@ cat << END
 #include "kobalt/kobalt.h"
 #include <stdio.h>
 
-#define NUM_SPECIALS $(($(wc -l src/token.csv | awk '{printf $1}')+2))
+#define NUM_SPECIALS $(($(wc -l lib/kobalt/token.csv | awk '{printf $1}')+2))
 
 extern char * specials[NUM_SPECIALS];
 
@@ -20,7 +20,7 @@ do
     cat << END
     T${token[0]},
 END
-done < src/token.csv
+done < lib/kobalt/token.csv
 
 cat << END
     TILLEGAL,
