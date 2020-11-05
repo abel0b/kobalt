@@ -5,6 +5,9 @@ workspace "kobalt"
         defines { "WINDOWS=1", "_CRT_SECURE_NO_WARNINGS", "_CRT_NONSTDC_NO_WARNINGS" }
     end
 
+    filter { "configurations:debug", "toolset:clang or gcc" }
+        buildoptions { "-Wall -Wextra" }
+
     filter { "configurations:debug", "toolset:clang" }
         buildoptions { "-funwind-tables", "-fasynchronous-unwind-tables", "-ggdb3", "-fno-omit-frame-pointer", "-fno-optimize-sibling-calls" }
         linkoptions { "-Wl,--export-dynamic", "-fsanitize=address,leak,undefined" }

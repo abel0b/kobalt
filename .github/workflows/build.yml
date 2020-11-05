@@ -13,6 +13,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         config: [release]
+        cc: [gcc, clang]
         include:
           - os: ubuntu-latest
             osname: "linux"
@@ -28,16 +29,17 @@ jobs:
         tar xvzf premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz
 
     - name: Generate project file
-      run: ./premake5 gmake2
+      run: ./premake5 --os=${{ matrix.osname }} gmake2
 
     - name: Compile
-      run: make config=${{ matrix.config }} -j$(nproc)
+      run: make -j$(nproc) CC=${{ matrix.cc }} config=${{ matrix.config }}
 
   build-windows:
     runs-on: windows-latest
     strategy:
       matrix:
         config: [release]
+        cc: [cl]
 
     steps:
     - uses: actions/checkout@v2
@@ -48,9 +50,9 @@ jobs:
         Expand-Archive -DestinationPath . -Path premake-5.0.0-alpha15-windows.zip
 
     - name: Generate project file
-      run: ./premake5.exe --os=windows vs2019
+      run: ./premake5 --os=windows vs2019
 
     - name: Compile
       run: |
         .\contrib\vsenv.ps1
-        MSBuild.exe kobalt.sln -m -p:Configuration=${{ matrix.config }}
+        msbuild kobalt.sln -m -p:CLToolExe=${{ matrix.cc }} -p:Configuration=${{ matrix.config }}
