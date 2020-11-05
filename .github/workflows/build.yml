@@ -26,20 +26,21 @@ jobs:
     - name: Install premake
       run : |
         wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz
-        sudo tar xvzf premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz --directory=/usr/bin
+        tar xvzf premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz
+        sudo mv premake5 /usr/bin
 
     - name: Generate project file
-      run: premake5 --os=${{ matrix.osname }} --cc=${{ matrix.cc }} gmake2
+      run: premake5 --os=${{ matrix.osname }} gmake2
 
     - name: Compile
-      run: make config=${{ matrix.config }} -j$(nproc)
+      run: make -j$(nproc) CC=${{ matrix.cc }} config=${{ matrix.config }}
 
   build-windows:
     runs-on: windows-latest
     strategy:
       matrix:
         config: [release]
-        cc: [gcc, clang, msc]
+        cc: [cl]
 
     steps:
     - uses: actions/checkout@v2
@@ -50,9 +51,9 @@ jobs:
         Expand-Archive -DestinationPath . -Path premake-5.0.0-alpha15-windows.zip
 
     - name: Generate project file
-      run: ./premake5 --cc=${{ matrix.cc }} --os=windows vs2019
+      run: ./premake5 --os=windows vs2019
 
     - name: Compile
       run: |
         .\contrib\vsenv.ps1
-        msbuild kobalt.sln -m -p:Configuration=${{ matrix.config }}
+        msbuild kobalt.sln -m -p:CLToolExe=${{ matrix.cc }} -p:Configuration=${{ matrix.config }}
