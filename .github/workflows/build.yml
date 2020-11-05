@@ -26,8 +26,8 @@ jobs:
     - name: Install premake
       run : |
         wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz
-        tar xvzf premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz --directory=/usr/bin
-        
+        sudo tar xvzf premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz --directory=/usr/bin
+
     - name: Generate project file
       run: premake5 --os=${{ matrix.osname }} --cc=${{ matrix.cc }} gmake2
 
@@ -39,7 +39,7 @@ jobs:
     strategy:
       matrix:
         config: [release]
-        cc: [gcc, clang, cl]
+        cc: [gcc, clang, msc]
 
     steps:
     - uses: actions/checkout@v2
