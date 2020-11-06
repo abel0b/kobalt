@@ -21,18 +21,18 @@ jobs:
             osname: "macosx"
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Install premake
-      run : |
-        wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz
-        tar xvzf premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz
+      - name: Install premake
+        run : |
+          wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz
+          tar xvzf premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz
 
-    - name: Generate project file
-      run: ./premake5 --os=${{ matrix.osname }} gmake2
+      - name: Generate project file
+        run: ./premake5 --os=${{ matrix.osname }} gmake2
 
-    - name: Compile
-      run: make -j$(nproc) CC=${{ matrix.cc }} config=${{ matrix.config }}
+      - name: Compile
+        run: make -j$(nproc) CC=${{ matrix.cc }} config=${{ matrix.config }}
 
   build-windows:
     runs-on: windows-latest
@@ -42,17 +42,17 @@ jobs:
         cc: [cl]
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Install premake
-      run: |
-        Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-windows.zip" -OutFile "premake-5.0.0-alpha15-windows.zip"
-        Expand-Archive -DestinationPath . -Path premake-5.0.0-alpha15-windows.zip
+      - name: Install premake
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-windows.zip" -OutFile "premake-5.0.0-alpha15-windows.zip"
+          Expand-Archive -DestinationPath . -Path premake-5.0.0-alpha15-windows.zip
 
-    - name: Generate project file
-      run: ./premake5 --os=windows vs2019
+      - name: Generate project file
+        run: ./premake5 --os=windows vs2019
 
-    - name: Compile
-      run: |
-        .\contrib\vsenv.ps1
-        msbuild kobalt.sln -m -p:CLToolExe=${{ matrix.cc }} -p:Configuration=${{ matrix.config }}
+      - name: Compile
+        run: |
+          .\tools\vsenv.ps1
+          msbuild kobalt.sln -m -p:CLToolExe=${{ matrix.cc }} -p:Configuration=${{ matrix.config }}
