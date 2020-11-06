@@ -17,6 +17,7 @@
 #include <stdlib.h>
 
 #if UNIX
+#if defined(__GLIBC__)
 #include <execinfo.h>
 #include <signal.h>
 #include <unistd.h>
@@ -32,10 +33,13 @@ void handler(int sig) {
     exit(1);
 }
 #endif
+#endif
 
 int main(int argc, char * argv[]) {
 #if UNIX
+#if defined(__GLIBC__)
     signal(SIGABRT, handler);
+#endif
 #endif
 
     if (argc == 1) {
