@@ -20,14 +20,13 @@ jobs:
       - name: Login to Github registry
         uses: docker/login-action@v1
         with:
-          username: ${{ github.actor }}
+          username: ghcr.io/${{ github.repository }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          registry: docker.pkg.github.com
+          registry: ghcr.io
       
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
           context: .
           file: ./tools/docker/Dockerfile
-          repository: ${{ github.repository }}/kobalt
-          tag_with_ref: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
