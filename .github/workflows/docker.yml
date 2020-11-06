@@ -20,7 +20,7 @@ jobs:
       - name: Login to Github registry
         uses: docker/login-action@v1
         with:
-          username: ghcr.io/${{ github.repository }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
       
