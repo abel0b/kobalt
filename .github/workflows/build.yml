@@ -35,7 +35,7 @@ jobs:
         run: make -j$(nproc) CC=${{ matrix.cc }} config=${{ matrix.config }}
 
       - name: Say hello world
-        run: ./bin/${{ matrix.config }}/kobalt docs/examples/hello_world.kb
+        run: ./bin/${{ matrix.config }}/kobalt doc/examples/hello_world.kb
 
   build-windows:
     runs-on: windows-latest
@@ -61,4 +61,4 @@ jobs:
           msbuild kobalt.sln -m -p:CLToolExe=${{ matrix.cc }} -p:Configuration=${{ matrix.config }}
 
       - name: Say hello world
-        run: .\bin\${{ matrix.config }}\kobalt docs\examples\hello_world.kb
+        run: .\bin\${{ matrix.config }}\kobalt doc\examples\hello_world.kb
