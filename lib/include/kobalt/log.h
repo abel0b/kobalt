@@ -52,7 +52,7 @@
 #if DEBUG
 #define kbelog(...)\
     do {\
-        fprintf(stderr, BRED "error: " RESET " (" __FILE__ ":%d" ") ", __LINE__);\
+        fprintf(stderr, BRED "error:" RESET " (" __FILE__ ":%d" ") ", __LINE__);\
         fprintf(stderr, __VA_ARGS__);\
         fprintf(stderr, "\n");\
         fflush(stderr);\

@@ -1,0 +1,2 @@
+fun printl (msg :: str) :: () =
+    __c:puts msg

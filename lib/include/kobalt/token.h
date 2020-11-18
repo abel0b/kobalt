@@ -2,9 +2,10 @@
 #define KBTOKEN__H
 
 #include "kobalt/kobalt.h"
+#include "kobalt/vec.h"
 #include <stdio.h>
 
-#define NUM_SPECIALS 58
+#define NUM_SPECIALS 59
 
 extern char * specials[NUM_SPECIALS];
 
@@ -25,6 +26,7 @@ enum kbtoken_kind {
     TSemi,
     THash,
     TColon,
+    TColonColon,
     TUnit,
     TLPar,
     TRPar,
@@ -71,12 +73,20 @@ enum kbtoken_kind {
     TILLEGAL,
 };
 
-struct kbtoken {
-    enum kbtoken_kind kind;
-    char * value;
+struct kbloc {
     int line;
     int col;
 };
+
+struct kbtoken {
+    enum kbtoken_kind kind;
+    char* value;
+    struct kbloc loc;
+};
+
+kbvec_decl(struct kbtoken, token)
+
+int is_builtin_fun(enum kbtoken_kind tok_kind);
 
 struct kbtoken kbtoken_make(enum kbtoken_kind kind, char* value, int line, int col);
 

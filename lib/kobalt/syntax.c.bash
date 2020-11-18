@@ -25,6 +25,6 @@ cat << END
 }
 
 int isgroup(struct kbnode *node) {
-    return node->kind == NFile || node->kind == NFunParams || node->kind == NSeq || node->kind == NCallParams || node->kind == NIfElse || node->kind == NCase;
+    return node->kind == NProgram || node->kind == NFunParams || node->kind == NSeq || node->kind == NCallParams || node->kind == NIfElse || node->kind == NCase;
 }
 END

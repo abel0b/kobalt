@@ -8,6 +8,6 @@
 #include "kobalt/astinfo.h"
 #include "kobalt/str.h"
 
-int kbcgen(struct kbopts* opts, struct kbsrc* src, struct kbast* ast, struct kbastinfo* astinfo, struct kbstr* exe);
+int kbcgen(struct kbopts* opts, struct kbsrc* src, struct kbast* ast, struct kbastinfo* astinfo, struct kbstr* exe, struct kbstr* csrc);
 
 #endif

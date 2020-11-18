@@ -1,0 +1,5 @@
+fun <= (a :: int) (b :: int) :: int
+
+fun + (a :: int) (b :: int) :: int
+
+fun - (a :: int) (b :: int) :: int

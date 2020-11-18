@@ -11,6 +11,7 @@ Comment
 Semi ;
 Hash #
 Colon :
+ColonColon ::
 Unit ()
 LPar (
 RPar )
