@@ -4,6 +4,7 @@
 #include "kobalt/kobalt.h"
 #include "kobalt/source.h"
 #include "kobalt/token.h"
+#include "kobalt/vec.h"
 
 extern char * keywords[];
 
@@ -12,6 +13,7 @@ enum kblexer_state {
     LEXER_NEWTOK,
     LEXER_SYM,
     LEXER_STRINGLIT,
+    LEXER_CHARLIT,
     LEXER_NUMLIT,
     LEXER_COMMENT,
     LEXER_IDENTIFIER,
@@ -29,6 +31,7 @@ struct kblexer {
     int indent_counter;
     int space_indent;
     int line;
+    int prev_col;
     int col;
     int tokline;
     int tokcol;
@@ -68,10 +71,10 @@ void kblexer_int_init(struct kblexer* lexer);
 
 void kblexer_int_next(struct kblexer* lexer, char ch);
 
-void kblexer_next(struct kblexer* lexer, struct kbtoken** tokens, int* numtokens, int* capacity, char ch);
+void kblexer_next(struct kblexer* lexer, struct kbvec_token* tokens, char ch);
 
-void kblexer_run(struct kblexer* lexer, struct kbsrc* src, struct kbtoken** tokens, int* numtokens); 
+void kblexer_run(struct kblexer* lexer, struct kbsrc* src, struct kbvec_token* tokens); 
 
-void kblex(struct kbsrc* src, struct kbtoken** tokens, int* numtokens);
+void kblex(struct kbsrc* src, struct kbvec_token* tokens);
 
 #endif

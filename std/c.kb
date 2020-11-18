@@ -1,0 +1,21 @@
+fun __c:puts (s :: str) :: ()
+
+fun __c:putchar (c :: char) :: ()
+
+fun __c:abort :: ()
+
+fun __c:exit (status :: int) :: ()
+
+fun __c:strlen (string :: str) :: int
+
+fun __c:strcpy (dest :: str) (src :: str) :: str
+
+fun __c:strncpy (dest :: str) (src :: str) (count :: int) :: str
+
+fun __c:strcat (dest :: str) (src :: str) :: str
+
+fun __c:strncat (dest :: str) (src :: str) (count :: int) :: str
+
+fun __c:strcmp (dest :: str) (src :: str) :: int
+
+fun __c:strncmp (dest :: str) (src :: str) (count :: int) :: int

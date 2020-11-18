@@ -6,9 +6,12 @@
 #include <stdio.h>
 
 enum kbstage {
-    LEX,
-    PARSE,
-    CODEGEN,
+    LexingStage = 1,
+    ParsingStage = 2,
+    TypingStage = 4,
+    CGenStage = 8,
+    CCStage = 16,
+    ExecStage = 32,
 };
 
 struct kbopts {

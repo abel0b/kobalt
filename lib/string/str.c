@@ -24,7 +24,7 @@ void kbstr_catf(struct kbstr* str, char* fmt, ...) {
     }
 
     va_start(args, fmt);
-    int r = vsnprintf(&str->data[str->len], len + 1, fmt, args);
+    vsnprintf(&str->data[str->len], len + 1, fmt, args);
     va_end(args);
     str->len += len;
 }

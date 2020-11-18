@@ -25,7 +25,7 @@ function main {
     if [[ -z ${1:x} ]]; then
         while read metasrc; do
             metabuild "$metasrc"
-        done < <(find src lib -name "*.bash")
+        done < <(find src lib std -name "*.bash")
     else
         metabuild $1
     fi

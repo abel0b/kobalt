@@ -32,5 +32,9 @@ void ensuredir(char* path) {
 }
 
 int isds(char c) {
+#if WINDOWS
     return (c == '/') || (c == '\\');
+#else
+    return c == '/';
+#endif
 }

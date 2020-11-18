@@ -6,7 +6,7 @@
 #include "kobalt/dict.h"
 
 enum kbnode_kind {
-    NFile,
+    NProgram,
     NFun,
     NFunParams,
     NFunParam,
@@ -43,7 +43,7 @@ struct kbnode_fun {
     int id;
     int funparams;
     int rettype;
-    int funbody;
+    int body;
 };
         
 struct kbnode_type {
@@ -105,6 +105,7 @@ struct kbnode_casebranch {
 struct kbnode {
     enum kbnode_kind kind;
     int parent;
+    struct kbloc loc;
     union {
         struct kbnode_group group;
         struct kbnode_fun fun;

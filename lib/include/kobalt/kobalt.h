@@ -4,6 +4,7 @@
 #define KBVERSION "0.1.0"
 
 #include <stdlib.h>
+#include "kobalt/log.h"
 
 #if WINDOWS
 #define DS '\\'
@@ -19,6 +20,10 @@
 
 #define todo() do { fprintf(stderr, "TODO at %s:%d\n", __FILE__, __LINE__); exit(1); } while(0)
 
+#define kb_todo(...) do { kbelog("TODO feature at %s:%s:%d", __FILE__, __func__, __LINE__); kbelog(__VA_ARGS__); exit(1); } while(0)
+
 #define unused(X) do { (void)(X); } while(0)
+
+#define kb_unused(X) do { (void)(X); } while(0)
 
 #endif

@@ -5,12 +5,14 @@
 #include "kobalt/syntax.h"
 #include "kobalt/dict.h"
 #include "kobalt/objpool.h"
+#include "kobalt/astinfo.h"
+#include "kobalt/vec.h"
 #include <stdio.h>
 
+kbvec_decl(struct kbnode, node)
+
 struct kbast {
-    struct kbnode* nodes;
-    int capacity;
-    int numnodes;
+    struct kbvec_node nodes;
 };
 
 enum kbastorder {
@@ -19,7 +21,7 @@ enum kbastorder {
     MixOrder = 3,
 };
 
-struct kbastvisitor {
+struct kbastvisit {
     struct kbast* ast;
     enum kbastorder order;
     enum kbastorder curop;
@@ -28,24 +30,24 @@ struct kbastvisitor {
     void* ctx;
     int stacksize;
     int stackcap;
-    int (*visit)(struct kbastvisitor* astvisitor);
+    int (*visit)(struct kbastvisit* astvisit);
 };
 
 void kbast_new(struct kbast* ast);
 
-int kbast_add(struct kbast* ast, enum kbnode_kind kind, int parent);
+int kbast_add(struct kbast* ast, enum kbnode_kind kind, int parent, struct kbloc loc);
 
 void kbast_del(struct kbast* ast);
 
-void kbast_display(FILE* out, struct kbast* ast);
+void kbast_display(FILE* out, struct kbast* ast, struct kbastinfo* astinfo);
 
-void kbastvisitor_new(struct kbast* ast, void* ctx, int (*visit)(struct kbastvisitor *), struct kbastvisitor* astvisitor, enum kbastorder order);
+void kbastvisit_new(struct kbast* ast, void* ctx, int (*visit)(struct kbastvisit *), struct kbastvisit* astvisit, enum kbastorder order);
 
-int kbastvisitor_step(struct kbastvisitor* astvisitor);
+int kbastvisit_step(struct kbastvisit* astvisit);
 
-void kbastvisitor_run(struct kbastvisitor* astvisitor);
+void kbastvisit_run(struct kbastvisit* astvisit);
 
-void kbastvisitor_del(struct kbastvisitor* astvisitor);
+void kbastvisit_del(struct kbastvisit* astvisit);
 
 struct kbdict* kbscope_get(struct kbast* ast, int nid);
 

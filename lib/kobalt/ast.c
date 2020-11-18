@@ -7,140 +7,162 @@
 #include "kobalt/type.h"
 #include "kobalt/log.h"
 
-static int INITNUMNODES = 32;
+kbvec_impl(struct kbnode, node)
 
-void kbastvisitor_new(struct kbast* ast, void* ctx, int (*visit)(struct kbastvisitor *), struct kbastvisitor* astvisitor, enum kbastorder order) {
-    astvisitor->order = order;
-    astvisitor->ast = ast;
-    astvisitor->ctx = ctx;
-    astvisitor->visit = NULL;
-    astvisitor->visit = visit;
+void kbast_new(struct kbast* ast) {
+    kbvec_node_new(&ast->nodes);
+}
+
+void kbastvisit_new(struct kbast* ast, void* ctx, int (*visit)(struct kbastvisit *), struct kbastvisit* astvisit, enum kbastorder order) {
+    astvisit->order = order;
+    astvisit->ast = ast;
+    astvisit->ctx = ctx;
+    astvisit->visit = NULL;
+    astvisit->visit = visit;
 }
 
 static void indent(FILE* out, int level) {
     for (int ii=0; ii<level; ++ii) {
-        fprintf(out, "    ");
+        fprintf(out, "  ");
     }
 }
 
-int kbastvisitor_rec(struct kbastvisitor* astvisitor, int nid, int depth) {
-    if (nid == -1) return 0;
-    struct kbnode* node = &astvisitor->ast->nodes[nid];
-    astvisitor->cur.nid = nid;
-    astvisitor->cur.depth = depth;
+int kbastvisit_rec(struct kbastvisit* astvisit, int nid, int depth) {
+    if (nid == -1) {
+        return 0;
+    }
+    struct kbnode* node = &astvisit->ast->nodes.data[nid];
+    astvisit->cur.nid = nid;
+    astvisit->cur.depth = depth;
 
-    if(astvisitor->order & PreOrder) {
-        astvisitor->curop = PreOrder;
-        astvisitor->visit(astvisitor);
+    if(astvisit->order & PreOrder) {
+        astvisit->curop = PreOrder;
+        astvisit->visit(astvisit);
     }
     
     switch(node->kind) {
-        case NFile:
+        case NProgram:
         case NSeq:
         case NFunParams:
         case NIfElse:
         case NCallParams:
             for(int i = 0; i < node->data.group.numitems; ++i) {
-                kbastvisitor_rec(astvisitor, node->data.group.items[i], depth + 1);
+                kbastvisit_rec(astvisit, node->data.group.items[i], depth + 1);
             }
             break;
         case NFun:
-            kbastvisitor_rec(astvisitor, node->data.fun.id, depth + 1);
-            kbastvisitor_rec(astvisitor, node->data.fun.funparams, depth + 1);
-            kbastvisitor_rec(astvisitor, node->data.fun.rettype, depth + 1);
-            kbastvisitor_rec(astvisitor, node->data.fun.funbody, depth + 1);
+            kbastvisit_rec(astvisit, node->data.fun.id, depth + 1);
+            kbastvisit_rec(astvisit, node->data.fun.funparams, depth + 1);
+            kbastvisit_rec(astvisit, node->data.fun.rettype, depth + 1);
+            kbastvisit_rec(astvisit, node->data.fun.body, depth + 1);
             break;
         case NFunParam:
-            kbastvisitor_rec(astvisitor, node->data.funparam.id, depth + 1);
-            kbastvisitor_rec(astvisitor, node->data.funparam.type, depth + 1);
+            kbastvisit_rec(astvisit, node->data.funparam.id, depth + 1);
+            kbastvisit_rec(astvisit, node->data.funparam.type, depth + 1);
             break;
         case NCall:
-            kbastvisitor_rec(astvisitor, node->data.call.id, depth + 1);
-            kbastvisitor_rec(astvisitor, node->data.call.callparams, depth + 1);
+            kbastvisit_rec(astvisit, node->data.call.id, depth + 1);
+            kbastvisit_rec(astvisit, node->data.call.callparams, depth + 1);
             break;
         case NAssign:
             break;
         case NId:
             break;
         case NCallParam:
-            kbastvisitor_rec(astvisitor, node->data.callparam.expr, depth + 1);
+            kbastvisit_rec(astvisit, node->data.callparam.expr, depth + 1);
             break;
         case NIfBranch:
         case NElifBranch:
-            kbastvisitor_rec(astvisitor, node->data.ifbranch.cond, depth + 1);
-            kbastvisitor_rec(astvisitor, node->data.ifbranch.conseq, depth + 1);
+            kbastvisit_rec(astvisit, node->data.ifbranch.cond, depth + 1);
+            kbastvisit_rec(astvisit, node->data.ifbranch.conseq, depth + 1);
             break;
         case NElseBranch:
-            kbastvisitor_rec(astvisitor, node->data.ifbranch.conseq, depth + 1);
+            kbastvisit_rec(astvisit, node->data.ifbranch.conseq, depth + 1);
         default:
             break;
     }
 
-    astvisitor->cur.nid = nid;
-    astvisitor->cur.depth = depth;
-    if(astvisitor->order & PostOrder) {
-        astvisitor->curop = PostOrder;
-        astvisitor->visit(astvisitor);
+    astvisit->cur.nid = nid;
+    astvisit->cur.depth = depth;
+    if(astvisit->order & PostOrder) {
+        astvisit->curop = PostOrder;
+        astvisit->visit(astvisit);
     }
     return 1;
 }
 
-void kbastvisitor_run(struct kbastvisitor* astvisitor) {
-    kbastvisitor_rec(astvisitor, 0, 0);
+void kbastvisit_run(struct kbastvisit* astvisit) {
+    kbastvisit_rec(astvisit, 0, 0);
 }
 
-void kbastvisitor_del(struct kbastvisitor* astvisitor) {
-    unused(astvisitor);
+void kbastvisit_del(struct kbastvisit* astvisit) {
+    unused(astvisit);
 }
 
-static int display_aux(struct kbastvisitor* astvisitor) {
-    struct kbnode* node = &astvisitor->ast->nodes[astvisitor->cur.nid];
-    FILE* out = (FILE*)astvisitor->ctx;
-    indent(out, astvisitor->cur.depth);
-    fprintf(out, "%s", kbnode_kind_str(node->kind));
+struct kbast_disp_ctx {
+    FILE* out;
+    struct kbastinfo* astinfo;
+};
+
+static int display_aux(struct kbastvisit* astvisit) {
+    struct kbnode* node = &astvisit->ast->nodes.data[astvisit->cur.nid];
+    struct kbast_disp_ctx* ctx = (struct kbast_disp_ctx*)astvisit->ctx;
+
+    indent(ctx->out, astvisit->cur.depth);
+    fprintf(ctx->out, BWHT "%s" RESET " <%d:%d>", kbnode_kind_str(node->kind), node->loc.line, node->loc.col);
+
     switch(node->kind) {
         case NType:
-            fprintf(out, " \"%s\"\n", node->data.type.name);
+            fprintf(ctx->out, " = \"%s\"", node->data.type.name);
             break;
         case NStrLit:
-            fprintf(out, " \"%s\"\n", node->data.strlit.value);
+            fprintf(ctx->out, " = " BYEL "\"%s\"" RESET, node->data.strlit.value);
             break;
         case NIntLit:
-            fprintf(out, " %s\n", node->data.intlit.value);
+            fprintf(ctx->out, " = " BYEL "%s" RESET, node->data.intlit.value);
             break;
         case NFloatLit:
-            fprintf(out, " %s\n", node->data.floatlit.value);
+            fprintf(ctx->out, " = " BYEL "%s" RESET, node->data.floatlit.value);
             break;
         case NCharLit:
-            fprintf(out, " \'%s\'\n", node->data.charlit.value);
+            fprintf(ctx->out, " = " BYEL "\'%s\'" RESET, node->data.charlit.value);
             break;
         case NId:
-            fprintf(out, " \"%s\"\n", node->data.id.name);
-            break;
-        case NSym:
-            fprintf(out, " \"%s\"\n", kbtoken_string(node->data.sym.kind));
+            fprintf(ctx->out, " = \"%s\"", node->data.id.name);
             break;
         default:
-            fprintf(out, "\n");
             break;
     }
+    if (ctx->astinfo) {
+        struct kbtype* type = ctx->astinfo->types.data[astvisit->cur.nid];
+        if (type) {
+            fprintf(ctx->out, " :: " GRN);
+            kbtype_display(ctx->astinfo->types.data[astvisit->cur.nid]);
+            fprintf(ctx->out, RESET);
+        }
+    }
+    fprintf(ctx->out, "\n");
     return 1;
 }
 
-void kbast_display(FILE* out, struct kbast* ast) {
-    struct kbastvisitor visdisp;
-    kbastvisitor_new(ast, out, display_aux, &visdisp, PreOrder);
-    kbastvisitor_run(&visdisp);
-    kbastvisitor_del(&visdisp);
+void kbast_display(FILE* out, struct kbast* ast, struct kbastinfo* astinfo) {
+    struct kbastvisit visdisp;
+    struct kbast_disp_ctx ctx = {
+        .out = out,
+        .astinfo = astinfo,
+    };
+    kbastvisit_new(ast, &ctx, display_aux, &visdisp, PreOrder);
+    kbastvisit_run(&visdisp);
+    kbastvisit_del(&visdisp);
 }
 
-static int del_aux(struct kbastvisitor* astvisitor) {
-    struct kbnode* node = &astvisitor->ast->nodes[astvisitor->cur.nid];
+static int del_aux(struct kbastvisit* astvisit) {
+    struct kbnode* node = &astvisit->ast->nodes.data[astvisit->cur.nid];
     switch(node->kind) {
         case NCallParams:
         case NSeq:
         case NFunParams:
-        case NFile:
+        case NProgram:
         case NIfElse:
             if(node->data.group.numitems) {
                 kbfree(node->data.group.items);
@@ -161,6 +183,7 @@ static int del_aux(struct kbastvisitor* astvisitor) {
             kbfree(node->data.floatlit.value);
             break;
         case NCharLit:
+            kbfree(node->data.floatlit.value);
             break;
         case NAssign:
             break;
@@ -173,34 +196,21 @@ static int del_aux(struct kbastvisitor* astvisitor) {
     return 1;
 }
 
-static void kbtype_del_aux(void* data) {
-    struct kbtype* type = (struct kbtype*) data;
-    kbtype_del(type);
-}
-
-void kbast_new(struct kbast* ast) {
-    ast->capacity = 0;
-    ast->numnodes = 0;
-    ast->nodes = NULL;
-}
-
-int kbast_add(struct kbast* ast, enum kbnode_kind kind, int parent) {
-    if (ast->numnodes == ast->capacity) {
-        ast->capacity = (ast->capacity == 0)? INITNUMNODES : 2 * ast->capacity;
-        ast->nodes = kbrealloc(ast->nodes, sizeof(ast->nodes[0]) * ast->capacity);
-    }
-    ast->nodes[ast->numnodes].kind = kind;
-    ast->nodes[ast->numnodes].parent = parent;
-    memset(&ast->nodes[ast->numnodes].data, 0, sizeof(ast->nodes[ast->numnodes].data));
-    return ast->numnodes++;
+int kbast_add(struct kbast* ast, enum kbnode_kind kind, int parent, struct kbloc loc) {
+    struct kbnode node = {
+        .kind = kind,
+        .parent = parent,
+        .loc = loc,
+    };
+    memset(&node.data, 0, sizeof(node.data));
+    kbvec_node_push(&ast->nodes, node);
+    return ast->nodes.size - 1;
 }
 
 void kbast_del(struct kbast* ast) {
-    struct kbastvisitor visdel;
-    kbastvisitor_new(ast, NULL, del_aux, &visdel, PostOrder);
-    kbastvisitor_run(&visdel);
-    kbastvisitor_del(&visdel);
-    if(ast->capacity) {
-        kbfree(ast->nodes);
-    }
+    struct kbastvisit visdel;
+    kbastvisit_new(ast, NULL, del_aux, &visdel, PostOrder);
+    kbastvisit_run(&visdel);
+    kbastvisit_del(&visdel);
+    kbvec_node_del(&ast->nodes);
 }

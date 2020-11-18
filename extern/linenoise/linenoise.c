@@ -108,6 +108,7 @@
  * This could probably be made to work for the msvc compiler too.
  * This support based in part on work by Jon Griffiths.
  */
+#define _GNU_SOURCE
 
 #ifdef _WIN32 /* Windows platform, either MinGW or Visual Studio (MSVC) */
 

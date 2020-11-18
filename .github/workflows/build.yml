@@ -34,6 +34,9 @@ jobs:
       - name: Compile
         run: make -j$(nproc) CC=${{ matrix.cc }} config=${{ matrix.config }}
 
+      - name: Say hello world
+        run: ./bin/${{ matrix.config }}/kobalt docs/example/hello_world.kb
+
   build-windows:
     runs-on: windows-latest
     strategy:
@@ -56,3 +59,6 @@ jobs:
         run: |
           .\tools\vsenv.ps1
           msbuild kobalt.sln -m -p:CLToolExe=${{ matrix.cc }} -p:Configuration=${{ matrix.config }}
+
+      - name: Say hello world
+        run: .\bin\${{ matrix.config }}\kobalt docs\example\hello_world.kb

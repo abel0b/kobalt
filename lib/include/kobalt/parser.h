@@ -9,8 +9,7 @@
 #include "kobalt/ast.h"
 
 struct kbparser {
-    struct kbtoken* tokens;
-    int numtokens;
+    struct kbvec_token* tokens;
     int curnode;
     struct kbast * ast;
     struct kberrvec errvec;
@@ -22,12 +21,12 @@ struct kbparser {
 
 struct kbparser kbparser_make(struct kbtoken * tokens, struct kbsrc * src);
 
-void kbparser_new(struct kbparser* parser, struct kbtoken* tokens, int numtokens, struct kbsrc* src, struct kbast* ast);
+void kbparser_new(struct kbparser* parser, struct kbvec_token* tokens, struct kbsrc* src, struct kbast* ast);
 
 void kbparser_run(struct kbparser* parser);
 
 void kbparser_del(struct kbparser * parser);
 
-void kbparse(struct kbtoken* tokens, int numtokens, struct kbsrc* src, struct kbast* ast);
+void kbparse(struct kbvec_token* tokens, struct kbsrc* src, struct kbast* ast);
 
 #endif

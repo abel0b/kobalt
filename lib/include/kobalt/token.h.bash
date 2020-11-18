@@ -3,6 +3,7 @@ cat << END
 #define KBTOKEN__H
 
 #include "kobalt/kobalt.h"
+#include "kobalt/vec.h"
 #include <stdio.h>
 
 #define NUM_SPECIALS $(($(wc -l lib/kobalt/token.csv | awk '{printf $1}')+2))
@@ -26,12 +27,20 @@ cat << END
     TILLEGAL,
 };
 
-struct kbtoken {
-    enum kbtoken_kind kind;
-    char * value;
+struct kbloc {
     int line;
     int col;
 };
+
+struct kbtoken {
+    enum kbtoken_kind kind;
+    char* value;
+    struct kbloc loc;
+};
+
+kbvec_decl(struct kbtoken, token)
+
+int is_builtin_fun(enum kbtoken_kind tok_kind);
 
 struct kbtoken kbtoken_make(enum kbtoken_kind kind, char* value, int line, int col);
 

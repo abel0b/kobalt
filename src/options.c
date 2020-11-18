@@ -17,7 +17,7 @@
 #endif
 
 void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
-    opts->stage = CODEGEN;
+    opts->stage = LexingStage | ParsingStage | TypingStage | CGenStage | CCStage | ExecStage;
     opts->optim = 0;
     opts->run = 0;
     opts->output = NULL;
@@ -27,10 +27,10 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
     opts->verbosity = 1;
     kbvec_new(&opts->exe_argv, sizeof(char*));
 
-    unsigned int ii = 1;
+    int ii = 1;
     bool endopts = false;
-    while (ii<(unsigned int)argc) {
-        unsigned int jj = ii;
+    while (ii < argc) {
+        int jj = ii;
         if (strcmp(argv[jj], "--") == 0) {
             endopts = true;
         }
@@ -38,15 +38,18 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
             if (strlen(argv[jj]) == 2) {
                 char optopt = argv[jj][1];
                 char * optarg = NULL;
-                if (jj+1<(unsigned int)argc && argv[jj+1][0] != '-') {
+                if (jj + 1 < argc && argv[jj + 1][0] != '-') {
                     optarg = argv[jj+1];
                 }
                 switch (optopt) {
                     case 'L':
-                        opts->stage = LEX;
+                        opts->stage = LexingStage;
+                        break;
+                    case 'P':
+                        opts->stage = LexingStage | ParsingStage;
                         break;
                     case 'T':
-                        opts->stage = PARSE;
+                        opts->stage = LexingStage | ParsingStage | TypingStage;
                         break;
                     case 'v':
                         printf("Kobalt Language Compiler v%s\n\n", KBVERSION);
@@ -62,10 +65,10 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
                         printf("Usage: %s [file...]\n", argv[0]);
                         printf("Options:\n");
                         printf("  -o  output file\n");
-                        printf("  -V  enable verbose mode\n");
                         printf("  -v  display version\n");
                         printf("  -L  lexing stage\n");
-                        printf("  -T  parsing stage\n");
+                        printf("  -P  parsing stage: produce ast\n");
+                        printf("  -I  type inference stage: produce typed ast\n");
                         exit(0);
                         break;
                     case 'o':
@@ -105,7 +108,7 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
                     srcs_capacity = 2 * srcs_capacity;
                     opts->srcs = kbrealloc(opts->srcs, sizeof(opts->srcs[0]) * srcs_capacity);
                 }
-                int st = 1;
+                int st = 0;
                 if (argv[jj][0] == '.') {
                     while(isds(argv[jj][st])) {
                         st ++;
@@ -169,18 +172,6 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
     opts->cachedir[cachedirsize - 1] = '\0';
     genuid(opts->cachedir + strlen(opts->cachedir));
     ensuredir(opts->cachedir);
-}
-
-char * kbstage_string(enum kbstage stage) {
-    switch (stage) {
-        case LEX:
-            return "LEX";
-        case PARSE:
-            return "PARSE";
-        case CODEGEN:
-            return "CODEGEN";
-    }
-    return "UNDEFINED";
 }
 
 void kbopts_del(struct kbopts* opts) {

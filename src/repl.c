@@ -1,15 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "kobalt/kobalt.h"
 #include "linenoise.h"
+#include "kobalt/log.h"
 
 int eval(char* prog) {
+    unused(prog);
     printf("val _ : foo = <bar>\n");
     return 0;
 }
 
 int kb_repl() {
-    printf("Kobalt v0.1.0\n");
+    printf("Kobalt v%s\n", KBVERSION);
+    kbilog("the REPL is not currently implemented");
     const char *prompt = "> ";
     char *line;
     int loop = 1;
@@ -24,7 +28,7 @@ int kb_repl() {
             eval(line);
         }
         else if (!strncmp(line,"/historylen", 11)) {
-            int len = atoi(line+11);
+            int len = atoi(line + 11);
             linenoiseHistorySetMaxLen(len);
         }
         else if (!strncmp(line, "/exit", 5)) {

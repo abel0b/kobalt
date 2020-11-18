@@ -4,14 +4,17 @@
 #include "kobalt/kobalt.h"
 #include "kobalt/vec.h"
 
+kbvec_decl(struct kbtype*, type)
+
 enum kbtypekind {
-    Unit = 1,
-    Int = 2,
-    Char = 4,
-    FLoat = 8,
-    Fun = 16,
-    Array = 32,
-    Var = 64,
+    Unit = 0,
+    Int = 1,
+    Char = 2,
+    Float = 3,
+    Fun = 4,
+    Array = 5,
+    Var = 6,
+    Str = 7,
 };
 
 struct kbarraytype {
@@ -19,7 +22,7 @@ struct kbarraytype {
 };
 
 struct kbfuntype {
-    struct kbvec in_types;
+    struct kbvec_type in_types;
     struct kbtype* out_type;
 };
 

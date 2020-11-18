@@ -5,8 +5,8 @@
 
 char * kbnode_kind_str(enum kbnode_kind kind) {
     switch(kind) {
-        case NFile:
-            return "File";
+        case NProgram:
+            return "Program";
         case NFun:
             return "Fun";
         case NFunParams:
@@ -60,5 +60,5 @@ char * kbnode_kind_str(enum kbnode_kind kind) {
 }
 
 int isgroup(struct kbnode *node) {
-    return node->kind == NFile || node->kind == NFunParams || node->kind == NSeq || node->kind == NCallParams || node->kind == NIfElse || node->kind == NCase;
+    return node->kind == NProgram || node->kind == NFunParams || node->kind == NSeq || node->kind == NCallParams || node->kind == NIfElse || node->kind == NCase;
 }
