@@ -61,4 +61,6 @@ jobs:
           msbuild kobalt.sln -m -p:CLToolExe=${{ matrix.cc }} -p:Configuration=${{ matrix.config }}
 
       - name: Say hello world
-        run: .\bin\${{ matrix.config }}\kobalt doc\examples\hello_world.kb
+        run: |
+          .\tools\vsenv.ps1
+          .\bin\${{ matrix.config }}\kobalt doc\examples\hello_world.kb
