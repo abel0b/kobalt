@@ -92,6 +92,8 @@ jobs:
     needs: [build-unix, build-windows]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v2
       
@@ -107,23 +109,11 @@ jobs:
         with:
           name: kobalt-prerelease-windows
 
-      - name: Create Release
-        continue-on-error: true
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: latest
-          release_name: Prerelease
-          draft: false
-          prerelease: true
-          body: These are the artifacts obtained for the last successful build on master branch.
-      
-      - name: Upload release assets
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Delete old release
         run: |
-          hub release edit -a kobalt-prerelease-linux.tar.gz -m "" latest
-          hub release edit -a kobalt-prerelease-macosx.tar.gz -m "" latest
-          hub release edit -a kobalt-prerelease-windows.zip -m "" latest
+          hub release delete latest || true
+          git tag -d latest || true
+          git push origin --delete latest || true
+
+      - name: Create prerelease
+        run: hub release create -p -m -a kobalt-prerelease-linux.tar.gz -a kobalt-prerelease-macosx.tar.gz -a kobalt-prerelease-windows.zip "Prerelease\n\nThese are the artifacts obtained for the latest successful build on master branch." latest
