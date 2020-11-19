@@ -108,17 +108,17 @@ jobs:
           name: kobalt-prerelease-windows
 
       - name: Create Release
+        continue-on-error: true
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: prerelease
+          tag_name: latest
           release_name: Prerelease
           draft: false
           prerelease: true
-          allowUpdates: true
           body: These are the artifacts obtained for the last successful build on master branch.
       
       - name: Upload release assets
-        run: hub release edit -a kobalt-prerelease-linux.tar.gz -a kobalt-prerelease-macosx.tar.gz -a kobalt-prerelease-windows.zip  -m "" prerelease
+        run: hub release edit -a kobalt-prerelease-linux.tar.gz -a kobalt-prerelease-macosx.tar.gz -a kobalt-prerelease-windows.zip  -m "" latest
