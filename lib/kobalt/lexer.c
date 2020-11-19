@@ -476,6 +476,9 @@ void kblexer_next(struct kblexer* lexer, struct kbvec_token* tokens, char ch) {
 
 void kblexer_run(struct kblexer* lexer, struct kbsrc* src, struct kbvec_token* tokens) { 
     for (int i = 0; i < src->length; ++i) {
+        if (src->content[i] == '\r' && i < src->length - 1 && src->content[i + 1] == '\n') {
+            continue;
+        }
         if (src->content[i] == '\n') {
             lexer->prev_col = lexer->col;
             lexer->line ++;
@@ -488,7 +491,9 @@ void kblexer_run(struct kblexer* lexer, struct kbsrc* src, struct kbvec_token* t
     }
     
     // add line feed if not present
-    if (src->content[src->length - 1] != '\n') kblexer_next(lexer, tokens, '\n');
+    if (src->content[src->length - 1] != '\n') {
+        kblexer_next(lexer, tokens, '\n');
+    }
 
     while (lexer->indent_level-- > 0) {
         kblexer_push_token(lexer, tokens, kbtoken_make(TDedent, NULL, lexer->line, lexer->col));
