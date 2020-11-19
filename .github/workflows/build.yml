@@ -93,16 +93,20 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     steps:
+      - uses: actions/checkout@v2
+      
       - uses: actions/download-artifact@v2
         with:
           name: kobalt-prerelease-linux
+      
       - uses: actions/download-artifact@v2
         with:
           name: kobalt-prerelease-macosx
+      
       - uses: actions/download-artifact@v2
         with:
           name: kobalt-prerelease-windows
-      - run: ls -lah
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -114,5 +118,6 @@ jobs:
           draft: false
           prerelease: true
           body: These are the artifacts obtained for the last successful build on master branch.
+      
       - name: Upload release assets
         run: hub release edit -a kobalt-prerelease-linux.tar.gz -a kobalt-prerelease-macosx.tar.gz -a kobalt-prerelease-windows.zip  -m "" prerelease
