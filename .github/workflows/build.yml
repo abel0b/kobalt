@@ -121,4 +121,9 @@ jobs:
           body: These are the artifacts obtained for the last successful build on master branch.
       
       - name: Upload release assets
-        run: hub release edit -a kobalt-prerelease-linux.tar.gz -a kobalt-prerelease-macosx.tar.gz -a kobalt-prerelease-windows.zip  -m "" latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          hub release edit -a kobalt-prerelease-linux.tar.gz -m "" latest
+          hub release edit -a kobalt-prerelease-macosx.tar.gz -m "" latest
+          hub release edit -a kobalt-prerelease-windows.zip -m "" latest
