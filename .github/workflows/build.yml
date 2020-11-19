@@ -17,10 +17,8 @@ jobs:
         include:
           - os: ubuntu-latest
             osname: linux
-            release_name: kobalt-prerelease-linux
           - os: macos-latest
             osname: macosx
-            release_name: kobalt-prerelease-macos
 
     steps:
       - uses: actions/checkout@v2
@@ -47,8 +45,8 @@ jobs:
         if: github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.release_name }}
-          path: dist/${{ matrix.release_name }}.tar.gz
+          name: kobalt-prerelease-${{ matrix.osname }}
+          path: dist/kobalt-prerelease-${{ matrix.osname }}.tar.gz
 
   build-windows:
     runs-on: windows-latest
@@ -100,7 +98,7 @@ jobs:
           name: kobalt-prerelease-linux
       - uses: actions/download-artifact@v2
         with:
-          name: kobalt-prerelease-macos
+          name: kobalt-prerelease-macosx
       - uses: actions/download-artifact@v2
         with:
           name: kobalt-prerelease-windows
@@ -117,4 +115,4 @@ jobs:
           prerelease: true
           body: These are the artifacts obtained for the last successful build on master branch.
       - name: Upload release assets
-        run: hub release edit -a kobalt-prerelease-linux.tar.gz -a kobalt-prerelease-macos.tar.gz -a kobalt-prerelease-windows.zip  -m "" prerelease
+        run: hub release edit -a kobalt-prerelease-linux.tar.gz -a kobalt-prerelease-macosx.tar.gz -a kobalt-prerelease-windows.zip  -m "" prerelease
