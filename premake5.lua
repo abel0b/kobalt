@@ -42,20 +42,54 @@ newoption {
     default = "/usr/local",
 }
 
+function install_action (prefix)
+    if os.host() == "windows" then
+        exe = ".exe"
+    else
+        exe = ""
+    end        
+    bindir = prefix .. "/bin"
+    libdir = prefix .. "/lib"
+    os.mkdir(bindir)
+    os.mkdir(libdir)
+    os.copyfile("bin/release/kobalt" .. exe, bindir)
+    if os.host() == "windows" then
+        os.copyfile("bin/release/kb.lib" .. exe, libdir)
+    else
+        os.copyfile("bin/release/libkb.a" .. exe, libdir)
+    end
+
+end
+
 newaction {
     trigger = "install",
-    description = "Install kobalt",
+    description = "Install kobalt on unix",
     execute = function ()
-        if os.host() == "windows" then
-            io.stderr:write("install command is not available on windows")
-            os.exit(1)
-        end
-        os.copyfile("./bin/release/kobalt", _OPTIONS["prefix"] .. "/bin")
+        install_action(_OPTIONS["prefix"])
     end
 }
 
 newaction {
-    trigger = "export-compile-command",
+    trigger = "release",
+    description = "Create release archive",
+    execute = function ()
+        slug = "kobalt-prerelease-" .. os.host()
+        reldir = "tmp/" .. slug
+        install_action(reldir)
+        os.mkdir("dist")
+        os.chdir(reldir)
+        if os.host() == "windows" then
+            tarcmd = "tar.exe -a -c -f ../../dist/" .. slug .. ".zip " .. "bin lib"
+        else
+            tarcmd = "tar czvf ../../dist/" .. slug .. ".tar.gz " .. "bin lib"
+        end
+        print(tarcmd)
+        os.execute(tarcmd)
+    end
+}
+
+newaction {
+    trigger = "gen-compile-flags",
     description = "Generate compile_flags.txt for clangd",
     execute = function ()
         flags = io.open("compile_flags.txt", "w")

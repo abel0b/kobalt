@@ -16,9 +16,11 @@ jobs:
         cc: [gcc, clang]
         include:
           - os: ubuntu-latest
-            osname: "linux"
+            osname: linux
+            release_name: kobalt-prerelease-linux
           - os: macos-latest
-            osname: "macosx"
+            osname: macosx
+            release_name: kobalt-prerelease-macos
 
     steps:
       - uses: actions/checkout@v2
@@ -36,6 +38,17 @@ jobs:
 
       - name: Say hello world
         run: ./bin/${{ matrix.config }}/kobalt doc/examples/hello_world.kb
+
+      - name: Create release archive
+        if: github.ref == 'refs/heads/master'
+        run: ./premake5 release
+
+      - name: Upload release archive
+        if: github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.release_name }}
+          path: dist/${{ matrix.release_name }}.tar.gz
 
   build-windows:
     runs-on: windows-latest
@@ -64,3 +77,72 @@ jobs:
         run: |
           .\tools\vsenv.ps1
           .\bin\${{ matrix.config }}\kobalt doc\examples\hello_world.kb
+
+      - name: Create release archive
+        if: github.ref == 'refs/heads/master'
+        run: ./premake5 release
+
+      - name: Upload release archive
+        if: github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v2
+        with:
+          name: kobalt-prerelease-windows
+          path: dist/kobalt-prerelease-windows.zip
+    
+  release:
+    name: Release
+    needs: [build-unix, build-windows]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: kobalt-prerelease-linux
+      - uses: actions/download-artifact@v2
+        with:
+          name: kobalt-prerelease-macos
+      - uses: actions/download-artifact@v2
+        with:
+          name: kobalt-prerelease-windows
+      - run: ls -lah
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: prerelease
+          release_name: Prerelease
+          draft: false
+          prerelease: true
+          body: These are the artifacts obtained for the last successful build on master branch.
+      - name: Upload Windows release assets
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: kobalt-prerelease-windows.zip
+          asset_name: kobalt-prerelease-windows.zip
+          asset_content_type: application/zip
+      - name: Upload Linux release assets
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: kobalt-prerelease-linux.tar.gz
+          asset_name: kobalt-prerelease-linux.tar.gz
+          asset_content_type: application/gzip
+      - name: Upload MacOS release assets
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: kobalt-prerelease-macos.tar.gz
+          asset_name: kobalt-prerelease-macos.tar.gz
+          asset_content_type: application/gzip
