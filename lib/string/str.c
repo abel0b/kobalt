@@ -29,6 +29,13 @@ void kbstr_catf(struct kbstr* str, char* fmt, ...) {
     str->len += len;
 }
 
+void kbstr_cat(struct kbstr* str, char* src) {
+    int len = strlen(src);
+    strcpy(&str->data[str->len], src);
+    str->len += len;
+}
+
+
 void kbstr_del(struct kbstr* str) {
     if (str->data) {
         kbfree(str->data);

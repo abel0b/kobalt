@@ -9,6 +9,7 @@ struct kbstr {
 
 void kbstr_new(struct kbstr* str);
 void kbstr_catf(struct kbstr* str, char* fmt, ...);
+void kbstr_cat(struct kbstr* str, char* src);
 void kbstr_del(struct kbstr* str);
 
 #endif

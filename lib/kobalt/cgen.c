@@ -249,7 +249,7 @@ static void cgen_call(struct kbast* ast, struct kbastinfo* astinfo, struct kbcge
         kbstr_stack_pushf(&ctx->vals, "val%d", retval);
     }
     else {
-        kbstr_stack_pushf(&ctx->vals, "void");
+        kbstr_stack_push(&ctx->vals, "void");
     }
 }
 

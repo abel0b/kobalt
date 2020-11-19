@@ -45,9 +45,6 @@ char* kbstr_stack_push(struct kbstr_stack* str_stack, char* str) {
 char* kbstr_stack_pop(struct kbstr_stack* str_stack) {
     char* str = kbvec_cstr_pop(&str_stack->stack);
     kbobjpool_pop(&str_stack->objpool, strlen(str) + 1);
-#if DEBUG
-    // kbilog("str_stack pop %s", str);
-#endif
     return str;
 }
 
