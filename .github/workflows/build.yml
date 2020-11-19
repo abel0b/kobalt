@@ -117,6 +117,7 @@ jobs:
           release_name: Prerelease
           draft: false
           prerelease: true
+          allowUpdates: true
           body: These are the artifacts obtained for the last successful build on master branch.
       
       - name: Upload release assets
