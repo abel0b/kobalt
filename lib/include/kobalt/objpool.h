@@ -23,6 +23,6 @@ void kbobjpool_new(struct kbobjpool* objpool, size_t elem_size, void del(void*))
 void kbobjpool_del(struct kbobjpool* objpool);
 void* kbobjpool_alloc(struct kbobjpool* objpool);
 void* kbobjpool_arralloc(struct kbobjpool* objpool, int n);
-void kbobjpool_pop(struct kbobjpool* objpool, size_t size);
+void kbobjpool_pop(struct kbobjpool* objpool, int size);
 
 #endif
