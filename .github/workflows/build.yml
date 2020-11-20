@@ -116,4 +116,8 @@ jobs:
           git push origin --delete latest || true
 
       - name: Create Release
-        run: hub release create -p -a kobalt-prerelease-linux.tar.gz -a kobalt-prerelease-macosx.tar.gz -a kobalt-prerelease-windows.zip -m "Prerelease\n\nThese are the artifacts obtained for the latest successful build on master branch." latest
+        run: |
+          echo "Prerelease #${{ github.run_id }}" > release_notes.md
+          echo >> release_notes.md
+          echo >> "These are the artifacts obtained for the latest successful build on master branch."
+          hub release create -p -a kobalt-prerelease-linux.tar.gz -a kobalt-prerelease-macosx.tar.gz -a kobalt-prerelease-windows.zip --file release_notes.md latest
