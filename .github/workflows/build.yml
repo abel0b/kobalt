@@ -119,5 +119,5 @@ jobs:
         run: |
           echo "Prerelease v0.1.0-alpha.${{ github.run_number }}" > release_notes.md
           echo >> release_notes.md
-          echo >> "These are the artifacts obtained for the latest successful build on master branch." >> release_notes.md
+          echo "These are the artifacts obtained for the latest successful build on master branch." >> release_notes.md
           hub release create -p -a kobalt-prerelease-linux.tar.gz -a kobalt-prerelease-macosx.tar.gz -a kobalt-prerelease-windows.zip --file release_notes.md latest
