@@ -1,7 +1,7 @@
 #ifndef KOBALT__H
 #define KOBALT__H
 
-#define KBVERSION "0.1.0"
+#include "kobalt/version.h"
 
 #include <stdlib.h>
 #include "kobalt/log.h"
