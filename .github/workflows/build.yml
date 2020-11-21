@@ -24,7 +24,9 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install Lua
-        uses: leafo/gh-actions-lua@v8.0.0
+        uses: xpol/setup-lua@v1
+        with:
+          lua-version: "5.4.0"
 
       - name: Install premake
         run : |
@@ -65,7 +67,9 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install Lua
-        uses: leafo/gh-actions-lua@v8.0.0
+        uses: xpol/setup-lua@v1
+        with:
+          lua-version: "5.4.0"
 
       - name: Install premake
         run: |
