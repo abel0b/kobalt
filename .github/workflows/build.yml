@@ -24,11 +24,9 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install Lua
-        uses: xpol/setup-lua@v0.2
+        uses: abel0b/setup-lua@v1
         with:
           lua-version: "5.3.5"
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 
       - name: Install premake
         run : |
@@ -69,11 +67,9 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install Lua
-        uses: xpol/setup-lua@v0.2
+        uses: abel0b/setup-lua@v1
         with:
           lua-version: "5.3.5"
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 
       - name: Install premake
         run: |
