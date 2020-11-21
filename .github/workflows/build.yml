@@ -11,13 +11,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-20.04, macos-10.15]
         config: [release]
         cc: [gcc, clang]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             osname: linux
-          - os: macos-latest
+          - os: macos-10.15
             osname: macosx
 
     steps:
@@ -27,6 +27,8 @@ jobs:
         uses: xpol/setup-lua@v0.2
         with:
           lua-version: "5.3.5"
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 
       - name: Install premake
         run : |
@@ -46,11 +48,10 @@ jobs:
         run: ./bin/${{ matrix.config }}/kobalt doc/examples/hello_world.kb
 
       - name: Create release archive
-        if: github.ref == 'refs/heads/master'
         run: ./premake5 release
 
       - name: Upload release archive
-        if: github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v2
         with:
           name: kobalt-prerelease-${{ matrix.osname }}
@@ -58,6 +59,7 @@ jobs:
 
   build-windows:
     runs-on: windows-latest
+
     strategy:
       matrix:
         config: [release]
@@ -70,6 +72,8 @@ jobs:
         uses: xpol/setup-lua@v0.2
         with:
           lua-version: "5.3.5"
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 
       - name: Install premake
         run: |
@@ -93,11 +97,10 @@ jobs:
           .\bin\${{ matrix.config }}\kobalt doc\examples\hello_world.kb
 
       - name: Create release archive
-        if: github.ref == 'refs/heads/master'
         run: ./premake5 release
 
       - name: Upload release archive
-        if: github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v2
         with:
           name: kobalt-prerelease-windows
@@ -106,7 +109,9 @@ jobs:
   release:
     name: Release
     needs: [build-unix, build-windows]
-    runs-on: ubuntu-latest
+
+    runs-on: ubuntu-20.04
+
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
