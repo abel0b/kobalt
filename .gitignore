@@ -1,7 +1,8 @@
 /bin
 /obj
 /tmp
-/kbcache
 *.make
 Makefile
 *.sln
+*.vcxproj*
+compile_flags.txt

@@ -1,5 +1,6 @@
 # Kobalt
 ![build](https://github.com/abel0b/kobalt/workflows/build/badge.svg)
+
 The versatile language and toolchain for pragmatic programmers.
 
 ## Ambitions

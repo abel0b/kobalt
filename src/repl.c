@@ -12,7 +12,7 @@ int eval(char* prog) {
 }
 
 int kb_repl() {
-    printf("Kobalt v%s\n", KBVERSION);
+    printf("Kobalt %s\n", KBVERSION);
     kbilog("the REPL is not currently implemented");
     const char *prompt = "> ";
     char *line;

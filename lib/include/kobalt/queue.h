@@ -23,6 +23,7 @@ void kbqueue_dequeue(struct kbqueue* queue, void* elem);
 #define kbqueue_decl(TYPE, NAME) \
 struct kbqueue_##NAME {\
     TYPE* data;\
+    int front;\
     int size;\
     int capacity;\
 };\
@@ -30,13 +31,14 @@ void kbqueue_##NAME##_new(struct kbqueue_##NAME* queue);\
 void kbqueue_##NAME##_del(struct kbqueue_##NAME* queue);\
 void kbqueue_##NAME##_reserve(struct kbqueue_##NAME* queue, int newcap);\
 void kbqueue_##NAME##_enqueue(struct kbqueue_##NAME* queue, TYPE elem);\
-TYPE kbqueue_##NAME##_dequeue(struct kbqueue_##NAME* queue, int idx);\
+TYPE kbqueue_##NAME##_dequeue(struct kbqueue_##NAME* queue);\
 
 #define kbqueue_impl(TYPE, NAME)\
 void kbqueue_##NAME##_new(struct kbqueue_##NAME* queue) {\
-    queue->capacity = 0;\
+    queue->front = 0;\
+    queue->capacity = 8;\
     queue->size = 0;\
-    queue->data = NULL;\
+    queue->data = kbmalloc(sizeof(TYPE) * queue->capacity);\
 }\
 void kbqueue_##NAME##_del(struct kbqueue_##NAME* queue) {\
     if (queue->data) {\
@@ -51,15 +53,21 @@ void kbqueue_##NAME##_reserve(struct kbqueue_##NAME* queue, int newcap) {\
 }\
 void kbqueue_##NAME##_enqueue(struct kbqueue_##NAME* queue, TYPE elem) {\
     if (queue->capacity == queue->size) {\
-        kbqueue_##NAME##_reserve(queue, (queue->capacity == 0)? 8 : 2 * queue->capacity);\
+        int prev_cap = queue->capacity;\
+        kbqueue_##NAME##_reserve(queue, 2 * queue->capacity);\
+        if (queue->front + queue->size > prev_cap) {\
+            memcpy((char*)queue->data + (prev_cap - 1) * sizeof(TYPE), queue->data, sizeof(TYPE));\
+        }\
     }\
    queue->data[queue->size] = elem;\
-    ++ queue->size;\
+   ++ queue->size;\
 }\
 TYPE kbqueue_##NAME##_dequeue(struct kbqueue_##NAME* queue) {\
     assert(queue->size > 0);\
     -- queue->size;\
     return queue->data[queue->size];\
 }
+
+kbqueue_decl(int, int)
 
 #endif

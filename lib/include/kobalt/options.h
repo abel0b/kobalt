@@ -3,32 +3,26 @@
 
 #include "kobalt/kobalt.h"
 #include "kobalt/vec.h"
+#include "kobalt/queue.h"
+#include "kobalt/compiland.h"
+#include "kobalt/str.h"
 #include <stdio.h>
-
-enum kbstage {
-    LexingStage = 1,
-    ParsingStage = 2,
-    TypingStage = 4,
-    CGenStage = 8,
-    CCStage = 16,
-    ExecStage = 32,
-};
+#include <stdbool.h>
+#include "kobalt/stage.h"
 
 struct kbopts {
     int optim;
-    int run;
-    char verbosity;
-    enum kbstage stage;
-    char* cwd;
-    int numsrcs;
-    char** srcs;
-    char* output;
-    char* cachedir;
+    int verbosity;
+    int stages;
+    struct kbstr cwd;
+    struct kbvec inputs;
+    struct kbstr outpath;
+    struct kbstr cachepath;
     struct kbvec exe_argv;
 };
 
-void kbopts_new(int argc, char* argv[], struct kbopts* opts);
+void kbopts_new(struct kbopts* opts, int argc, char* argv[]);
 
-void kbopts_del(struct kbopts * options);
+void kbopts_del(struct kbopts* opts);
 
 #endif

@@ -55,6 +55,10 @@ char * kbnode_kind_str(enum kbnode_kind kind) {
             return "Let";
         case NMod:
             return "Mod";
+        case NImport:
+            return "Import";
+        case NExport:
+            return "Export";
     }
     return "UNDEFINED";
 }

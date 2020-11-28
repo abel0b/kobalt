@@ -3,6 +3,8 @@ workspace "kobalt"
     
     if os.host() == "windows" then
         defines { "WINDOWS=1", "_CRT_SECURE_NO_WARNINGS", "_CRT_NONSTDC_NO_WARNINGS" }
+    else
+        defines { "UNIX=1", "_POSIX_C_SOURCE=200809L" }
     end
 
     filter { "configurations:release", "toolset:clang or gcc" }
@@ -31,8 +33,8 @@ workspace "kobalt"
     project "kobalt"
         kind "ConsoleApp"
         language "C"
-        includedirs { "lib/include", "extern/linenoise", "std/include" }
-        files { "src/**.h", "src/**.c", "extern/linenoise/*.c" }
+        includedirs { "lib/include", "extern/linenoise", "extern/sha-2", "extern/base32", "std/include" }
+        files { "src/**.h", "src/**.c", "extern/linenoise/*.c", "extern/sha-2/*.c", "extern/base32/*.c" }
         links { "kb" }
 
 newoption {
@@ -96,6 +98,10 @@ newaction {
         flags:write("-Wall\n")
         flags:write("-Wextra\n")
         flags:write("-Iextern/linenoise\n")
+        flags:write("-Iextern/levenshtein\n")
+        flags:write("-Iextern/sha-2\n")
+        flags:write("-Iextern/base85\n")
+        flags:write("-Iextern/base32\n")
         flags:write("-Ilib/include\n")
         flags:write("-Istd/include\n")
         flags:close()

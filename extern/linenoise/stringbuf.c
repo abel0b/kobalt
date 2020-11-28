@@ -5,15 +5,16 @@
  *
  * See utf8.c for licence details.
  */
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
 
-#ifndef STRINGBUF_H
+
 #include "stringbuf.h"
-#endif
+
 #ifdef USE_UTF8
 #include "utf8.h"
 #endif

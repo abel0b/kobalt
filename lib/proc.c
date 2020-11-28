@@ -1,4 +1,3 @@
-#define _POSIX_C_SOURCE 1
 #include "kobalt/proc.h"
 #include "kobalt/log.h"
 #include "kobalt/str.h"

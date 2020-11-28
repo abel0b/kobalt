@@ -7,6 +7,25 @@
 #include <string.h>
 #include <assert.h>
 
+struct kbparser {
+    struct kbvec_token* tokens;
+    int curnode;
+    struct kbast* ast;
+    struct kberrvec errvec;
+    struct kbcompiland* compiland;
+    int capacity;
+    int numnodes;
+    int cursor;
+};
+
+struct kbparser kbparser_make(struct kbtoken* tokens, struct kbcompiland* compiland);
+
+void kbparser_new(struct kbparser* parser, struct kbvec_token* tokens, struct kbcompiland* compiland, struct kbast* ast);
+
+void kbparser_run(struct kbparser* parser);
+
+void kbparser_del(struct kbparser * parser);
+
 /* Get attribute of a given node */
 #define attr(P,N,A) (P->ast->nodes.data[N].data.N.A)
 
@@ -146,9 +165,9 @@ static struct kbtoken * unchecked_eat(struct kbparser* parser, enum kbtoken_kind
         char * strbuf = kbmalloc(128 * bufsize);
         int size;
 #if DEBUG
-    while ((size = snprintf(strbuf, bufsize, "(%s:%d) Unexpected token at %s:%d:%d\nExpected %s but got %s\n", file, line, parser->src->filename, parser->tokens->data[parser->cursor].loc.line, parser->tokens->data[parser->cursor].loc.col, kbtoken_string(kind), kbtoken_string(parser->tokens->data[parser->cursor].kind))) > bufsize) {
+    while ((size = snprintf(strbuf, bufsize, "(%s:%d) Unexpected token at %s:%d:%d\nExpected %s but got %s\n", file, line, parser->compiland->path.data, parser->tokens->data[parser->cursor].loc.line, parser->tokens->data[parser->cursor].loc.col, kbtoken_string(kind), kbtoken_string(parser->tokens->data[parser->cursor].kind))) > bufsize) {
 #else
-    while ((size = snprintf(strbuf, bufsize, "Unexpected token at %s:%d:%d\nExpected %s but got %s\n", parser->src->filename, parser->tokens->data[parser->cursor].loc.line, parser->tokens->data[parser->cursor].loc.col, kbtoken_string(kind), kbtoken_string(parser->tokens->data[parser->cursor].kind))) > bufsize) {
+    while ((size = snprintf(strbuf, bufsize, "Unexpected token at %s:%d:%d\nExpected %s but got %s\n", parser->compiland->path.data, parser->tokens->data[parser->cursor].loc.line, parser->tokens->data[parser->cursor].loc.col, kbtoken_string(kind), kbtoken_string(parser->tokens->data[parser->cursor].kind))) > bufsize) {
 #endif
             bufsize = size+1;
             strbuf = kbrealloc(strbuf, (size+1) * sizeof(char));
@@ -193,7 +212,7 @@ static struct kbtoken * unchecked_eatid(struct kbparser* parser, char * id) {
         int bufsize = 128;
         char * strbuf = kbmalloc(128 * bufsize);
         int size;
-        while ((size = snprintf(strbuf, bufsize, "Unexpected identifier at %s:%d:%d\nExpected %s but got %s\n", parser->src->filename, parser->tokens->data[parser->cursor].loc.line, parser->tokens->data[parser->cursor].loc.col, id, parser->tokens->data[parser->cursor].value)) > bufsize) {
+        while ((size = snprintf(strbuf, bufsize, "Unexpected identifier at %s:%d:%d\nExpected %s but got %s\n", parser->compiland->path.data, parser->tokens->data[parser->cursor].loc.line, parser->tokens->data[parser->cursor].loc.col, id, parser->tokens->data[parser->cursor].value)) > bufsize) {
             bufsize = size+1;
             strbuf = kbrealloc(strbuf, (size+1) * sizeof(char));
         }
@@ -443,6 +462,15 @@ static int make_lit(struct kbparser* parser) {
     return bubble(parser, -1);
 }
 
+static int make_import(struct kbparser* parser) {
+    int import = kbparser_addnode(parser, NImport);
+    eat(parser, TId);
+    struct kbtoken * tok = eat(parser, TId);
+    attr(parser, import, path) = kbmalloc(strlen(tok->value) + 1);
+    strcpy(attr(parser, import, path), tok->value);
+    return bubble(parser, import);
+}
+
 static int make_term(struct kbparser* parser) {
     struct kbtoken* tok = anypeek(parser);
     if(tok->kind == TStr || tok->kind == TInt || tok->kind == TFloat || tok->kind == TChar) {
@@ -632,6 +660,9 @@ static int make_program(struct kbparser* parser) {
         if (peekid(parser, "fun")) {
             push_make(parser, group, make_fun(parser));
         }
+        else if (peekid(parser, "import")) {
+            push_make(parser, group, make_import(parser));
+        }
         else {
             push_make(parser, group, make_expr(parser));
         }
@@ -643,7 +674,7 @@ static int make_program(struct kbparser* parser) {
         //     int bufsize = 128;
         //     char * strbuf = kbmalloc(128 * bufsize);
         //     int size;
-        //     while ((size = snprintf(strbuf, bufsize, "Unexpected token %s at %s:%d:%d\n", kbtoken_string(tok->kind), parser->src->filename, parser->tokens[parser->cursor].loc.line, parser->tokens[parser->cursor].loc.col) > bufsize)) {
+        //     while ((size = snprintf(strbuf, bufsize, "Unexpected token %s at %s:%d:%d\n", kbtoken_string(tok->kind), parser->compiland->path.data, parser->tokens[parser->cursor].loc.line, parser->tokens[parser->cursor].loc.col) > bufsize)) {
         //         bufsize = size+1;
         //         strbuf = kbrealloc(strbuf, (size+1) * sizeof(char));
         //     }
@@ -655,13 +686,13 @@ static int make_program(struct kbparser* parser) {
     return bubble(parser, group);
 }
 
-void kbparser_new(struct kbparser* parser, struct kbvec_token* tokens, struct kbsrc* src, struct kbast* ast) {
+void kbparser_new(struct kbparser* parser, struct kbvec_token* tokens, struct kbcompiland* compiland, struct kbast* ast) {
     parser->curnode = -1;
     parser->capacity = 0;
     parser->numnodes = 0;
     parser->cursor = 0;
     parser->tokens = tokens;
-    parser->src = src;
+    parser->compiland = compiland;
     parser->ast = ast;
     parser->errvec = kberrvec_make();
     kbast_new(parser->ast);
@@ -671,9 +702,9 @@ void kbparser_del(struct kbparser* parser) {
     kberrvec_del(&parser->errvec);
 }
 
-void kbparse(struct kbvec_token* tokens, struct kbsrc* src, struct kbast* ast) {
+void kbparse(struct kbvec_token* tokens, struct kbcompiland* compiland, struct kbast* ast) {
     struct kbparser parser;
-    kbparser_new(&parser, tokens, src, ast);
+    kbparser_new(&parser, tokens, compiland, ast);
     kbparser_run(&parser);
     kbparser_del(&parser);
 }

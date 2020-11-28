@@ -3,7 +3,6 @@
 #include "kobalt/options.h"
 #include "kobalt/memory.h"
 #include "kobalt/uid.h"
-#include "kobalt/cmdcc.h"
 #include "kobalt/fs.h"
 #include "kobalt/log.h"
 #include "kobalt/type.h"
@@ -15,17 +14,14 @@
 #include <string.h>
 #include <stdarg.h>
 #include <assert.h>
-
-bool is_letter(char c) {
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-}
+#include <ctype.h>
 
 struct kbcgenctx {
-    struct kbsrc* src;
+    struct kbcompiland* compiland;
     struct kbstr headerpath;
     FILE* cheader;
-    struct kbstr* sourcepath;
-    struct kbstr include;
+    struct kbstr sourcepath;
+    struct kbstr tmp;
     FILE* csource;
     struct kbstr h_code;
     struct kbstr src_code;
@@ -127,7 +123,9 @@ static void cgen_fun(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgen
     char* name = ast->nodes.data[node->data.fun.id].data.id.name;
 
     struct kbtype* type = kbscope_resolve(astinfo, name, nid)->type;
-	kbstr_catf(ctx->cur_code, "\n%s %s(", kbtype_to_c(type->data.fun.out_type), name);
+
+    kbstr_resize(&ctx->tmp, 0);
+	kbstr_catf(&ctx->tmp, "\n%s %s(", kbtype_to_c(type->data.fun.out_type), name);
 
 	int numparams = ast->nodes.data[node->data.fun.funparams].data.group.numitems;
 	int firstparam = 1;
@@ -136,17 +134,20 @@ static void cgen_fun(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgen
         if (in_type->kind != Unit) {
             char* paramname = ast->nodes.data[ast->nodes.data[ast->nodes.data[node->data.fun.funparams].data.group.items[i]].data.funparam.id].data.id.name;
             if (!firstparam) {
-                kbstr_catf(ctx->cur_code, ", ");
+                kbstr_catf(&ctx->tmp, ", ");
                 firstparam = 0;
             }
-            kbstr_catf(ctx->cur_code, "%s %s", kbtype_to_c(in_type), paramname);
+            kbstr_catf(&ctx->tmp, "%s %s", kbtype_to_c(in_type), paramname);
         }
         else if (numparams == 1) {
-            kbstr_catf(ctx->cur_code, "void");
+            kbstr_catf(&ctx->tmp, "void");
         }
 	}
 
-	kbstr_catf(ctx->cur_code, ")\n{\n");
+	kbstr_catf(&ctx->tmp, ")");
+    
+    kbstr_catf(ctx->cur_code, "%s\n{\n", ctx->tmp.data);
+    kbstr_catf(&ctx->h_code, "%s;\n", ctx->tmp.data);
 
 	cgen_rec(ast, astinfo, ctx, node->data.fun.body);
 
@@ -203,7 +204,7 @@ static void cgen_call(struct kbast* ast, struct kbastinfo* astinfo, struct kbcge
         kbstr_catf(ctx->cur_code, "%s val%d = ", kbtype_to_c(type->data.fun.out_type), retval);
     }    
 
-	if (is_letter(kbname[0]) || kbname[0] == '_') {
+	if (isalpha(kbname[0]) || kbname[0] == '_') {
 		char *cname;
         if (kbname[0] == '_' && kbname[1] == '_') {
             if (strncmp(kbname, "__c:", strlen("__c:")) == 0) {
@@ -358,39 +359,28 @@ static int cgen_rec(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenc
     return 1;
 }
 
-void kbcgenctx_new(struct kbopts* opts, struct kbsrc* src, struct kbcgenctx* cgenctx) {
+void kbcgenctx_new(struct kbopts* opts, struct kbcompiland* compiland, struct kbcgenctx* cgenctx) {
     kbstr_new(&cgenctx->h_code);
+    kbstr_new(&cgenctx->tmp);
     kbstr_new(&cgenctx->src_code);
     kbstr_new(&cgenctx->main_code);
     cgenctx->cur_code = &cgenctx->main_code;
-    cgenctx->src = src;
+    cgenctx->compiland = compiland;
     
     kbstr_new(&cgenctx->headerpath);
-    kbstr_new(cgenctx->sourcepath);
-    kbstr_new(&cgenctx->include);
-    kbstr_catf(&cgenctx->headerpath, "%s/", opts->cachedir);
-
-    int i;
-    for(i = 0; i < (int)strlen(src->filename)-3; i++) {
-        char c = (isds(src->filename[i]))? '%' : src->filename[i];
-        kbstr_catf(&cgenctx->headerpath, "%c", c);
-        kbstr_catf(&cgenctx->include, "%c", c);
-    }
+    kbstr_new(&cgenctx->sourcepath);
+    kbstr_catf(&cgenctx->headerpath, "%s/%s.h", opts->cachepath.data, compiland->name);
+    kbstr_catf(&cgenctx->sourcepath, "%s/%s.c", opts->cachepath.data, compiland->name);
     
-    kbstr_catf(&cgenctx->headerpath, ".h");
-    kbstr_catf(&cgenctx->include, ".h");
-
     cgenctx->cheader = fopen(cgenctx->headerpath.data, "w");
     if (cgenctx->cheader == NULL) {
         kbelog("couldn't open output file '%s'", cgenctx->headerpath.data);
         exit(1);
     }
    
-    kbstr_catf(cgenctx->sourcepath, "%s", cgenctx->headerpath.data);
-    cgenctx->sourcepath->data[cgenctx->sourcepath->len - 1] = 'c';
-    cgenctx->csource = fopen(cgenctx->sourcepath->data, "w");
+    cgenctx->csource = fopen(cgenctx->sourcepath.data, "w");
     if (cgenctx->csource == NULL) {
-        kbelog("couldn't open file output '%s'", cgenctx->sourcepath->data);
+        kbelog("couldn't open file output '%s'", cgenctx->sourcepath.data);
         exit(1);
     }
     cgenctx->valcount = 1;
@@ -403,37 +393,48 @@ void kbcgenctx_new(struct kbopts* opts, struct kbsrc* src, struct kbcgenctx* cge
 }
 
 void kbcgenctx_del(struct kbcgenctx* cgenctx) {
+    kbstr_del(&cgenctx->tmp);
     kbstr_del(&cgenctx->h_code);
     kbstr_del(&cgenctx->src_code);
     kbstr_del(&cgenctx->main_code);
-    kbstr_del(&cgenctx->include);
     kbstr_del(&cgenctx->headerpath);
-    // fclose(cgenctx->cheader);
-    // fclose(cgenctx->csource);
+    kbstr_del(&cgenctx->sourcepath);
+    fclose(cgenctx->cheader);
+    fclose(cgenctx->csource);
     kbstr_stack_del(&cgenctx->vals);
     kbvec_del(&cgenctx->tmpvals);
     kbfree(cgenctx->indent);
 }
 
-int kbcgen(struct kbopts* opts, struct kbsrc* src, struct kbast* ast, struct kbastinfo* astinfo, struct kbstr* exe, struct kbstr* csrc) {
+int kbcgen(struct kbopts* opts, struct kbcompiland* compiland, struct kbast* ast, struct kbastinfo* astinfo) {
     struct kberrvec errvec = kberrvec_make();
-    
-    struct kbcgenctx cgenctx;
-    cgenctx.sourcepath = csrc;
-    kbcgenctx_new(opts, src, &cgenctx);
 
-    emit(cgenctx.cheader, "// This file was generated by Kobalt compiler v%s\n", KBVERSION);
+    struct kbcgenctx cgenctx;
+    kbcgenctx_new(opts, compiland, &cgenctx);
     
-    char* headername = kbmalloc(sizeof(char) * (strlen(src->basename) + 2 + 8 + 1));
-    memset(headername, 0, sizeof(char) * (strlen(src->basename) + 2 + 8 + 1));
+    struct kbstr common_header;
+    kbstr_new(&common_header);
+    kbstr_catf(&common_header, "// This file was generated by Kobalt %s\n", KBVERSION);
+
+    struct kbstr cid;
+    kbstr_new(&cid);
+    kbstr_cat(&cid, compiland->basename.data);
+    for(int i = 0; i < cid.len; ++i) {
+        if (!isalpha(cid.data[i]) && !isdigit(cid.data[i])) {
+            cid.data[i] = '_';
+        }
+    }
+    
+    char* headername = kbmalloc(sizeof(char) * (compiland->name.len + 2 + 8 + 1));
+    memset(headername, 0, sizeof(char) * (compiland->name.len + 2 + 8 + 1));
     {
         int cur = 0;
-        for(int ii = 0; ii < (int)strlen(src->basename) - 3; ++ii) {
-            if (src->basename[ii] >= 'a' && src->basename[ii] <= 'z') {
-                headername[cur++] = src->basename[ii] + 'A' - 'a';
+        for(int i = 0; i < compiland->name.len; ++i) {
+            if (isalpha(compiland->name.data[i])) {
+                headername[cur++] = toupper(compiland->name.data[i]);
             }
-            else if ((src->basename[ii] >= 'A' && src->basename[ii] <= 'Z') || (src->basename[ii] >= '0' && src->basename[ii] <= '9')) {
-                headername[cur++] = src->basename[ii];
+            else {
+                headername[cur++] = '_';
             }
         }
         headername[cur++] = '_';
@@ -441,48 +442,65 @@ int kbcgen(struct kbopts* opts, struct kbsrc* src, struct kbast* ast, struct kba
         genuidmaj(headername + cur);
     }
 
-    emit(cgenctx.cheader, "#ifndef __KBH__%s\n", headername);
-    emit(cgenctx.cheader, "#define __KBH__%s\n", headername);
-    emit(cgenctx.cheader, "#include <stdlib.h>\n");
-    emit(cgenctx.cheader, "#include <stdio.h>\n");
-    emit(cgenctx.cheader, "#include <stdbool.h>\n");
-    emit(cgenctx.cheader, "#include <stdint.h>\n");
-    emit(cgenctx.cheader, "#include <math.h>\n");
-    kbfree(headername);
-    
-    emit(cgenctx.csource, "// This file was generated by Kobalt compiler v%s\n", KBVERSION);
-    emit(cgenctx.csource, "#include \"%s\"\n", cgenctx.include.data);
-    
-    // emit(cgenctx.csource, "\nint kb_print(char* msg) {\n\tprintf(\"%%s\\n\", msg);\n\treturn 0;\n}\n");
+    emit(cgenctx.cheader,
+        "%s"
+        "#ifndef __KB_HEADER_%s\n"
+        "#define __KB_HEADER_%s\n"
+        "#include <stdlib.h>\n"
+        "#include <stdio.h>\n"
+        "#include <stdbool.h>\n"
+        "#include <stdint.h>\n"
+        "#include <math.h>\n",
+        common_header.data,
+        headername,
+        headername
+    );
 
+    emit(cgenctx.csource,
+        "%s"
+        "#include \"%s.h\"\n",
+        common_header.data,
+        compiland->name.data
+    );
+
+   
     cgen_rec(ast, astinfo, &cgenctx, 0);
 
-    emit(cgenctx.csource, cgenctx.src_code.data);
-    emit(cgenctx.csource, "\nint main() {\n");
-    if (cgenctx.main_code.data) {
-        emit(cgenctx.csource, cgenctx.main_code.data);
-        emit(cgenctx.csource, "\treturn EXIT_SUCCESS;\n");
+    if (cgenctx.h_code.len) {
+        emit(cgenctx.cheader, cgenctx.h_code.data);
     }
-    emit(cgenctx.csource, "}\n");
-   
+
+    if (cgenctx.src_code.len) {
+        emit(cgenctx.csource, cgenctx.src_code.data);
+    }
+
+    if (cgenctx.main_code.len || compiland->entry) {
+        emit(cgenctx.csource,
+            "\nint __main__%s()\n"
+            "{\n"
+            "%s"
+            "\treturn 0;\n"
+            "}\n",
+            cid.data,
+            cgenctx.main_code.data
+        );
+    }
+
+    if (compiland->entry) {
+        emit(cgenctx.csource,
+            "\nint main()\n"
+            "{\n"
+            "\tint status = __main__%s();\n"
+            "\treturn status;\n"
+            "}\n",
+            cid.data
+        );
+    }
+
     emit(cgenctx.cheader, "#endif\n");
     
     fflush(cgenctx.cheader);
     fflush(cgenctx.csource);
-
-    fclose(cgenctx.cheader);
-    fclose(cgenctx.csource);
-
-    kbstr_new(exe);
-    kbstr_catf(exe, opts->cachedir);
-    kbstr_catf(exe, "/");
-    kbstr_catf(exe, src->basename);
-#if WINDOWS
-    kbstr_catf(exe, "0");
-    strcpy(&exe->data[exe->len - 3], "exe");
-#else
-    exe->data[exe->len - 3] = '\0';
-#endif
         
     // TODO: create a file copy function in fs.c
     // FILE* srcexe = fopen(exefull, "rb");
@@ -503,7 +521,10 @@ int kbcgen(struct kbopts* opts, struct kbsrc* src, struct kbast* ast, struct kba
     // fclose(srcexe);
     // fclose(destexe);
     // kbfree(exe);
+    kbstr_del(&cid);
     kberrvec_del(&errvec);    
     kbcgenctx_del(&cgenctx);
+    kbstr_del(&common_header);
+    kbfree(headername);
     return 1;
 }

@@ -89,6 +89,10 @@ struct kbnode_casebranch {
     int conseq;
 };
 
+struct kbnode_import {
+    char* path;
+};
+
 struct kbnode {
     enum kbnode_kind kind;
     int parent;
@@ -109,6 +113,7 @@ struct kbnode {
         struct kbnode_sym sym;
         struct kbnode_ifbranch ifbranch;
         struct kbnode_casebranch casebranch;
+        struct kbnode_import import;
     } data;
     struct kbdict* ann;
 };

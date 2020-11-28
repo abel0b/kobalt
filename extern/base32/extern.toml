@@ -1,0 +1,3 @@
+name = "base32"
+repository = "https://github.com/ahmed-masud/libbase32.git"
+commit = "79761b2b79b0545697945efe0987a8d3004512f9"

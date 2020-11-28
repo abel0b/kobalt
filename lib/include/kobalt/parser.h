@@ -5,28 +5,9 @@
 #include "kobalt/token.h"
 #include "kobalt/syntax.h"
 #include "kobalt/error.h"
-#include "kobalt/source.h"
+#include "kobalt/compiland.h"
 #include "kobalt/ast.h"
 
-struct kbparser {
-    struct kbvec_token* tokens;
-    int curnode;
-    struct kbast * ast;
-    struct kberrvec errvec;
-    struct kbsrc * src;
-    int capacity;
-    int numnodes;
-    int cursor;
-};
-
-struct kbparser kbparser_make(struct kbtoken * tokens, struct kbsrc * src);
-
-void kbparser_new(struct kbparser* parser, struct kbvec_token* tokens, struct kbsrc* src, struct kbast* ast);
-
-void kbparser_run(struct kbparser* parser);
-
-void kbparser_del(struct kbparser * parser);
-
-void kbparse(struct kbvec_token* tokens, struct kbsrc* src, struct kbast* ast);
+void kbparse(struct kbvec_token* tokens, struct kbcompiland* compiland, struct kbast* ast);
 
 #endif

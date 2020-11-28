@@ -6,10 +6,13 @@
 #include <string.h>
 #include <assert.h>
 
+kbvec_impl(struct kbstr, str)
+
 void kbstr_new(struct kbstr* str) {
-    str->data = NULL;
     str->len = 0;
-    str->cap = 0;
+    str->cap = 8;
+    str->data = kbmalloc(sizeof(str->data[0]) * str->cap);
+    str->data[0] = '\0';
 }
 
 void kbstr_catf(struct kbstr* str, char* fmt, ...) {
@@ -31,10 +34,22 @@ void kbstr_catf(struct kbstr* str, char* fmt, ...) {
 
 void kbstr_cat(struct kbstr* str, char* src) {
     int len = strlen(src);
+    while(str->cap < str->len + len + 1) {
+        str->cap = (str->cap)? 2 * str->cap : 8;
+        str->data = kbrealloc(str->data, sizeof(str->data[0]) * str->cap);
+    }
     strcpy(&str->data[str->len], src);
     str->len += len;
 }
 
+void kbstr_resize(struct kbstr* str, long int len) {
+    if (len + 1 > str->cap) {
+        str->cap = len + 1;
+        str->data = kbrealloc(str->data, sizeof(str->data[0]) * str->cap);
+    }
+    str->len = len;
+    str->data[str->len] = '\0';
+}
 
 void kbstr_del(struct kbstr* str) {
     if (str->data) {

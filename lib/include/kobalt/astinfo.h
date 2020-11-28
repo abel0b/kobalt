@@ -23,6 +23,7 @@ struct kbastinfo {
     struct kbvec_type types;
 };
 
+
 struct kbscope* kbastinfo_alloc_scope(struct kbastinfo* astinfo, struct kbscope* pscope);
 
 void kbastinfo_new(struct kbastinfo* astinfo);

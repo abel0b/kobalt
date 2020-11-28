@@ -1,10 +1,13 @@
 #include "kobalt/options.h"
-#include "kobalt/source.h"
+#include "kobalt/compiland.h"
 #include "kobalt/memory.h"
 #include "kobalt/log.h"
 #include "kobalt/fs.h"
 #include "kobalt/uid.h"
 #include "kobalt/time.h"
+#include "kobalt/stdsrc.h"
+#include "sha-256.h"
+#include "base32.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -12,54 +15,47 @@
 #include <assert.h>
 #if WINDOWS
 #include <direct.h>
+#include <shlobj_core.h>
+#pragma comment(lib,"Shell32.lib")
 #else
 #include <unistd.h>
 #endif
 
-void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
-    opts->stage = LexingStage | ParsingStage | TypingStage | CGenStage | CCStage | ExecStage;
+void kbopts_new(struct kbopts* opts, int argc, char* argv[]) {
+    opts->stages = LexingStage | ParsingStage | TypeInferStage | TypeCheckStage | CGenStage | CCStage | ExecStage;
     opts->optim = 0;
-    opts->run = 0;
-    opts->output = NULL;
-    opts->numsrcs = 0;
-    int srcs_capacity = 1;
-    opts->srcs = kbmalloc(sizeof(opts->srcs[0]) * srcs_capacity);
+    kbstr_new(&opts->outpath);
     opts->verbosity = 1;
+    kbvec_new(&opts->inputs, sizeof(struct kbcompiland));
     kbvec_new(&opts->exe_argv, sizeof(char*));
 
-    int ii = 1;
+    int i = 1;
     bool endopts = false;
-    while (ii < argc) {
-        int jj = ii;
-        if (strcmp(argv[jj], "--") == 0) {
+    while (i < argc) {
+        int j = i;
+        if (strcmp(argv[j], "--") == 0) {
             endopts = true;
         }
-        else if (argv[jj][0] == '-') {
-            if (strlen(argv[jj]) == 2) {
-                char optopt = argv[jj][1];
-                char * optarg = NULL;
-                if (jj + 1 < argc && argv[jj + 1][0] != '-') {
-                    optarg = argv[jj+1];
+        else if (argv[j][0] == '-') {
+            if (strlen(argv[j]) == 2) {
+                char optopt = argv[j][1];
+                char* optarg = NULL;
+                if (j + 1 < argc && argv[j + 1][0] != '-') {
+                    optarg = argv[j+1];
                 }
                 switch (optopt) {
                     case 'L':
-                        opts->stage = LexingStage;
+                        opts->stages = LexingStage;
                         break;
                     case 'P':
-                        opts->stage = LexingStage | ParsingStage;
+                        opts->stages = LexingStage | ParsingStage;
                         break;
                     case 'T':
-                        opts->stage = LexingStage | ParsingStage | TypingStage;
+                        opts->stages = LexingStage | ParsingStage | TypeInferStage | TypeCheckStage;
                         break;
                     case 'v':
                         printf("Kobalt Language Compiler v%s\n\n", KBVERSION);
                         exit(0);
-                        break;
-                    case 'V':
-                        opts->verbosity = 2;
-                        break;
-                    case 'r':
-                        opts->run = 1;
                         break;
                     case 'h':
                         printf("Usage: %s [file...]\n", argv[0]);
@@ -73,13 +69,12 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
                         break;
                     case 'o':
                         {
-                            ii++;
+                            i++;
                             if (optarg == NULL) {
                                 kbelog("argument to '-o' is missing");
                                 exit(1);
                             }
-                            opts->output = (char*)kbmalloc(sizeof(opts->output[0]) * (strlen(optarg) + 1));
-                            strcpy(opts->output, optarg);
+                            kbstr_cat(&opts->outpath, optarg);
                         }
                         break;
                     default: {
@@ -95,92 +90,99 @@ void kbopts_new(int argc, char* argv[], struct kbopts* opts) {
                 }
             }
             else {
-                kbelog("unknown option '%s'", argv[jj]);
+                kbelog("unknown option '%s'", argv[j]);
                 exit(1);
             }
         }
         else {
             if (endopts) {
-                kbvec_push(&opts->exe_argv, &argv[jj]);
+                kbvec_push(&opts->exe_argv, &argv[j]);
             }
             else {
-                if (opts->numsrcs == srcs_capacity) {
-                    srcs_capacity = 2 * srcs_capacity;
-                    opts->srcs = kbrealloc(opts->srcs, sizeof(opts->srcs[0]) * srcs_capacity);
-                }
-                int st = 0;
-                if (argv[jj][0] == '.') {
-                    while(isds(argv[jj][st])) {
-                        st ++;
-                    }
-                }
-                // TODO: check if it is a file
-                opts->srcs[opts->numsrcs] = &argv[jj][st];
-                ++ opts->numsrcs;
+
+                struct kbcompiland compiland;
+                // kbcompiland_new_virt(&compiland, "@std.kb", (char*)stdkb);
+                // kbqueue_enqueue(input, &compiland);
+
+                kbcompiland_new_entry(&compiland, &argv[j][0]);
+                kbvec_push(&opts->inputs, &compiland);
             }
         }
-        ii++;
+        ++ i;
     }
 
     kbvec_push(&opts->exe_argv, &(void*){NULL});
 
-    if (!opts->numsrcs) {
-        kbelog("no input file");
-        exit(1);
-    }
-
     size_t cwdsize = 32;
-    opts->cwd = kbmalloc(cwdsize);
-    int maxiter = 4;
-    while(maxiter-- && (getcwd(opts->cwd, cwdsize) == NULL)) {
+    kbstr_new(&opts->cwd);
+    kbstr_resize(&opts->cwd, cwdsize);
+    int maxiter = 10;
+    while(maxiter-- && (getcwd(opts->cwd.data, cwdsize) == NULL)) {
         cwdsize = 2 * cwdsize;
-        opts->cwd = kbrealloc(opts->cwd, cwdsize);    
+        kbstr_resize(&opts->cwd, cwdsize);
     } 
-    if (maxiter == 0) {
+    if (maxiter <= 0) {
         kbelog("allocation");
         exit(1);
     }
-    
-#if WINDOWS
-    for(char* c = opts->cwd; *c != '\0'; c++) {
-        if (*c == '\\') {
-            *c = '/';
-        }
-    }
-#endif
+    kbpath_normalize(&opts->cwd);
    
-    seed(kbtime_get());
+    // int seednum = kbtime_get();
+    // kbilog("random seed is %d", seednum);
+    seed(1337);
 
+    kbstr_new(&opts->cachepath);
 #if UNIX
     char* home = getenv("HOME");
-    assert(home != NULL);
+    if(home == NULL) {
+        kbelog("cannot get HOME environment variable");
+        exit(1);
+    }
 
-    int cachedirsize = strlen(home) + strlen("/.cache/kobalt") + 1 + 8 + 1;
-    opts->cachedir = kbmalloc(cachedirsize);
-    
-    strcpy(opts->cachedir, home);
-    strcat(opts->cachedir, "/.cache");
-    ensuredir(opts->cachedir);
+    kbstr_cat(&opts->cachepath, home);
+    kbpath_push(&opts->cachepath, ".cache");
+    ensuredir(opts->cachepath.data);
+    kbpath_push(&opts->cachepath, "kobalt");
 
-    strcat(opts->cachedir, "/kobalt/");
 #else
-    int cachedirsize = strlen("kbcache") + 1 + 8 + 1;
-    opts->cachedir = kbmalloc(sizeof(char) * cachedirsize);
-    strcpy(opts->cachedir, "kbcache/");
+    PWSTR appdata = NULL;
+    if (SHGetKnownFolderPath(&FOLDERID_RoamingAppData, KF_FLAG_CREATE, NULL, &appdata) == S_OK) {
+        char dest[MAX_PATH];
+        wcstombs(dest, appdata, MAX_PATH);
+        kbstr_cat(&opts->cachepath, dest);
+    }
+    else {
+        kbelog("getting AppData path"); 
+    }
 #endif
-    ensuredir(opts->cachedir);
-    opts->cachedir[cachedirsize - 1] = '\0';
-    genuid(opts->cachedir + strlen(opts->cachedir));
-    ensuredir(opts->cachedir);
+    ensuredir(opts->cachepath.data);
+    kbpath_push(&opts->cachepath, "build");
+    ensuredir(opts->cachepath.data);
+
+    uint8_t data[32];
+    int bsize = base32encsize(sizeof(data));
+    int cachepathlen = opts->cachepath.len + bsize + 1;
+
+    kbpath_push(&opts->cachepath, "placeholder");
+    kbstr_resize(&opts->cachepath, cachepathlen);
+    
+    calc_sha_256(data, opts->cwd.data, opts->cwd.len);
+
+    base32enc(&opts->cachepath.data[opts->cachepath.len - bsize], data, sizeof(data));
+    
+    kbpath_normalize(&opts->cachepath);
+    ensuredir(opts->cachepath.data);
+
+#if DEBUG
+    kbilog("cachepath is %s", opts->cachepath.data);
+#endif
 }
 
 void kbopts_del(struct kbopts* opts) {
-    kbfree(opts->cwd);
-    kbfree(opts->srcs);
-    kbfree(opts->cachedir);
-    if (opts->output != NULL) {
-        kbfree(opts->output);
-    }
+    kbvec_del(&opts->inputs);
+    kbstr_del(&opts->cwd);
+    kbstr_del(&opts->cachepath);
+    kbstr_del(&opts->outpath);
     kbfree(*(char**)kbvec_get(&opts->exe_argv, 0));
     kbvec_del(&opts->exe_argv);
 }

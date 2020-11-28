@@ -128,7 +128,10 @@ static int display_aux(struct kbastvisit* astvisit) {
             fprintf(ctx->out, " = " BYEL "\'%s\'" RESET, node->data.charlit.value);
             break;
         case NId:
-            fprintf(ctx->out, " = \"%s\"", node->data.id.name);
+            fprintf(ctx->out, " = %s", node->data.id.name);
+            break;
+        case NImport:
+            fprintf(ctx->out, " = %s", node->data.import.path);
             break;
         default:
             break;
@@ -189,6 +192,9 @@ static int del_aux(struct kbastvisit* astvisit) {
             break;
         case NId:
             kbfree(node->data.id.name);
+            break;
+        case NImport:
+            kbfree(node->data.import.path);
             break;
         default:
             break;
