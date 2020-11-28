@@ -133,7 +133,7 @@ jobs:
           git push origin --delete latest || true
 
       - name: Determine the next alpha version number
-        run: cat $(ls ./doc/changelog/* | grep alpha) | sed 's/-alpha/-alpha.${{ github.run_number }}/' > release_notes.md
+        run: cat $(ls ./doc/changelog/* | grep alpha) | sed 's/-alpha/-alpha.${{ github.run_number }}/' | cat doc/changelog/v0.1.0-alpha.md | sed 's/# //' > release_notes.md
 
       - name: Create Release
         run: |
