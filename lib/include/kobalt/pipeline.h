@@ -8,13 +8,12 @@
 #include "kobalt/stage.h"
 #include "kobalt/token.h"
 #include "kobalt/options.h"
-#include "kobalt/astinfo.h"
+#include "kobalt/modgraph.h"
 
 struct kbpipe {
     struct kbcompiland compiland;
     struct kbvec_token tokens;
     struct kbast ast;
-    struct kbastinfo astinfo;
 };
 
 struct kbstage {
@@ -23,6 +22,7 @@ struct kbstage {
 };
 
 struct kbpipeline {
+    struct kbmodgraph modgraph;
     struct kbopts* opts;
     struct kbvec stages;
     struct kbvec pipes;

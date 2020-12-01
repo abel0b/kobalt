@@ -99,66 +99,6 @@ void kbastvisit_del(struct kbastvisit* astvisit) {
     unused(astvisit);
 }
 
-struct kbast_disp_ctx {
-    FILE* out;
-    struct kbastinfo* astinfo;
-};
-
-static int display_aux(struct kbastvisit* astvisit) {
-    struct kbnode* node = &astvisit->ast->nodes.data[astvisit->cur.nid];
-    struct kbast_disp_ctx* ctx = (struct kbast_disp_ctx*)astvisit->ctx;
-
-    indent(ctx->out, astvisit->cur.depth);
-    fprintf(ctx->out, BWHT "%s" RESET " <%d:%d>", kbnode_kind_str(node->kind), node->loc.line, node->loc.col);
-
-    switch(node->kind) {
-        case NType:
-            fprintf(ctx->out, " = \"%s\"", node->data.type.name);
-            break;
-        case NStrLit:
-            fprintf(ctx->out, " = " BYEL "\"%s\"" RESET, node->data.strlit.value);
-            break;
-        case NIntLit:
-            fprintf(ctx->out, " = " BYEL "%s" RESET, node->data.intlit.value);
-            break;
-        case NFloatLit:
-            fprintf(ctx->out, " = " BYEL "%s" RESET, node->data.floatlit.value);
-            break;
-        case NCharLit:
-            fprintf(ctx->out, " = " BYEL "\'%s\'" RESET, node->data.charlit.value);
-            break;
-        case NId:
-            fprintf(ctx->out, " = %s", node->data.id.name);
-            break;
-        case NImport:
-            fprintf(ctx->out, " = %s", node->data.import.path);
-            break;
-        default:
-            break;
-    }
-    if (ctx->astinfo) {
-        struct kbtype* type = ctx->astinfo->types.data[astvisit->cur.nid];
-        if (type) {
-            fprintf(ctx->out, " :: " GRN);
-            kbtype_display(ctx->astinfo->types.data[astvisit->cur.nid]);
-            fprintf(ctx->out, RESET);
-        }
-    }
-    fprintf(ctx->out, "\n");
-    return 1;
-}
-
-void kbast_display(FILE* out, struct kbast* ast, struct kbastinfo* astinfo) {
-    struct kbastvisit visdisp;
-    struct kbast_disp_ctx ctx = {
-        .out = out,
-        .astinfo = astinfo,
-    };
-    kbastvisit_new(ast, &ctx, display_aux, &visdisp, PreOrder);
-    kbastvisit_run(&visdisp);
-    kbastvisit_del(&visdisp);
-}
-
 static int del_aux(struct kbastvisit* astvisit) {
     struct kbnode* node = &astvisit->ast->nodes.data[astvisit->cur.nid];
     switch(node->kind) {

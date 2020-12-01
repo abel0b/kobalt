@@ -6,13 +6,16 @@
 enum kbstage_id {
     LexingStage = 1,
     ParsingStage = 2,
-    TypeInferStage = 4,
-    TypeCheckStage = 8,
-    CGenStage = 16,
-    CCStage = 32,
-    LinkStage = 64,
-    ExecStage = 128,
-    AllStage = 255,
+    ModAnalysisStage = 4,
+    TypeInferStage = 8,
+    TypeCheckStage = 16,
+    CGenStage = 32,
+    CCStage = 64,
+    LinkStage = 128,
+    ExecStage = 256,
+    AllStage = 511,
 };
+
+char* kbstage_to_str(enum kbstage_id id);
 
 #endif

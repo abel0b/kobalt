@@ -18,9 +18,17 @@ int kbspawn(char* prog, char* args[], FILE* logfile) {
     char** argv = NULL;
     {
         int numarg = 0;
-        kbdlog("spawn %s", prog);
+#if DEBUG
+        if (getenv("DEBUG_PROC")) {
+            kbdlog("spawn %s", prog);
+        }
+#endif
         while(args[numarg] != NULL) {
+#if DEBUG
+        if (getenv("DEBUG_PROC") && args[numarg][0]) {
             kbdlog("arg.%d = %s", numarg, args[numarg]);
+        }
+#endif
             numarg++;
         }
         argv = kbmalloc(sizeof(argv[0]) * (numarg + 1 + 1));

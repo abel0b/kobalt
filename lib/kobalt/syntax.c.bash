@@ -6,7 +6,7 @@ cat << END
 #include <string.h>
 #include <stdio.h>
 
-char * kbnode_kind_str(enum kbnode_kind kind) {
+char* kbnode_kind_str(enum kbnode_kind kind) {
     switch(kind) {
 END
 

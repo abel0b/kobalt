@@ -78,7 +78,7 @@ static int encode_tail(char *dest, const void *_src, size_t len)
 
 size_t base32enc(char *dest, const void *_src, size_t ssize)
 {
-    int dk = 0, sk = 0;
+    unsigned int dk = 0, sk = 0;
     const unsigned char *src = _src;
 
 
@@ -199,7 +199,7 @@ static int decode_block(unsigned char *dest, const void *_src)
 
 
 size_t base32dec(void *dest, size_t buf_size, const char * src) {
-    int sk, dk;
+    unsigned int sk, dk;
     size_t src_len;
     src_len = strlen(src);
 

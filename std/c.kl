@@ -19,3 +19,5 @@ fun __c:strncat (dest :: str) (src :: str) (count :: int) :: str
 fun __c:strcmp (dest :: str) (src :: str) :: int
 
 fun __c:strncmp (dest :: str) (src :: str) (count :: int) :: int
+
+fun __c:printf (fmt :: str) (num :: int) :: ()

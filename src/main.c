@@ -10,16 +10,15 @@
 #include <execinfo.h>
 #include <signal.h>
 #include <unistd.h>
-
 void handler(int sig) {
     void* array[10];
-    size_t size;
-
-    size = backtrace(array, 10);
-
+    size_t size = backtrace(array, 10);
     fprintf(stderr, "error: signal %d:\n", sig);
     backtrace_symbols_fd(array, size, STDERR_FILENO);
     exit(1);
+}
+void onexit() {
+    abort();
 }
 #endif
 #endif
@@ -28,6 +27,7 @@ int main(int argc, char * argv[]) {
 #if UNIX
 #if defined(__GLIBC__)
     signal(SIGABRT, handler);
+    // atexit(onexit);
 #endif
 #endif
 

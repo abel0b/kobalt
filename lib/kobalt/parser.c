@@ -654,8 +654,21 @@ static int make_ifelse(struct kbparser* parser) {
     return bubble(parser, ifelse);
 }
 
+static int make_boilerplate(struct kbparser* parser, int group) {
+    int import = kbparser_addnode(parser, NImport);
+    attr(parser, import, path) = kbmalloc(strlen("std") + 1);
+    strcpy(attr(parser, import, path), "std");
+    push_make(parser, group, import);
+    return 1;
+}
+
 static int make_program(struct kbparser* parser) {
     int group = kbparser_addnode(parser, NProgram);
+    
+    if (parser->compiland->boilerplate) {
+        make_boilerplate(parser, group);
+    }
+
     while (!peek(parser, TEndFile)) {
         if (peekid(parser, "fun")) {
             push_make(parser, group, make_fun(parser));

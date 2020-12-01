@@ -8,6 +8,7 @@
 
 struct kbcompiland {
     bool virtual;
+    bool boilerplate;
     struct kbstr path;
     struct kbstr name;
     struct kbstr basename;
@@ -15,7 +16,9 @@ struct kbcompiland {
     bool entry;
 };
 
-void kbcompiland_new_entry(struct kbcompiland* compiland, char* filename);
+void kbcompiland_new_entry(struct kbcompiland* compiland, char* path);
+
+void kbcompiland_new(struct kbcompiland* compiland, char* path);
 
 void kbcompiland_new_virt(struct kbcompiland* compiland, char* path, char* content);
 

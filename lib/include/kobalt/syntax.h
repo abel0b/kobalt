@@ -3,7 +3,6 @@
 
 #include "kobalt/kobalt.h"
 #include "kobalt/token.h"
-#include "kobalt/dict.h"
 
 enum kbnode_kind {
     NProgram,
@@ -130,7 +129,6 @@ struct kbnode {
         struct kbnode_casebranch casebranch;
         struct kbnode_import import;
     } data;
-    struct kbdict* ann;
 };
 
 char * kbnode_kind_str(enum kbnode_kind kind);

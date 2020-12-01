@@ -18,6 +18,7 @@ void kbpath_normalize(struct kbstr* path) {
 
     int i = 0;
     if (path->len && path->data[0] == '.') {
+        i = 1;
         while(isds(path->data[i])) {
             i ++;
         }

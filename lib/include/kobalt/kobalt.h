@@ -2,6 +2,13 @@
 #define KOBALT__H
 
 #include "kobalt/version.h"
+#if DEBUG
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#include <sanitizer/common_interface_defs.h>
+#endif
+#endif
+#endif
 
 #include <stdlib.h>
 #include "kobalt/log.h"
@@ -25,5 +32,13 @@
 #define unused(X) do { (void)(X); } while(0)
 
 #define kb_unused(X) do { (void)(X); } while(0)
+
+#if DEBUG
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#define exit(X) do {if (X) {__sanitizer_print_stack_trace(); exit(X);}else{exit(X);}} while(0)
+#endif
+#endif
+#endif
 
 #endif

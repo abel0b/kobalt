@@ -5,7 +5,6 @@
 #include "kobalt/fs.h"
 #include "kobalt/uid.h"
 #include "kobalt/time.h"
-#include "kobalt/stdsrc.h"
 #include "sha-256.h"
 #include "base32.h"
 #include <stdlib.h>
@@ -22,7 +21,7 @@
 #endif
 
 void kbopts_new(struct kbopts* opts, int argc, char* argv[]) {
-    opts->stages = LexingStage | ParsingStage | TypeInferStage | TypeCheckStage | CGenStage | CCStage | ExecStage;
+    opts->stages = LexingStage | ParsingStage | ModAnalysisStage | TypeInferStage | TypeCheckStage | CGenStage | CCStage | ExecStage;
     opts->optim = 0;
     kbstr_new(&opts->outpath);
     opts->verbosity = 1;
@@ -50,8 +49,11 @@ void kbopts_new(struct kbopts* opts, int argc, char* argv[]) {
                     case 'P':
                         opts->stages = LexingStage | ParsingStage;
                         break;
+                    case 'M':
+                        opts->stages = LexingStage | ParsingStage | ModAnalysisStage;
+                        break;
                     case 'T':
-                        opts->stages = LexingStage | ParsingStage | TypeInferStage | TypeCheckStage;
+                        opts->stages = LexingStage | ParsingStage | ModAnalysisStage |TypeInferStage | TypeCheckStage;
                         break;
                     case 'v':
                         printf("Kobalt Language Compiler v%s\n\n", KBVERSION);
@@ -111,6 +113,8 @@ void kbopts_new(struct kbopts* opts, int argc, char* argv[]) {
         ++ i;
     }
 
+    // TODO: check pipeline validation
+
     kbvec_push(&opts->exe_argv, &(void*){NULL});
 
     size_t cwdsize = 32;
@@ -142,8 +146,6 @@ void kbopts_new(struct kbopts* opts, int argc, char* argv[]) {
     kbstr_cat(&opts->cachepath, home);
     kbpath_push(&opts->cachepath, ".cache");
     ensuredir(opts->cachepath.data);
-    kbpath_push(&opts->cachepath, "kobalt");
-
 #else
     PWSTR appdata = NULL;
     if (SHGetKnownFolderPath(&FOLDERID_RoamingAppData, KF_FLAG_CREATE, NULL, &appdata) == S_OK) {
@@ -155,6 +157,8 @@ void kbopts_new(struct kbopts* opts, int argc, char* argv[]) {
         kbelog("getting AppData path"); 
     }
 #endif
+    ensuredir(opts->cachepath.data);
+    kbpath_push(&opts->cachepath, "kobalt");
     ensuredir(opts->cachepath.data);
     kbpath_push(&opts->cachepath, "build");
     ensuredir(opts->cachepath.data);
@@ -173,12 +177,20 @@ void kbopts_new(struct kbopts* opts, int argc, char* argv[]) {
     kbpath_normalize(&opts->cachepath);
     ensuredir(opts->cachepath.data);
 
+    kbstr_new(&opts->manifest_path);
+    kbstr_cat(&opts->manifest_path, opts->cachepath.data);
+    kbpath_push(&opts->manifest_path, "kl-build.yaml");
+    opts->manifest = fopen(opts->manifest_path.data, "w");
+    fprintf(opts->manifest, "workdir: %s\n", opts->cwd.data);
+
 #if DEBUG
-    kbilog("cachepath is %s", opts->cachepath.data);
+    // kbilog("cachepath is %s", opts->cachepath.data);
 #endif
 }
 
 void kbopts_del(struct kbopts* opts) {
+    kbstr_del(&opts->manifest_path);
+    fclose(opts->manifest);
     kbvec_del(&opts->inputs);
     kbstr_del(&opts->cwd);
     kbstr_del(&opts->cachepath);

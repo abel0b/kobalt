@@ -6,6 +6,7 @@
 #include "kobalt/objpool.h"
 #include "kobalt/type.h"
 #include "kobalt/symbol.h"
+#include "kobalt/ast.h"
 #include <stdint.h>
 
 struct kbscope {
@@ -23,10 +24,11 @@ struct kbastinfo {
     struct kbvec_type types;
 };
 
+void kbast_display(FILE* out, struct kbast* ast, struct kbastinfo* astinfo);
 
 struct kbscope* kbastinfo_alloc_scope(struct kbastinfo* astinfo, struct kbscope* pscope);
 
-void kbastinfo_new(struct kbastinfo* astinfo);
+void kbastinfo_new(struct kbastinfo* astinfo, struct kbast* ast);
 
 void kbastinfo_del(struct kbastinfo* astinfo);
 

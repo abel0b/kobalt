@@ -19,6 +19,8 @@ struct kbopts {
     struct kbstr outpath;
     struct kbstr cachepath;
     struct kbvec exe_argv;
+    struct kbstr manifest_path;
+    FILE* manifest;
 };
 
 void kbopts_new(struct kbopts* opts, int argc, char* argv[]);

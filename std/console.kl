@@ -1,0 +1,5 @@
+fun printl (msg :: str) :: () =
+    __c:puts msg
+
+fun intprintl (num :: int) :: () =
+    __c:printf "%d\n" num

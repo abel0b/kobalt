@@ -1,3 +1,4 @@
 echo "unsigned char stdkb[] = {"
-cat std/c.kb std/console.kb std/num.kb | xxd -i $file
+cat std/c.kl std/console.kl std/num.kl | xxd -i $file
+echo ", 0"
 echo "};"

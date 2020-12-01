@@ -8,12 +8,14 @@
 #include <assert.h>
 #include <ctype.h>
 
-void kbcompiland_new_entry(struct kbcompiland* compiland, char* filename) {
+static void kbcompiland_new_aux(struct kbcompiland* compiland, char* filename, bool entry) {
     compiland->virtual = false;
-    compiland->entry = true;
+    compiland->entry = entry;
+    compiland->boilerplate = true;
     kbstr_new(&compiland->path);
     kbstr_cat(&compiland->path, filename);
     kbpath_normalize(&compiland->path);
+    kbilog("normpath %s", compiland->path.data);
 
     int base = 0;
     {
@@ -60,9 +62,18 @@ void kbcompiland_new_entry(struct kbcompiland* compiland, char* filename) {
     fclose(file);
 }
 
+void kbcompiland_new_entry(struct kbcompiland* compiland, char* path) {
+    kbcompiland_new_aux(compiland, path, true);
+}
+
+void kbcompiland_new(struct kbcompiland* compiland, char* path) {
+    kbcompiland_new_aux(compiland, path, false);
+}
+
 void kbcompiland_new_virt(struct kbcompiland* compiland, char* path, char* content) {
     compiland->virtual = true;
     compiland->entry = false;
+    compiland->boilerplate = false;
 
     kbstr_new(&compiland->path);
     kbstr_cat(&compiland->path, path);

@@ -78,40 +78,40 @@ char* kbtype_to_c(struct kbtype* type) {
     exit(1);
 }
 
-static int cgen_rec(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid);
+static int cgen_rec(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid);
 
-static void cgen_callparams(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+static void cgen_callparams(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid) {
     struct kbnode* node = &ast->nodes.data[nid];
     for(int i = 0; i < node->data.group.numitems; ++i) {
-        cgen_rec(ast, astinfo, ctx, node->data.group.items[i]);
+        cgen_rec(ast, modgraph, modid, ctx, node->data.group.items[i]);
     }
 }
 
-static void cgen_program(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+static void cgen_program(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid) {
     struct kbnode* node = &ast->nodes.data[nid];
     indent(ctx);
     for(int i = 0; i < node->data.group.numitems; ++i) {
-        cgen_rec(ast, astinfo, ctx, node->data.group.items[i]);
+        cgen_rec(ast, modgraph, modid, ctx, node->data.group.items[i]);
     }
     dedent(ctx);
 }
 
-static void cgen_seq(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+static void cgen_seq(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid) {
     struct kbnode* node = &ast->nodes.data[nid];
     for(int i = 0; i < node->data.group.numitems - 1; ++i) {
-        cgen_rec(ast, astinfo, ctx, node->data.group.items[i]);
+        cgen_rec(ast, modgraph, modid, ctx, node->data.group.items[i]);
         kbstr_stack_pop(&ctx->vals);
          // TODO: display warning when expresion result is unused
     }
-    cgen_rec(ast, astinfo, ctx, node->data.group.items[node->data.group.numitems - 1]);
+    cgen_rec(ast, modgraph, modid, ctx, node->data.group.items[node->data.group.numitems - 1]);
 }
 
-static void cgen_callparam(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+static void cgen_callparam(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid) {
     struct kbnode* node = &ast->nodes.data[nid];
-    cgen_rec(ast, astinfo, ctx, node->data.callparam.expr);
+    cgen_rec(ast, modgraph, modid, ctx, node->data.callparam.expr);
 }
 
-static void cgen_fun(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+static void cgen_fun(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid) {
     struct kbnode* node = &ast->nodes.data[nid];
     if (node->data.fun.body == -1) {
         return;
@@ -122,7 +122,11 @@ static void cgen_fun(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgen
 
     char* name = ast->nodes.data[node->data.fun.id].data.id.name;
 
-    struct kbtype* type = kbscope_resolve(astinfo, name, nid)->type;
+    struct kbstr name_str;
+    kbstr_new(&name_str);
+    kbstr_cat(&name_str, name);
+    struct kbtype* type = kbmodgraph_resolve(modgraph, modid, nid, &name_str)->type;
+    kbstr_del(&name_str);
 
     kbstr_resize(&ctx->tmp, 0);
 	kbstr_catf(&ctx->tmp, "\n%s %s(", kbtype_to_c(type->data.fun.out_type), name);
@@ -149,7 +153,7 @@ static void cgen_fun(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgen
     kbstr_catf(ctx->cur_code, "%s\n{\n", ctx->tmp.data);
     kbstr_catf(&ctx->h_code, "%s;\n", ctx->tmp.data);
 
-	cgen_rec(ast, astinfo, ctx, node->data.fun.body);
+	cgen_rec(ast, modgraph, modid, ctx, node->data.fun.body);
 
 	if (type->data.fun.out_type->kind != Unit) {
 	    char* val = kbstr_stack_pop(&ctx->vals);
@@ -159,43 +163,52 @@ static void cgen_fun(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgen
     ctx->cur_code = prev_code;
 }
 
-static void cgen_strlit(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+static void cgen_strlit(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid) {
     struct kbnode* node = &ast->nodes.data[nid];
-    unused(astinfo);
+    unused(modgraph);
+    unused(modid);
     kbstr_stack_pushf(&ctx->vals, "\"%s\"", node->data.strlit.value);
 }
 
-static void cgen_charlit(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+static void cgen_charlit(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid) {
     struct kbnode* node = &ast->nodes.data[nid];
-    unused(astinfo);
+    unused(modgraph);
+    unused(modid);
     kbstr_stack_pushf(&ctx->vals, "'%s'", node->data.charlit.value);
 }
 
-static void cgen_intlit(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+static void cgen_intlit(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid) {
     struct kbnode* node = &ast->nodes.data[nid];
-    unused(astinfo);
+    unused(modgraph);
+    unused(modid);
     kbstr_stack_pushf(&ctx->vals, "%s", node->data.intlit.value);
 }
 
-static void cgen_floatlit(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+static void cgen_floatlit(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid) {
     struct kbnode* node = &ast->nodes.data[nid];
-    unused(astinfo);
+    unused(modgraph);
+    unused(modid);
 	kbstr_stack_pushf(&ctx->vals, "%s", node->data.floatlit.value);
 }
 
-static void cgen_id(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+static void cgen_id(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid) {
 	struct kbnode* node = &ast->nodes.data[nid];
-    unused(astinfo);
+    unused(modgraph);
+    unused(modid);
     kbstr_stack_pushf(&ctx->vals, "%s", node->data.id.name);
 }
 
-static void cgen_call(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+static void cgen_call(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid) {
 	struct kbnode* node = &ast->nodes.data[nid];
-	cgen_rec(ast, astinfo, ctx, node->data.call.callparams);
+	cgen_rec(ast, modgraph, modid, ctx, node->data.call.callparams);
 	struct kbnode* sym = &ast->nodes.data[node->data.call.id];
 	
-    char *kbname = sym->data.id.name;
-    struct kbtype* type = kbscope_resolve(astinfo, kbname, nid)->type;
+    char* kbname = sym->data.id.name;
+    struct kbstr name_str;
+    kbstr_new(&name_str);
+    kbstr_cat(&name_str, kbname);
+    struct kbtype* type = kbmodgraph_resolve(modgraph, modid, nid, &name_str)->type;
+    kbstr_del(&name_str);
 
     kbstr_catf(ctx->cur_code, "%s", ctx->indent);
     int retval;
@@ -221,13 +234,22 @@ static void cgen_call(struct kbast* ast, struct kbastinfo* astinfo, struct kbcge
 
 		kbstr_catf(ctx->cur_code, "%s(", cname);
 
+        // TODO: add ability to pop several values
+        struct kbvec_cstr paramvals;
+        kbvec_cstr_new(&paramvals);
         for(int i = 0; i < ast->nodes.data[node->data.call.callparams].data.group.numitems; ++i) {
-            if (i != 0) {
+            
+		    char* val = kbstr_stack_pop(&ctx->vals);
+            kbvec_cstr_push(&paramvals, val);
+		    
+        }
+        for(int i = paramvals.size - 1; i >= 0; -- i) {
+            if (i != paramvals.size - 1) {
                 kbstr_catf(ctx->cur_code, ", ");
             }
-		    char* val = kbstr_stack_pop(&ctx->vals);
-		    kbstr_catf(ctx->cur_code, "%s", val);
+            kbstr_catf(ctx->cur_code, "%s", paramvals.data[i]);
         }
+        kbvec_cstr_del(&paramvals);
 		kbstr_catf(ctx->cur_code, ");\n");
 	}
 	else {
@@ -254,22 +276,22 @@ static void cgen_call(struct kbast* ast, struct kbastinfo* astinfo, struct kbcge
     }
 }
 
-static void cgen_ifelse(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+static void cgen_ifelse(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid) {
 	struct kbnode* node = &ast->nodes.data[nid];
     int val = ctx->valcount++;
     kbstr_catf(ctx->cur_code, "%s%s val%d;\n", ctx->indent, "int", val);
     kbvec_push(&ctx->tmpvals, &val);
     for(int i = 0; i < node->data.group.numitems; ++i) {
-        cgen_rec(ast, astinfo, ctx, node->data.group.items[i]);
+        cgen_rec(ast, modgraph, modid, ctx, node->data.group.items[i]);
     }
     kbvec_pop(&ctx->tmpvals, NULL);
     kbstr_stack_pushf(&ctx->vals, "val%d", val);
 }
 
-static void cgen_ifbranch(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+static void cgen_ifbranch(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid) {
 	struct kbnode* node = &ast->nodes.data[nid];
 	int retval = *(int*)kbvec_last(&ctx->tmpvals);
-	cgen_rec(ast, astinfo, ctx, node->data.ifbranch.cond);
+	cgen_rec(ast, modgraph, modid, ctx, node->data.ifbranch.cond);
 	char *condval = kbstr_stack_pop(&ctx->vals);
 	if (node->kind == NElifBranch) {
 		kbstr_catf(ctx->cur_code, "%selse\n%s{\n", ctx->indent, ctx->indent);
@@ -278,7 +300,7 @@ static void cgen_ifbranch(struct kbast* ast, struct kbastinfo* astinfo, struct k
 	kbstr_catf(ctx->cur_code, "%sif (%s)\n\t{\n", ctx->indent, condval);
 	indent(ctx);
 
-	cgen_rec(ast, astinfo, ctx, node->data.ifbranch.conseq);
+	cgen_rec(ast, modgraph, modid, ctx, node->data.ifbranch.conseq);
 	char *branchval = kbstr_stack_pop(&ctx->vals);
 	kbstr_catf(ctx->cur_code, "%sval%d = %s;\n", ctx->indent, retval, branchval);
 	dedent(ctx);
@@ -289,19 +311,19 @@ static void cgen_ifbranch(struct kbast* ast, struct kbastinfo* astinfo, struct k
 	}
 }
 
-static void cgen_elsebranch(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+static void cgen_elsebranch(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid) {
 	struct kbnode* node = &ast->nodes.data[nid];
     int retval = *(int*)kbvec_last(&ctx->tmpvals);
     kbstr_catf(ctx->cur_code, "%selse\n%s{\n", ctx->indent, ctx->indent);
     indent(ctx);
-    cgen_rec(ast, astinfo, ctx, node->data.ifbranch.conseq);
+    cgen_rec(ast, modgraph, modid, ctx, node->data.ifbranch.conseq);
     char* branchval = kbstr_stack_pop(&ctx->vals);
     kbstr_catf(ctx->cur_code, "%sval%d = %s;\n", ctx->indent, retval, branchval);
     dedent(ctx);
     kbstr_catf(ctx->cur_code, "%s}\n", ctx->indent);
 }
 
-static int cgen_rec(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenctx* ctx, int nid) {
+static int cgen_rec(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, struct kbcgenctx* ctx, int nid) {
     struct kbnode* node = &ast->nodes.data[nid];
 
 #if DEBUG
@@ -311,47 +333,47 @@ static int cgen_rec(struct kbast* ast, struct kbastinfo* astinfo, struct kbcgenc
 #endif
     switch(node->kind) {
         case NProgram:
-            cgen_program(ast, astinfo, ctx, nid);
+            cgen_program(ast, modgraph, modid, ctx, nid);
             break;
         case NCallParams:
-            cgen_callparams(ast, astinfo, ctx, nid);
+            cgen_callparams(ast, modgraph, modid, ctx, nid);
             break;
         case NSeq:
-            cgen_seq(ast, astinfo, ctx, nid);
+            cgen_seq(ast, modgraph, modid, ctx, nid);
             break;
         case NCallParam:
-            cgen_callparam(ast, astinfo, ctx, nid);
+            cgen_callparam(ast, modgraph, modid, ctx, nid);
             break;
         case NFun:
-            cgen_fun(ast, astinfo, ctx, nid);
+            cgen_fun(ast, modgraph, modid, ctx, nid);
             break;
         case NStrLit:
-            cgen_strlit(ast, astinfo, ctx, nid);
+            cgen_strlit(ast, modgraph, modid, ctx, nid);
             break;
         case NIntLit:
-            cgen_intlit(ast, astinfo, ctx, nid);
+            cgen_intlit(ast, modgraph, modid, ctx, nid);
             break;
         case NFloatLit:
-            cgen_floatlit(ast, astinfo, ctx, nid);
+            cgen_floatlit(ast, modgraph, modid, ctx, nid);
             break;
         case NCharLit:
-            cgen_charlit(ast, astinfo, ctx, nid);
+            cgen_charlit(ast, modgraph, modid, ctx, nid);
             break;
         case NId:
-			cgen_id(ast, astinfo, ctx, nid);
+			cgen_id(ast, modgraph, modid, ctx, nid);
             break;
         case NCall:
-			cgen_call(ast, astinfo, ctx, nid);
+			cgen_call(ast, modgraph, modid, ctx, nid);
             break;
         case NIfElse:
-			cgen_ifelse(ast, astinfo, ctx, nid);
+			cgen_ifelse(ast, modgraph, modid, ctx, nid);
             break;
         case NIfBranch:
         case NElifBranch:
-			cgen_ifbranch(ast, astinfo, ctx, nid);
+			cgen_ifbranch(ast, modgraph, modid, ctx, nid);
             break;
         case NElseBranch:
-			cgen_elsebranch(ast, astinfo, ctx, nid);
+			cgen_elsebranch(ast, modgraph, modid, ctx, nid);
             break;
         default:
             break;
@@ -406,11 +428,10 @@ void kbcgenctx_del(struct kbcgenctx* cgenctx) {
     kbfree(cgenctx->indent);
 }
 
-int kbcgen(struct kbopts* opts, struct kbcompiland* compiland, struct kbast* ast, struct kbastinfo* astinfo) {
-    struct kberrvec errvec = kberrvec_make();
-
+int kbcgen(struct kbopts* opts, struct kbcompiland* compiland, struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid) {
     struct kbcgenctx cgenctx;
     kbcgenctx_new(opts, compiland, &cgenctx);
+    struct kbmod* mod = kbmodgraph_get(modgraph, modid);
     
     struct kbstr common_header;
     kbstr_new(&common_header);
@@ -456,6 +477,10 @@ int kbcgen(struct kbopts* opts, struct kbcompiland* compiland, struct kbast* ast
         headername
     );
 
+    for(int i = 0; i < mod->deps.size; ++ i) {
+        emit(cgenctx.cheader, "#include \"%s.h\"\n", mod->deps.data[i]);
+    }
+
     emit(cgenctx.csource,
         "%s"
         "#include \"%s.h\"\n",
@@ -464,14 +489,14 @@ int kbcgen(struct kbopts* opts, struct kbcompiland* compiland, struct kbast* ast
     );
 
    
-    cgen_rec(ast, astinfo, &cgenctx, 0);
+    cgen_rec(ast, modgraph, modid, &cgenctx, 0);
 
     if (cgenctx.h_code.len) {
         emit(cgenctx.cheader, cgenctx.h_code.data);
     }
 
     if (cgenctx.src_code.len) {
-        emit(cgenctx.csource, cgenctx.src_code.data);
+        emit(cgenctx.csource, "%s", cgenctx.src_code.data);
     }
 
     if (cgenctx.main_code.len || compiland->entry) {
@@ -522,7 +547,6 @@ int kbcgen(struct kbopts* opts, struct kbcompiland* compiland, struct kbast* ast
     // fclose(destexe);
     // kbfree(exe);
     kbstr_del(&cid);
-    kberrvec_del(&errvec);    
     kbcgenctx_del(&cgenctx);
     kbstr_del(&common_header);
     kbfree(headername);

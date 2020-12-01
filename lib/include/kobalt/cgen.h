@@ -5,10 +5,10 @@
 #include "kobalt/ast.h"
 #include "kobalt/options.h"
 #include "kobalt/compiland.h"
-#include "kobalt/astinfo.h"
 #include "kobalt/str.h"
 #include "kobalt/vec.h"
+#include "kobalt/modgraph.h"
 
-int kbcgen(struct kbopts* opts, struct kbcompiland* compiland, struct kbast* ast, struct kbastinfo* astinfo);
+int kbcgen(struct kbopts* opts, struct kbcompiland* compiland, struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid);
 
 #endif

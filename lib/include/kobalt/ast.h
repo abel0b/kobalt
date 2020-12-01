@@ -5,7 +5,6 @@
 #include "kobalt/syntax.h"
 #include "kobalt/dict.h"
 #include "kobalt/objpool.h"
-#include "kobalt/astinfo.h"
 #include "kobalt/vec.h"
 #include <stdio.h>
 
@@ -38,8 +37,6 @@ void kbast_new(struct kbast* ast);
 int kbast_add(struct kbast* ast, enum kbnode_kind kind, int parent, struct kbloc loc);
 
 void kbast_del(struct kbast* ast);
-
-void kbast_display(FILE* out, struct kbast* ast, struct kbastinfo* astinfo);
 
 void kbastvisit_new(struct kbast* ast, void* ctx, int (*visit)(struct kbastvisit *), struct kbastvisit* astvisit, enum kbastorder order);
 

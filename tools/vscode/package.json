@@ -2,7 +2,7 @@
     "name": "kobalt",
     "displayName": "Kobalt",
     "description": "Kobalt language support",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "engines": {
         "vscode": "^1.50.0"
     },
@@ -13,7 +13,7 @@
         "languages": [{
             "id": "kobalt",
             "aliases": ["Kobalt", "kobalt"],
-            "extensions": [".kb"],
+            "extensions": [".kl", ".kobalt"],
             "configuration": "./language-configuration.json"
         }],
         "grammars": [{

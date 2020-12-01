@@ -48,17 +48,19 @@ void kbdict_set(struct kbdict* dict, char* key, void* value) {
 
 void* kbdict_get(struct kbdict* dict, char* key) {
     unsigned long bucketid = hash(key) % dict->numbuckets;
-    for(int ii = 0; ii < dict->sizes[bucketid]; ++ ii) {
-        if (strcmp(key, dict->buckets[bucketid][ii].key) == 0) {
-            return dict->buckets[bucketid][ii].value;
+    for(int i = 0; i < dict->sizes[bucketid]; ++ i) {
+        if (strcmp(key, dict->buckets[bucketid][i].key) == 0) {
+            return dict->buckets[bucketid][i].value;
         }
     }
     return NULL;
 }
 
 void kbdict_del(struct kbdict* dict) {
-    for(int ii = 0; ii < dict->numbuckets; ++ ii) {
-        if (dict->capacities[ii]) kbfree(dict->buckets[ii]);
+    for(int i = 0; i < dict->numbuckets; ++ i) {
+        if (dict->capacities[i]) {
+            kbfree(dict->buckets[i]);
+        }
     }
     kbstr_stack_del(&dict->key_pool);
     kbfree(dict->buckets);
@@ -67,10 +69,10 @@ void kbdict_del(struct kbdict* dict) {
 }
 
 void kbdict_display(struct kbdict* dict) {
-    for(int ii = 0; ii < dict->numbuckets; ++ ii) {
-        if (dict->sizes[ii]) {
-            for(int jj = 0; jj < dict->sizes[ii]; ++ jj) {
-                printf("%s => %p\n", dict->buckets[ii][jj].key, dict->buckets[ii][jj].value);
+    for(int i = 0; i < dict->numbuckets; ++ i) {
+        if (dict->sizes[i]) {
+            for(int j = 0; j < dict->sizes[i]; ++ j) {
+                printf("%s => %p\n", dict->buckets[i][j].key, dict->buckets[i][j].value);
             }
         }
     }

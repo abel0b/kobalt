@@ -18,9 +18,11 @@
 
 #if WINDOWS
 char* ccs[CCNone] = {"cl", "clang-cl"};
-char* ccoptoutput[CCNone] = {"/Fe", "/Fe"};
-char* ccoptobj[CCNone] = {"/Fo", "/Fo"};
-char* ccoptextra[CCNone] = {"", ""};
+char* ccoptout[CCNone] = {"/Fe", "/Fe"};
+char* ccoptobj[CCNone] = {"", ""};
+char* ccoptobjout[CCNone] = {"/Fo", "/Fo"};
+char* ccopt1[CCNone] = {"", ""};
+char* ccopt2[CCNone] = {"", ""};
 #else
 char* ccs[CCNone] = {"clang", "gcc", "tcc"};
 char* ccoptobj[CCNone] = {"-c", "-c", "-c"};
@@ -85,7 +87,7 @@ void kbcmdcc_new(struct kbcmdcc* cmdcc) {
         int exitstatus = WEXITSTATUS(status);
 #endif
 	    if (exitstatus == 0) {
-	        kbilog("found C compiler '%s'", ccs[icc]);
+	        // kbilog("found C compiler '%s'", ccs[icc]);
             cmdcc->cc = icc;
             return;
         }
@@ -120,7 +122,7 @@ int kbcmdcc_compile(struct kbopts* opts, struct kbcmdcc* cmdcc, struct kbstr* sr
 #if WINDOWS
     // TODO: remove static path size limit
     char binopt[1024];
-    int ret = snprintf(binopt, 1024, "%s%s", ccoptobjout[cmdcc->cc], bin->data);
+    int ret = snprintf(binopt, 1024, "%s%s", ccoptobjout[cmdcc->cc], obj.data);
     if (ret < 0 || ret > 1024) {
         kbelog("unexpected error, probably because of too long path");
         exit(1);
@@ -136,7 +138,7 @@ int kbcmdcc_compile(struct kbopts* opts, struct kbcmdcc* cmdcc, struct kbstr* sr
 
     int exitstatus = kbspawn(ccs[cmdcc->cc], args.data, cclog);
     if (exitstatus == 0) {
-        kbilog("succesfully compiled %s", obj.data);
+        // kbilog("succesfully compiled %s", obj.data);
     }
     else {
         kbelog("C compilation exited with %d status. See logs saved in '%s/cc.log'", exitstatus, opts->cachepath.data);
@@ -180,7 +182,7 @@ int kbcmdcc_link(struct kbopts* opts, struct kbcmdcc* cmdcc, struct kbvec_str* o
 #if WINDOWS
     // TODO: remove static path size limit
     char binopt[1024];
-    int ret = snprintf(binopt, 1024, "%s%s", ccoptoutput[cmdcc->cc], bin->data);
+    int ret = snprintf(binopt, 1024, "%s%s", ccoptout[cmdcc->cc], bin->data);
     if (ret < 0 || ret > 1024) {
         kbelog("unexpected error, probably because of too long path");
         exit(1);
