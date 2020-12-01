@@ -1,0 +1,82 @@
+name: test
+
+on:
+  push:
+    branches:
+      - *
+  pull_request:
+    branches:
+      - *
+
+jobs:
+  test-unix:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, macos-10.15]
+        config: [release]
+        cc: [gcc, clang]
+        include:
+          - os: ubuntu-20.04
+            osname: linux
+          - os: macos-10.15
+            osname: macosx
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Lua
+        uses: abel0b/setup-lua@v1
+        with:
+          lua-version: "5.3.5"
+
+      - name: Install premake
+        run : |
+          wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz
+          tar xvzf premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz
+
+      - name: Generate project file
+        run: ./premake5 --os=${{ matrix.osname }} gmake2
+      
+      - name: Compile
+        run: make -j$(nproc) CC=${{ matrix.cc }} config=${{ matrix.config }}
+
+      - name: Run examples
+        run: for example in doc/examples/*.kl; do ./bin/${{ matrix.config }}/kobalt $example; done
+
+  test-windows:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        config: [release]
+        cc: [cl]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Lua
+        uses: abel0b/setup-lua@v1
+        with:
+          lua-version: "5.3.5"
+
+      - name: Install premake
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-windows.zip" -OutFile "premake-5.0.0-alpha15-windows.zip"
+          Expand-Archive -DestinationPath . -Path premake-5.0.0-alpha15-windows.zip
+
+      - name: Generate project file
+        run: ./premake5 --os=windows vs2019
+
+      - name: Generate version header
+        run: lua lib/include/kobalt/version.h.lua "$((get-childitem -name doc/changelog | select-string alpha) -replace "md","${{ github.run_number }}")" > lib/include/kobalt/version.h
+
+      - name: Compile
+        run: |
+          .\tools\vsenv.ps1
+          msbuild kobalt.sln -m -p:CLToolExe=${{ matrix.cc }} -p:Configuration=${{ matrix.config }}
+
+      - name: Run examples
+        run: |
+          .\tools\vsenv.ps1
+          get-childitem doc\examples -filter *.kl | foreach-object { bin\${{ matrix.config }}\kobalt.exe $_.FullName }

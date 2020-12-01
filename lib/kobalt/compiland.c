@@ -37,7 +37,9 @@ static void kbcompiland_new_aux(struct kbcompiland* compiland, char* filename, b
     kbstr_new(&compiland->name);
     for(int i = 0; i < compiland->path.len - 3; ++ i) {
         char c = (isds(compiland->path.data[i]))? '%' : compiland->path.data[i];
-        kbstr_catf(&compiland->name, "%c", c);
+        if (c != ':') {
+            kbstr_catf(&compiland->name, "%c", c);
+        }
     }
 
     FILE * file = fopen(compiland->path.data, "rb");
