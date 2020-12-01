@@ -13,7 +13,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04, macos-10.15]
         config: [release]
-        cc: [gcc, clang]
+        cc: [clang]
         include:
           - os: ubuntu-20.04
             osname: linux
@@ -29,9 +29,7 @@ jobs:
           lua-version: "5.3.5"
 
       - name: Install premake
-        run : |
-          wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz
-          tar xvzf premake-5.0.0-alpha15-${{ matrix.osname }}.tar.gz
+        uses: abel0b/setup-premake@v1
 
       - name: Generate project file
         run: ./premake5 --os=${{ matrix.osname }} gmake2
@@ -72,9 +70,7 @@ jobs:
           lua-version: "5.3.5"
 
       - name: Install premake
-        run: |
-          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-windows.zip" -OutFile "premake-5.0.0-alpha15-windows.zip"
-          Expand-Archive -DestinationPath . -Path premake-5.0.0-alpha15-windows.zip
+        uses: abel0b/setup-premake@v1
 
       - name: Generate project file
         run: ./premake5 --os=windows vs2019
