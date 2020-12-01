@@ -15,7 +15,6 @@ static void kbcompiland_new_aux(struct kbcompiland* compiland, char* filename, b
     kbstr_new(&compiland->path);
     kbstr_cat(&compiland->path, filename);
     kbpath_normalize(&compiland->path);
-    kbilog("normpath %s", compiland->path.data);
 
     int base = 0;
     {

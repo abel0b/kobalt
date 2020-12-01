@@ -8,8 +8,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04, macos-10.15]
-        config: [release]
-        cc: [gcc, clang]
+        config: [debug]
+        cc: [clang]
         include:
           - os: ubuntu-20.04
             osname: linux
@@ -43,7 +43,7 @@ jobs:
 
     strategy:
       matrix:
-        config: [release]
+        config: [debug]
         cc: [cl]
 
     steps:

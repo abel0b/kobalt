@@ -43,7 +43,7 @@ jobs:
         run: make -j$(nproc) CC=${{ matrix.cc }} config=${{ matrix.config }}
 
       - name: Say hello world
-        run: ./bin/${{ matrix.config }}/kobalt doc/examples/hello_world.kb
+        run: ./bin/${{ matrix.config }}/kobalt doc/examples/hello_world.kl
 
       - name: Create release archive
         run: ./premake5 release
@@ -90,7 +90,7 @@ jobs:
       - name: Say hello world
         run: |
           .\tools\vsenv.ps1
-          .\bin\${{ matrix.config }}\kobalt doc\examples\hello_world.kb
+          .\bin\${{ matrix.config }}\kobalt doc\examples\hello_world.kl
 
       - name: Create release archive
         run: ./premake5 release
