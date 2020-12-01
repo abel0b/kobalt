@@ -22,7 +22,6 @@ The toolchain enable users to produce unencumbered software that just work witho
 ***Warning!** The project is in the very early stages of development. Note that most features are either only partially implemented or not implemented at all.* [What works already?](https://github.com/abel0b/kobalt/tree/master/doc/examples)
 
 ## Getting started
-### Download pre-built binaries
 **TLDR.** You can download alpha version pre-built binaries for Windows, Linux and MacOs on the [releases page](https://github.com/abel0b/kobalt/releases).
 
 ### Build from sources
@@ -52,6 +51,9 @@ Binaries will be generated in bin directory.
 ## Resources
 #### [Examples](https://github.com/abel0b/kobalt/tree/master/doc/examples)
 Showcase programs in Kobalt.
+
+#### [Releases](https://github.com/abel0b/kobalt/releases)
+Last kobalt releases and changelog.
 
 ## Legal
 This is free software; you can redistribute it and/or modify it under the terms of the MIT license. See LICENSE for details.
