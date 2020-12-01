@@ -28,7 +28,7 @@ jobs:
         uses: abel0b/setup-premake@v1
 
       - name: Generate project file
-        run: ./premake5 --os=${{ matrix.osname }} gmake2
+        run: premake5 --os=${{ matrix.osname }} gmake2
       
       - name: Compile
         run: make -j$(nproc) CC=${{ matrix.cc }} config=${{ matrix.config }}
@@ -56,7 +56,7 @@ jobs:
         uses: abel0b/setup-premake@v1
 
       - name: Generate project file
-        run: ./premake5 --os=windows vs2019
+        run: premake5 --os=windows vs2019
 
       - name: Generate version header
         run: lua lib/include/kobalt/version.h.lua "$((get-childitem -name doc/changelog | select-string alpha) -replace "md","${{ github.run_number }}")" > lib/include/kobalt/version.h
