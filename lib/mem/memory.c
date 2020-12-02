@@ -28,7 +28,7 @@ static size_t checklimit(size_t newmem) {
 
 #if DEBUG
 void* kbmalloc_aux(size_t size, const char* file, int line, const char* func) {
-    if (getenv("CI")) {
+    if (getenv("DEBUG_MEMORY")) {
         kbilog("mem.malloc: %zuB at %s:%d:%s", size, file, line, func);
     } 
 #else
@@ -43,7 +43,7 @@ void* kbmalloc_aux(size_t size) {
 
 #if DEBUG
 void* kbrealloc_aux(void * ptr, size_t newsize, const char* file, int line, const char* func) {
-    if (getenv("CI")) {
+    if (getenv("DEBUG_MEMORY")) {
         kbilog("mem.realloc: %p %zuB at %s:%d:%s", ptr, newsize, file, line, func);
     }
 
@@ -57,7 +57,7 @@ void* kbrealloc_aux(void * ptr, size_t newsize) {
 
 #if DEBUG
 void kbfree_aux(void * ptr, const char* file, int line, const char* func) {
-    if (getenv("CI")) {
+    if (getenv("DEBUG_MEMORY")) {
         kbilog("mem.free: %p at %s:%d:%s", ptr, file, line, func);
     }
 #else
