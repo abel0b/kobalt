@@ -12,7 +12,12 @@ workspace "kobalt"
 
     filter { "configurations:debug", "toolset:clang" }
         buildoptions { "-std=c99 -pedantic -funwind-tables", "-fasynchronous-unwind-tables", "-ggdb3", "-fno-omit-frame-pointer", "-fno-optimize-sibling-calls" }
-        linkoptions { "-Wl,--export-dynamic", "-fsanitize=address,leak,undefined" }
+        linkoptions { "-Wl,--export-dynamic" }
+
+    if os.host() == "linux" then
+        filter { "configurations:debug", "toolset:clang" }
+            linkoptions { "-fsanitize=address,leak,undefined" }
+    end
 
     filter { "configurations:debug", "toolset:gcc" }
         buildoptions { "-ggdb3", "-rdynamic" }

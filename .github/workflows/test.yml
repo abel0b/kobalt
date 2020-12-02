@@ -80,7 +80,7 @@ jobs:
 
       - name: Configure debug logs
         if: github.event_name == 'workflow_dispatch'
-        run: foreach($log in ${{ github.event.inputs.debug_logs }}.split(" ")) { echo "DEBUG_$log=1" >> $GITHUB_ENV }
+        run: foreach($log in "${{ github.event.inputs.debug_logs }}".split(" ")) { echo "DEBUG_$log=1" >> $GITHUB_ENV }
 
       - name: Run examples
         run: |
