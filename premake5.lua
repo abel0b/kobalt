@@ -10,13 +10,13 @@ workspace "kobalt"
     filter { "configurations:release", "toolset:clang or gcc" }
         buildoptions { "-Wall -Wextra" }
 
-    filter { "configurations:debug", "toolset:clang" }
-        buildoptions { "-std=c99 -pedantic -funwind-tables", "-fasynchronous-unwind-tables", "-ggdb3", "-fno-omit-frame-pointer", "-fno-optimize-sibling-calls" }
-        linkoptions { "-Wl,--export-dynamic" }
+    filter { "configurations:debug", "toolset:clang or gcc" }
+        buildoptions { "-std=c99", "-pedantic", "-ggdb3" }
 
     if os.host() == "linux" then
         filter { "configurations:debug", "toolset:clang" }
-            linkoptions { "-fsanitize=address,leak,undefined" }
+            buildoptions { "-funwind-tables", "-fasynchronous-unwind-tables", "-fno-omit-frame-pointer", "-fno-optimize-sibling-calls" }
+            linkoptions { "-fsanitize=address,leak,undefined", "-Wl,--export-dynamic" }
     end
 
     filter { "configurations:debug", "toolset:gcc" }
