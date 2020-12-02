@@ -195,6 +195,5 @@ void kbopts_del(struct kbopts* opts) {
     kbstr_del(&opts->cwd);
     kbstr_del(&opts->cachepath);
     kbstr_del(&opts->outpath);
-    kbfree(*(char**)kbvec_get(&opts->exe_argv, 0));
     kbvec_del(&opts->exe_argv);
 }

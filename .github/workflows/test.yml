@@ -1,6 +1,14 @@
 name: test
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      debug_logs:
+        description: Enable debug logging
+        required: false
+
 
 jobs:
   test-unix:
@@ -28,10 +36,14 @@ jobs:
         uses: abel0b/setup-premake@v1
 
       - name: Generate project file
-        run: premake5 --os=${{ matrix.osname }} gmake2
+        run: premake5 --os=${{ matrix.osname }} --cc=${{ matrix.cc }} gmake2
       
       - name: Compile
-        run: make -j$(nproc) CC=${{ matrix.cc }} config=${{ matrix.config }}
+        run: make -j$(nproc) config=${{ matrix.config }}
+
+      - name: Configure debug logs
+        if: github.event_name == 'workflow_dispatch'
+        run: for log in ${{ github.event.inputs.debug_logs }}; do echo "DEBUG_$log=1" >> $GITHUB_ENV; done
 
       - name: Run examples
         run: for example in doc/examples/*.kl; do ./bin/${{ matrix.config }}/kobalt $example; done
@@ -65,6 +77,10 @@ jobs:
         run: |
           .\tools\vsenv.ps1
           msbuild kobalt.sln -m -p:CLToolExe=${{ matrix.cc }} -p:Configuration=${{ matrix.config }}
+
+      - name: Configure debug logs
+        if: github.event_name == 'workflow_dispatch'
+        run: foreach($log in ${{ github.event.inputs.debug_logs }}.split(" ")) { echo "DEBUG_$log=1" >> $GITHUB_ENV }
 
       - name: Run examples
         run: |

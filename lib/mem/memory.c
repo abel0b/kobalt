@@ -11,7 +11,7 @@ static int size_max(size_t a, size_t b) {
     return (a >= b)? a : b;
 }
 
-static void checkptr(void * ptr, size_t size) {
+static void checkptr(void* ptr, size_t size) {
     if (ptr == NULL) {
         kbelog("dynamic memory allocation of %zuB failed", size);
         exit(1);
@@ -26,7 +26,14 @@ static size_t checklimit(size_t newmem) {
     return newmem;
 }
 
-void * kbmalloc(size_t size) {
+#if DEBUG
+void* kbmalloc_aux(size_t size, const char* file, int line, const char* func) {
+    if (getenv("CI")) {
+        kbilog("mem.malloc: %zuB at %s:%d:%s", size, file, line, func);
+    } 
+#else
+void* kbmalloc_aux(size_t size) {
+#endif
     mem = checklimit(mem+size);
     mempeak = size_max(mempeak, mem);
     void* data = malloc(size);
@@ -34,12 +41,27 @@ void * kbmalloc(size_t size) {
     return data;
 }
 
-void * kbrealloc(void * ptr, size_t newsize) {
+#if DEBUG
+void* kbrealloc_aux(void * ptr, size_t newsize, const char* file, int line, const char* func) {
+    if (getenv("CI")) {
+        kbilog("mem.realloc: %p %zuB at %s:%d:%s", ptr, newsize, file, line, func);
+    }
+
+#else
+void* kbrealloc_aux(void * ptr, size_t newsize) {
+#endif
     void* data = realloc(ptr, newsize);
     checkptr(data, newsize);
     return data;
 }
 
-void kbfree(void * ptr) {
+#if DEBUG
+void kbfree_aux(void * ptr, const char* file, int line, const char* func) {
+    if (getenv("CI")) {
+        kbilog("mem.free: %p at %s:%d:%s", ptr, file, line, func);
+    }
+#else
+void kbfree_aux(void * ptr) {
+#endif
     free(ptr);
 }
