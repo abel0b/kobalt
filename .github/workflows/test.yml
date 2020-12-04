@@ -85,4 +85,4 @@ jobs:
       - name: Run examples
         run: |
           .\tools\vsenv.ps1
-          get-childitem .\doc\examples | foreach-object { echo "$_.FullName"; .\bin\${{ matrix.config }}\kobalt.exe $_.FullName }
+          get-childitem .\doc\examples | foreach-object { echo $_.FullName; .\bin\${{ matrix.config }}\kobalt.exe $_.FullName }
