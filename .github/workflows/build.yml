@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04, macos-10.15]
-        config: [release]
+        config: [debug, release]
         cc: [clang]
         include:
           - os: ubuntu-20.04
@@ -94,7 +94,7 @@ jobs:
 
       - name: Configure debug logs
         if: github.event_name == 'workflow_dispatch'
-        run: foreach($log in "${{ github.event.inputs.debug_logs }}".split(" ")) { echo "DEBUG_$log=1" >> $GITHUB_ENV }
+        run: foreach($log in "${{ github.event.inputs.debug_logs }}".split(" ")) { echo "DEBUG_$log=1" >> $env:GITHUB_ENV }
 
       - name: Say hello world
         run: |
