@@ -5,6 +5,11 @@ on:
     branches: [ master, develop ]
   pull_request:
     branches: [ master, develop ]
+  workflow_dispatch:
+    inputs:
+      debug_logs:
+        description: Enable debug logging
+        required: false
 
 jobs:
   build-unix:
@@ -39,6 +44,10 @@ jobs:
 
       - name: Compile
         run: make -j$(nproc) CC=${{ matrix.cc }} config=${{ matrix.config }}
+
+      - name: Configure debug logs
+        if: github.event_name == 'workflow_dispatch'
+        run: for log in ${{ github.event.inputs.debug_logs }}; do echo "DEBUG_$log=1" >> $GITHUB_ENV; done
 
       - name: Say hello world
         run: ./bin/${{ matrix.config }}/kobalt doc/examples/hello_world.kl
@@ -82,6 +91,10 @@ jobs:
         run: |
           .\tools\vsenv.ps1
           msbuild kobalt.sln -m -p:CLToolExe=${{ matrix.cc }} -p:Configuration=${{ matrix.config }}
+
+      - name: Configure debug logs
+        if: github.event_name == 'workflow_dispatch'
+        run: foreach($log in "${{ github.event.inputs.debug_logs }}".split(" ")) { echo "DEBUG_$log=1" >> $GITHUB_ENV }
 
       - name: Say hello world
         run: |
