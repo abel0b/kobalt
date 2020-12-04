@@ -9,10 +9,8 @@ on:
         description: Enable debug logging
         required: false
 
-
 jobs:
   test-unix:
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-20.04, macos-10.15]
@@ -23,6 +21,8 @@ jobs:
             osname: linux
           - os: macos-10.15
             osname: macosx
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v2
@@ -85,4 +85,4 @@ jobs:
       - name: Run examples
         run: |
           .\tools\vsenv.ps1
-          get-childitem doc\examples -filter *.kl | foreach-object { bin\${{ matrix.config }}\kobalt.exe $_.FullName }
+          get-childitem .\doc\examples | foreach-object { echo $_.FullName; .\bin\${{ matrix.config }}\kobalt.exe $_.FullName }

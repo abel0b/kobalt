@@ -198,7 +198,11 @@ void kbpipeline_run(struct kbpipeline* pipeline, struct kbcompiland* input) {
             struct kbpipe* pipe = (struct kbpipe*) kbvec_get(&pipeline->pipes, j);
             struct kbstr obj;
             kbstr_new(&obj);
+#if WINDOWS
+            kbstr_catf(&obj, "%s/%s.obj", pipeline->opts->cachepath.data, pipe->compiland.name.data);
+#else
             kbstr_catf(&obj, "%s/%s.o", pipeline->opts->cachepath.data, pipe->compiland.name.data);
+#endif
             kbvec_str_push(&objs, obj);
             fprintf(pipeline->opts->manifest, "  - %s.c\n", pipe->compiland.name.data);
         }

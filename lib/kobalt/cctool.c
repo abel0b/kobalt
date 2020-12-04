@@ -19,7 +19,7 @@
 #if WINDOWS
 char* ccs[CCNone] = {"cl", "clang-cl"};
 char* ccoptout[CCNone] = {"/Fe", "/Fe"};
-char* ccoptobj[CCNone] = {"", ""};
+char* ccoptobj[CCNone] = {"/c", "/c"};
 char* ccoptobjout[CCNone] = {"/Fo", "/Fo"};
 char* ccopt1[CCNone] = {"", ""};
 char* ccopt2[CCNone] = {"", ""};
@@ -102,6 +102,10 @@ int kbcmdcc_compile(struct kbopts* opts, struct kbcmdcc* cmdcc, struct kbstr* sr
     kbstr_new(&obj);
     kbstr_cat(&obj, src->data);
     obj.data[obj.len - 1] = 'o';
+#if WINDOWS
+    kbstr_cat(&obj, "bj");
+#endif
+    
 
     struct kbstr logfilepath;
     kbstr_new(&logfilepath);
