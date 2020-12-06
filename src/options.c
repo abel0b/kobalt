@@ -124,7 +124,9 @@ void kbopts_new(struct kbopts* opts, int argc, char* argv[]) {
     while(maxiter-- && (getcwd(opts->cwd.data, cwdsize) == NULL)) {
         cwdsize = 2 * cwdsize;
         kbstr_resize(&opts->cwd, cwdsize);
-    } 
+    }
+    kbstr_resize(&opts->cwd, strlen(opts->cwd.data));
+
     if (maxiter <= 0) {
         kbelog("allocation");
         exit(1);
@@ -163,16 +165,17 @@ void kbopts_new(struct kbopts* opts, int argc, char* argv[]) {
     kbpath_push(&opts->cachepath, "build");
     ensuredir(opts->cachepath.data);
 
-    uint8_t data[32];
-    int bsize = base32encsize(sizeof(data));
+    unsigned char data[32];
+    int bsize = base32_allocated_size(sizeof(data));
+
+    calc_sha_256(data, opts->cwd.data, opts->cwd.len);
+
     int cachepathlen = opts->cachepath.len + bsize + 1;
 
     kbpath_push(&opts->cachepath, "placeholder");
     kbstr_resize(&opts->cachepath, cachepathlen);
-    
-    calc_sha_256(data, opts->cwd.data, opts->cwd.len);
 
-    base32enc(&opts->cachepath.data[opts->cachepath.len - bsize], data, sizeof(data));
+    base32_encode(data, 32, &opts->cachepath.data[opts->cachepath.len - bsize]);
     
     kbpath_normalize(&opts->cachepath);
     ensuredir(opts->cachepath.data);

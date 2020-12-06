@@ -1,5 +1,5 @@
 workspace "kobalt"
-    configurations { "debug", "release" }
+    configurations { "debug", "release", "debug-vg" }
     
     if os.host() == "windows" then
         defines { "WINDOWS=1", "_CRT_SECURE_NO_WARNINGS", "_CRT_NONSTDC_NO_WARNINGS" }
@@ -11,18 +11,17 @@ workspace "kobalt"
         buildoptions { "-Wall -Wextra" }
 
     filter { "configurations:debug", "toolset:clang or gcc" }
-        buildoptions { "-std=c99", "-pedantic", "-ggdb3" }
+        buildoptions { "-std=c99", "-pedantic" }
 
     if os.host() == "linux" then
         filter { "configurations:debug", "toolset:clang" }
             buildoptions { "-funwind-tables", "-fasynchronous-unwind-tables", "-fno-omit-frame-pointer", "-fno-optimize-sibling-calls" }
             linkoptions { "-fsanitize=address,leak,undefined", "-Wl,--export-dynamic" }
+        filter { "configurations:debug or debug-vg", "toolset:clang or gcc" }
+            buildoptions { "-ggdb3" }
     end
 
-    filter { "configurations:debug", "toolset:gcc" }
-        buildoptions { "-ggdb3", "-rdynamic" }
-
-    filter "configurations:debug"
+    filter "configurations:debug or debug-vg"
         defines { "DEBUG=1" }
 
     filter "configurations:release"
@@ -38,8 +37,8 @@ workspace "kobalt"
     project "kobalt"
         kind "ConsoleApp"
         language "C"
-        includedirs { "lib/include", "extern/linenoise", "extern/sha-2", "extern/base32", "std/include" }
-        files { "src/**.h", "src/**.c", "extern/linenoise/*.c", "extern/sha-2/*.c", "extern/base32/*.c" }
+        includedirs { "lib/include", "extern/linenoise", "extern/sha-2", "extern/basenc", "std/include" }
+        files { "src/**.h", "src/**.c", "extern/linenoise/*.c", "extern/sha-2/*.c", "extern/basenc/*.c" }
         links { "kb" }
 
 newoption {
@@ -106,7 +105,7 @@ newaction {
         flags:write("-Iextern/levenshtein\n")
         flags:write("-Iextern/sha-2\n")
         flags:write("-Iextern/base85\n")
-        flags:write("-Iextern/base32\n")
+        flags:write("-Iextern/basenc\n")
         flags:write("-Ilib/include\n")
         flags:write("-Istd/include\n")
         flags:close()
