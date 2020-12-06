@@ -7,9 +7,17 @@ on:
     branches: [ master, develop ]
   workflow_dispatch:
     inputs:
+      config:
+        description: Configuration
+        required: true
+        default: release
       debug_logs:
         description: Enable debug logging
         required: false
+        default:
+
+env:
+  CONFIG: release
 
 jobs:
   build-unix:
@@ -17,13 +25,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04, macos-10.15]
-        config: [release]
         cc: [clang]
-        include:
-          - os: ubuntu-20.04
-            osname: linux
-          - os: macos-10.15
-            osname: macosx
 
     steps:
       - uses: actions/checkout@v2
@@ -36,21 +38,23 @@ jobs:
       - name: Install premake
         uses: abel0b/setup-premake@v1
 
+      - name: Configure workflow
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          for log in ${{ github.event.inputs.debug_logs }}; do echo "DEBUG_$log=1" >> $GITHUB_ENV; done
+          echo  "CONFIG=${{ github.event.inputs.config }}" >> $GITHUB_ENV
+
       - name: Generate project file
-        run: premake5 --os=${{ matrix.osname }} gmake2
+        run: premake5 gmake2
       
       - name: Generate version header
         run: lua lib/include/kobalt/version.h.lua "$(ls doc/changelog | grep alpha | sed 's/md/${{ github.run_number }}/')" > lib/include/kobalt/version.h
 
       - name: Compile
-        run: make -j$(nproc) CC=${{ matrix.cc }} config=${{ matrix.config }}
-
-      - name: Configure debug logs
-        if: github.event_name == 'workflow_dispatch'
-        run: for log in ${{ github.event.inputs.debug_logs }}; do echo "DEBUG_$log=1" >> $GITHUB_ENV; done
+        run: make -j$(nproc) CC=${{ matrix.cc }} config=$CONFIG
 
       - name: Say hello world
-        run: ./bin/${{ matrix.config }}/kobalt doc/examples/hello_world.kl
+        run: ./bin/$CONFIG/kobalt doc/examples/hello_world.kl
 
       - name: Create release archive
         run: premake5 release
@@ -81,8 +85,14 @@ jobs:
       - name: Install premake
         uses: abel0b/setup-premake@v1
 
+      - name: Configure workflow
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          foreach($log in "${{ github.event.inputs.debug_logs }}".split(" ")) { echo "DEBUG_$log=1" >> $env:GITHUB_ENV }
+          echo  "CONFIG=${{ github.event.inputs.config }}" >> $env:GITHUB_ENV
+
       - name: Generate project file
-        run: premake5 --os=windows vs2019
+        run: premake5 vs2019
 
       - name: Generate version header
         run: lua lib/include/kobalt/version.h.lua "$((get-childitem -name doc/changelog | select-string alpha) -replace "md","${{ github.run_number }}")" > lib/include/kobalt/version.h
@@ -90,16 +100,12 @@ jobs:
       - name: Compile
         run: |
           .\tools\vsenv.ps1
-          msbuild kobalt.sln -m -p:CLToolExe=${{ matrix.cc }} -p:Configuration=${{ matrix.config }}
-
-      - name: Configure debug logs
-        if: github.event_name == 'workflow_dispatch'
-        run: foreach($log in "${{ github.event.inputs.debug_logs }}".split(" ")) { echo "DEBUG_$log=1" >> $GITHUB_ENV }
+          msbuild kobalt.sln -m -p:CLToolExe=${{ matrix.cc }} -p:Configuration=$env:CONFIG
 
       - name: Say hello world
         run: |
           .\tools\vsenv.ps1
-          .\bin\${{ matrix.config }}\kobalt doc\examples\hello_world.kl
+          .\bin\$env:CONFIG\kobalt doc\examples\hello_world.kl
 
       - name: Create release archive
         run: premake5 release
