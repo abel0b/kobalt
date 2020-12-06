@@ -1,0 +1,134 @@
+name: release
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version tag
+        required: true
+
+env:
+  CONFIG: release
+
+jobs:
+  release-unix:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, macos-10.15]
+        cc: [clang]
+        include:
+          - os: ubuntu-20.04
+            osname: linux
+          - os: macos-10.15
+            osname: macos
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Lua
+        uses: abel0b/setup-lua@v1
+        with:
+          lua-version: "5.3.5"
+
+      - name: Install premake
+        uses: abel0b/setup-premake@v1
+
+      - name: Generate project file
+        run: premake5 gmake2
+      
+      - name: Generate version header
+        run: lua lib/include/kobalt/version.h.lua "$(ls doc/changelog | grep alpha | sed 's/md/${{ github.run_number }}/')" > lib/include/kobalt/version.h
+
+      - name: Compile
+        run: make -j$(nproc) CC=${{ matrix.cc }} config=$CONFIG
+
+      - name: Create release archive
+        run: premake5 release
+
+      - name: Upload release archive
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v2
+        with:
+          name: kobalt-prerelease-${{ matrix.osname }}
+          path: dist/kobalt-prerelease-${{ matrix.osname }}.tar.gz
+
+  release-windows:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        config: [release]
+        cc: [cl]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Lua
+        uses: abel0b/setup-lua@v1
+        with:
+          lua-version: "5.3.5"
+
+      - name: Install premake
+        uses: abel0b/setup-premake@v1
+
+      - name: Generate project file
+        run: premake5 vs2019
+
+      - name: Generate version header
+        run: lua lib/include/kobalt/version.h.lua "$((get-childitem -name doc/changelog | select-string alpha) -replace "md","${{ github.run_number }}")" > lib/include/kobalt/version.h
+
+      - name: Compile
+        run: |
+          .\tools\vsenv.ps1
+          msbuild kobalt.sln -m -p:CLToolExe=${{ matrix.cc }} -p:Configuration=$env:CONFIG
+
+      - name: Create release archive
+        run: premake5 release
+
+      - name: Upload release archive
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v2
+        with:
+          name: kobalt-prerelease-windows
+          path: dist/kobalt-prerelease-windows.zip
+    
+  release:
+    needs: [release-unix, release-windows]
+
+    runs-on: ubuntu-20.04
+
+    if: github.ref == 'refs/heads/master'
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+      
+      - uses: actions/download-artifact@v2
+        with:
+          name: kobalt-prerelease-linux
+      
+      - uses: actions/download-artifact@v2
+        with:
+          name: kobalt-prerelease-macosx
+      
+      - uses: actions/download-artifact@v2
+        with:
+          name: kobalt-prerelease-windows
+
+      - name: Delete old release
+        run: |
+          hub release delete latest || true
+          git tag -d latest || true
+          git push origin --delete latest || true
+
+      - name: Determine the next alpha version number
+        run: cp ./doc/changelog/${{ github.event.inputs.version }}.md release_notes.md
+
+      - name: Create Release
+        run: |
+          hub release create -p -a kobalt-prerelease-linux.tar.gz -a kobalt-prerelease-macos.tar.gz -a kobalt-prerelease-windows.zip --file release_notes.md ${{ github.event.inputs.version }}

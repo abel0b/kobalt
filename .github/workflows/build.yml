@@ -56,16 +56,6 @@ jobs:
       - name: Say hello world
         run: ./bin/$CONFIG/kobalt doc/examples/hello_world.kl
 
-      - name: Create release archive
-        run: premake5 release
-
-      - name: Upload release archive
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: actions/upload-artifact@v2
-        with:
-          name: kobalt-prerelease-${{ matrix.osname }}
-          path: dist/kobalt-prerelease-${{ matrix.osname }}.tar.gz
-
   build-windows:
     runs-on: windows-latest
 
@@ -106,50 +96,3 @@ jobs:
         run: |
           .\tools\vsenv.ps1
           & ".\bin\$env:CONFIG\kobalt" doc\examples\hello_world.kl
-
-      - name: Create release archive
-        run: premake5 release
-
-      - name: Upload release archive
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: actions/upload-artifact@v2
-        with:
-          name: kobalt-prerelease-windows
-          path: dist/kobalt-prerelease-windows.zip
-    
-  release:
-    name: Release
-    needs: [build-unix, build-windows]
-
-    runs-on: ubuntu-20.04
-
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v2
-      
-      - uses: actions/download-artifact@v2
-        with:
-          name: kobalt-prerelease-linux
-      
-      - uses: actions/download-artifact@v2
-        with:
-          name: kobalt-prerelease-macosx
-      
-      - uses: actions/download-artifact@v2
-        with:
-          name: kobalt-prerelease-windows
-
-      - name: Delete old release
-        run: |
-          hub release delete latest || true
-          git tag -d latest || true
-          git push origin --delete latest || true
-
-      - name: Determine the next alpha version number
-        run: sed 's/^# //; s/-alpha/-alpha.${{ github.run_number }}/' $(ls ./doc/changelog/* | grep alpha) > release_notes.md
-
-      - name: Create Release
-        run: |
-          hub release create -p -a kobalt-prerelease-linux.tar.gz -a kobalt-prerelease-macosx.tar.gz -a kobalt-prerelease-windows.zip --file release_notes.md $(ls doc/changelog | grep alpha | sed 's/md/${{ github.run_number }}/')
