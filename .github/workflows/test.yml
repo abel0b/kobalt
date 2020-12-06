@@ -14,6 +14,9 @@ on:
         required: false
         default:
 
+env:
+  CONFIG: release
+
 jobs:
   test-unix:
     strategy:
@@ -47,7 +50,7 @@ jobs:
         run: make -j$(nproc) config=$CONFIG
 
       - name: Run examples
-        run: for example in doc/examples/*.kl; do ./bin/${{ matrix.config }}/kobalt $example; done
+        run: for example in doc/examples/*.kl; do ./bin/$CONFIG/kobalt $example; done
 
   test-windows:
     runs-on: windows-latest
@@ -88,4 +91,4 @@ jobs:
       - name: Run examples
         run: |
           .\tools\vsenv.ps1
-          get-childitem .\doc\examples | foreach-object { echo $_.FullName; .\bin\${{ matrix.config }}\kobalt.exe $_.FullName }
+          get-childitem .\doc\examples | foreach-object { & ".\bin\$env:CONFIG\kobalt.exe" $_.FullName }

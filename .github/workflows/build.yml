@@ -105,7 +105,7 @@ jobs:
       - name: Say hello world
         run: |
           .\tools\vsenv.ps1
-          .\bin\$env:CONFIG\kobalt doc\examples\hello_world.kl
+          & ".\bin\$env:CONFIG\kobalt" doc\examples\hello_world.kl
 
       - name: Create release archive
         run: premake5 release
