@@ -116,3 +116,35 @@ jobs:
         with:
           name: kobalt-windows
           path: dist/kobalt-windows.zip
+
+  release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    
+    needs: [release-unix, release-windows]
+
+    runs-on: ubuntu-20.04
+
+    if: github.ref == 'refs/heads/master'
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+      
+      - uses: actions/download-artifact@v2
+        with:
+          name: kobalt-linux
+      
+      - uses: actions/download-artifact@v2
+        with:
+          name: kobalt-macos
+      
+      - uses: actions/download-artifact@v2
+        with:
+          name: kobalt-windows
+
+      - name: Generate release notes
+        run: if [[ -f ./doc/changelog/$(git describe --tags --abbrev=0 HEAD).md ]]; then cp ./doc/changelog/$(git describe --tags --abbrev=0 HEAD) .md release_notes.md; else git describe --tags --abbrev=0 HEAD > release_notes.md; fi
+
+      - name: Create Release
+        run: |
+          hub release create -p -a kobalt-linux.tar.gz -a kobalt-macos.tar.gz -a kobalt-windows.zip --file release_notes.md $(git describe --tags --abbrev=0 HEAD)

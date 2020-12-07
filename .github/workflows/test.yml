@@ -80,9 +80,6 @@ jobs:
       - name: Generate project file
         run: premake5 --os=windows vs2019
 
-      - name: Generate version header
-        run: lua lib/include/kobalt/version.h.lua "$((get-childitem -name doc/changelog | select-string alpha) -replace "md","${{ github.run_number }}")" > lib/include/kobalt/version.h
-
       - name: Compile
         run: |
           .\tools\vsenv.ps1
