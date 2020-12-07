@@ -60,7 +60,6 @@ jobs:
         run: premake5 release
 
       - name: Upload release archive
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v2
         with:
           name: kobalt-${{ matrix.osname }}
@@ -109,7 +108,6 @@ jobs:
         run: premake5 release
 
       - name: Upload release archive
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v2
         with:
           name: kobalt-windows
