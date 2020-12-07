@@ -11,7 +11,7 @@ end
 if arg[1] then
     version = arg[1]
 else
-    version = os.capture("ls doc/changelog | grep alpha | sed 's/.md//'")
+    version = os.capture("git describe --tags --abbrev=0 HEAD")
 end
     
 print("#ifndef KBVERSION__H")

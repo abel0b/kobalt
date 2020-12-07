@@ -2,15 +2,9 @@ name: release
 
 on:
   push:
-    branches: [ master, develop ]
-  pull_request:
-    branches: [ master, develop ]
-  workflow_dispatch:
-    inputs:
-      version:
-        description: Version tag
-        required: true
-
+    branches: [ master ]
+    tags:
+      - '*'
 env:
   CONFIG: release
 
@@ -42,7 +36,7 @@ jobs:
         run: premake5 gmake2
       
       - name: Generate version header
-        run: lua lib/include/kobalt/version.h.lua "$(ls doc/changelog | grep alpha | sed 's/md/${{ github.run_number }}/')" > lib/include/kobalt/version.h
+        run: lua lib/include/kobalt/version.h.lua > lib/include/kobalt/version.h
 
       - name: Compile
         run: make -j$(nproc) CC=${{ matrix.cc }} config=$CONFIG
@@ -80,7 +74,7 @@ jobs:
         run: premake5 vs2019
 
       - name: Generate version header
-        run: lua lib/include/kobalt/version.h.lua "$((get-childitem -name doc/changelog | select-string alpha) -replace "md","${{ github.run_number }}")" > lib/include/kobalt/version.h
+        run: lua lib/include/kobalt/version.h.lua > lib/include/kobalt/version.h
 
       - name: Compile
         run: |
@@ -96,7 +90,7 @@ jobs:
         with:
           name: kobalt-prerelease-windows
           path: dist/kobalt-prerelease-windows.zip
-    
+
   release:
     needs: [release-unix, release-windows]
 
@@ -114,21 +108,15 @@ jobs:
       
       - uses: actions/download-artifact@v2
         with:
-          name: kobalt-prerelease-macosx
+          name: kobalt-prerelease-macos
       
       - uses: actions/download-artifact@v2
         with:
           name: kobalt-prerelease-windows
 
-      - name: Delete old release
-        run: |
-          hub release delete latest || true
-          git tag -d latest || true
-          git push origin --delete latest || true
-
       - name: Determine the next alpha version number
-        run: cp ./doc/changelog/${{ github.event.inputs.version }}.md release_notes.md
+        run: if [[ -f ./doc/changelog/$(git describe --tags --abbrev=0 HEAD).md ]]; then cp ./doc/changelog/$(git describe --tags --abbrev=0 HEAD) .md release_notes.md; else git describe --tags --abbrev=0 HEAD > release_notes.md; fi
 
       - name: Create Release
         run: |
-          hub release create -p -a kobalt-prerelease-linux.tar.gz -a kobalt-prerelease-macos.tar.gz -a kobalt-prerelease-windows.zip --file release_notes.md ${{ github.event.inputs.version }}
+          hub release create -p -a kobalt-prerelease-linux.tar.gz -a kobalt-prerelease-macos.tar.gz -a kobalt-prerelease-windows.zip --file release_notes.md $(git describe --tags --abbrev=0 HEAD)

@@ -56,6 +56,17 @@ jobs:
       - name: Say hello world
         run: ./bin/$CONFIG/kobalt doc/examples/hello_world.kl
 
+      - name: Create release archive
+        run: premake5 release
+
+      - name: Upload release archive
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v2
+        with:
+          name: kobalt-prerelease-${{ matrix.osname }}
+          path: dist/kobalt-prerelease-${{ matrix.osname }}.tar.gz
+
+
   build-windows:
     runs-on: windows-latest
 
@@ -96,3 +107,13 @@ jobs:
         run: |
           .\tools\vsenv.ps1
           & ".\bin\$env:CONFIG\kobalt" doc\examples\hello_world.kl
+
+      - name: Create release archive
+        run: premake5 release
+
+      - name: Upload release archive
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v2
+        with:
+          name: kobalt-prerelease-windows
+          path: dist/kobalt-prerelease-windows.zip
