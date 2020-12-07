@@ -89,7 +89,7 @@ newaction {
     trigger = "release",
     description = "Create release archive",
     execute = function ()
-        if os.host() == "macos" then
+        if os.host() == "macosx" then
             slug = "kobalt-macos"
         else
             slug = "kobalt-" .. os.host()
