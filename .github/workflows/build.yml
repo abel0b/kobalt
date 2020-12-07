@@ -124,7 +124,6 @@ jobs:
 
     runs-on: ubuntu-20.04
 
-    if: github.ref == 'refs/heads/master'
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
