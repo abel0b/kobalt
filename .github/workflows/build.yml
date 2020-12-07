@@ -26,6 +26,11 @@ jobs:
       matrix:
         os: [ubuntu-20.04, macos-10.15]
         cc: [clang]
+        include:
+          - os: ubuntu-20.04
+            osname: linux
+          - os: macos-10.15
+            osname: macos
 
     steps:
       - uses: actions/checkout@v2
@@ -47,9 +52,6 @@ jobs:
       - name: Generate project file
         run: premake5 gmake2
       
-      - name: Generate version header
-        run: lua lib/include/kobalt/version.h.lua "$(ls doc/changelog | grep alpha | sed 's/md/${{ github.run_number }}/')" > lib/include/kobalt/version.h
-
       - name: Compile
         run: make -j$(nproc) CC=${{ matrix.cc }} config=$CONFIG
 
@@ -63,8 +65,8 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v2
         with:
-          name: kobalt-prerelease-${{ matrix.osname }}
-          path: dist/kobalt-prerelease-${{ matrix.osname }}.tar.gz
+          name: kobalt-${{ matrix.osname }}
+          path: dist/kobalt-${{ matrix.osname }}.tar.gz
 
 
   build-windows:
@@ -95,9 +97,6 @@ jobs:
       - name: Generate project file
         run: premake5 vs2019
 
-      - name: Generate version header
-        run: lua lib/include/kobalt/version.h.lua "$((get-childitem -name doc/changelog | select-string alpha) -replace "md","${{ github.run_number }}")" > lib/include/kobalt/version.h
-
       - name: Compile
         run: |
           .\tools\vsenv.ps1
@@ -115,5 +114,5 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v2
         with:
-          name: kobalt-prerelease-windows
-          path: dist/kobalt-prerelease-windows.zip
+          name: kobalt-windows
+          path: dist/kobalt-windows.zip

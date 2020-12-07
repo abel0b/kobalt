@@ -75,11 +75,25 @@ newaction {
     end
 }
 
+function os.capture(cmd)
+    local f = assert(io.popen(cmd, 'r'))
+    local s = assert(f:read('*a'))
+    f:close()
+    s = string.gsub(s, '^%s+', '')
+    s = string.gsub(s, '%s+$', '')
+    s = string.gsub(s, '[\n\r]+', ' ')
+    return s
+end
+
 newaction {
     trigger = "release",
     description = "Create release archive",
     execute = function ()
-        slug = "kobalt-prerelease-" .. os.host()
+        if os.host() == "macos" then
+            slug = "kobalt-macos"
+        else
+            slug = "kobalt-" .. os.host()
+        end
         reldir = "tmp/" .. slug
         install_action(reldir)
         os.mkdir("dist")

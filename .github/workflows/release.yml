@@ -35,9 +35,6 @@ jobs:
       - name: Generate project file
         run: premake5 gmake2
       
-      - name: Generate version header
-        run: lua lib/include/kobalt/version.h.lua > lib/include/kobalt/version.h
-
       - name: Compile
         run: make -j$(nproc) CC=${{ matrix.cc }} config=$CONFIG
 
@@ -48,8 +45,8 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v2
         with:
-          name: kobalt-prerelease-${{ matrix.osname }}
-          path: dist/kobalt-prerelease-${{ matrix.osname }}.tar.gz
+          name: kobalt-${{ matrix.osname }}
+          path: dist/kobalt-${{ matrix.osname }}.tar.gz
 
   release-windows:
     runs-on: windows-latest
@@ -73,9 +70,6 @@ jobs:
       - name: Generate project file
         run: premake5 vs2019
 
-      - name: Generate version header
-        run: lua lib/include/kobalt/version.h.lua > lib/include/kobalt/version.h
-
       - name: Compile
         run: |
           .\tools\vsenv.ps1
@@ -88,8 +82,8 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v2
         with:
-          name: kobalt-prerelease-windows
-          path: dist/kobalt-prerelease-windows.zip
+          name: kobalt-windows
+          path: dist/kobalt-windows.zip
 
   release:
     needs: [release-unix, release-windows]
@@ -104,19 +98,19 @@ jobs:
       
       - uses: actions/download-artifact@v2
         with:
-          name: kobalt-prerelease-linux
+          name: kobalt-linux
       
       - uses: actions/download-artifact@v2
         with:
-          name: kobalt-prerelease-macos
+          name: kobalt-macos
       
       - uses: actions/download-artifact@v2
         with:
-          name: kobalt-prerelease-windows
+          name: kobalt-windows
 
-      - name: Determine the next alpha version number
+      - name: Generate release notes
         run: if [[ -f ./doc/changelog/$(git describe --tags --abbrev=0 HEAD).md ]]; then cp ./doc/changelog/$(git describe --tags --abbrev=0 HEAD) .md release_notes.md; else git describe --tags --abbrev=0 HEAD > release_notes.md; fi
 
       - name: Create Release
         run: |
-          hub release create -p -a kobalt-prerelease-linux.tar.gz -a kobalt-prerelease-macos.tar.gz -a kobalt-prerelease-windows.zip --file release_notes.md $(git describe --tags --abbrev=0 HEAD)
+          hub release create -p -a kobalt-linux.tar.gz -a kobalt-macos.tar.gz -a kobalt-windows.zip --file release_notes.md $(git describe --tags --abbrev=0 HEAD)
