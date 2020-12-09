@@ -6,10 +6,9 @@ RUN cd extern/premake && make -f Bootstrap.mak linux
 COPY extern extern
 COPY lib lib
 COPY src src
-COPY std std
-COPY premake5.lua premake5.lua
+COPY premake5.lua --cc=clang premake5.lua
 RUN ./extern/premake/bin/release/premake5 gmake2
-RUN make CC=clang config=release
+RUN make config=release
 
 FROM alpine:latest as runner
 COPY --from=builder /usr/src/app/bin/release/kobalt /usr/bin
