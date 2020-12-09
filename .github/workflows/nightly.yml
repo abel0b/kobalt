@@ -11,9 +11,13 @@ env:
 jobs:
   check:
     runs-on: ubuntu-20.04
+    
     outputs:
       status: ${{ steps.count_nightly.value }}
+   
     steps:
+      - uses: actions/checkout@v2
+      
       - name: Count commits since latest nightly build
         id: count_nightly
         run: if git rev-list nightly -n1; then echo "::set-output name=value::$(git rev-list nightly..HEAD --count)"; else echo "::set-output name=value::1"; fi
