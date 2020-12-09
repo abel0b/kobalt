@@ -13,13 +13,13 @@ jobs:
     runs-on: ubuntu-20.04
     
     outputs:
-      count_nightly: ${{ steps.count_nightly.value }}
+      count-nightly: ${{ steps.count-nightly.outputs.value }}
    
     steps:
       - uses: actions/checkout@v2
       
       - name: Count commits since latest nightly build
-        id: count_nightly
+        id: count-nightly
         run: if git rev-list nightly -n1; then echo "::set-output name=value::$(git rev-list nightly..HEAD --count)"; else echo "::set-output name=value::1"; fi
 
   build-unix:
@@ -27,7 +27,7 @@ jobs:
 
     needs: check
 
-    if: needs.check.outputs.count_nightly != '0'
+    if: needs.check.outputs.count-nightly != '0'
 
     strategy:
       matrix:
@@ -80,7 +80,7 @@ jobs:
 
     needs: check
 
-    if: needs.check.outputs.count_nightly != '0'
+    if: needs.check.outputs.count-nightly != '0'
 
     strategy:
       matrix:
@@ -129,7 +129,7 @@ jobs:
   release:
     needs: [check, build-unix, build-windows]
 
-    if: needs.check.outputs.count_nightly != '0'
+    if: needs.check.outputs.count-nightly != '0'
 
     runs-on: ubuntu-20.04
 
