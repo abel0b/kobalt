@@ -71,7 +71,7 @@ jobs:
           path: dist/kobalt-${{ matrix.osname }}.tar.gz
 
 
-  build-unix:
+  build-windows:
     runs-on: windows-latest
 
     needs: check
