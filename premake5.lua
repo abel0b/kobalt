@@ -50,21 +50,20 @@ newoption {
 
 function install_action (prefix)
     if os.host() == "windows" then
-        exe = ".exe"
+        exe = "kobalt.exe"
     else
-        exe = ""
+        exe = "kobalt"
     end        
-    bindir = prefix .. "/bin"
-    libdir = prefix .. "/lib"
+    bindir = prefix .. "/bin/"
+    libdir = prefix .. "/lib/"
     os.mkdir(bindir)
     os.mkdir(libdir)
-    os.copyfile("bin/release/kobalt" .. exe, bindir)
+    assert(os.copyfile("bin/release/" .. exe, bindir .. exe))
     if os.host() == "windows" then
-        os.copyfile("bin/release/kl.lib" .. exe, libdir)
+        assert(os.copyfile("bin/release/kl.lib", libdir .. "kl.lib"))
     else
-        os.copyfile("bin/release/libkl.a" .. exe, libdir)
+        assert(os.copyfile("bin/release/libkl.a", libdir .. "libkl.a"))
     end
-
 end
 
 newaction {
