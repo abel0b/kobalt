@@ -1,19 +1,19 @@
 #include "kobalt/ast.h"
-#include "kobalt/memory.h"
+#include "klbase/mem.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 #include "kobalt/type.h"
-#include "kobalt/log.h"
+#include "klbase/log.h"
 
-kbvec_impl(struct kbnode, node)
+kl_vec_impl(struct kl_node, node)
 
-void kbast_new(struct kbast* ast) {
-    kbvec_node_new(&ast->nodes);
+void kl_ast_new(struct kl_ast* ast) {
+    kl_vec_node_new(&ast->nodes);
 }
 
-void kbastvisit_new(struct kbast* ast, void* ctx, int (*visit)(struct kbastvisit *), struct kbastvisit* astvisit, enum kbastorder order) {
+void kl_astvisit_new(struct kl_ast* ast, void* ctx, int (*visit)(struct kl_astvisit *), struct kl_astvisit* astvisit, enum kl_astorder order) {
     astvisit->order = order;
     astvisit->ast = ast;
     astvisit->ctx = ctx;
@@ -27,11 +27,11 @@ static void indent(FILE* out, int level) {
     }
 }
 
-int kbastvisit_rec(struct kbastvisit* astvisit, int nid, int depth) {
+int kl_astvisit_rec(struct kl_astvisit* astvisit, int nid, int depth) {
     if (nid == -1) {
         return 0;
     }
-    struct kbnode* node = &astvisit->ast->nodes.data[nid];
+    struct kl_node* node = &astvisit->ast->nodes.data[nid];
     astvisit->cur.nid = nid;
     astvisit->cur.depth = depth;
 
@@ -47,37 +47,37 @@ int kbastvisit_rec(struct kbastvisit* astvisit, int nid, int depth) {
         case NIfElse:
         case NCallParams:
             for(int i = 0; i < node->data.group.numitems; ++i) {
-                kbastvisit_rec(astvisit, node->data.group.items[i], depth + 1);
+                kl_astvisit_rec(astvisit, node->data.group.items[i], depth + 1);
             }
             break;
         case NFun:
-            kbastvisit_rec(astvisit, node->data.fun.id, depth + 1);
-            kbastvisit_rec(astvisit, node->data.fun.funparams, depth + 1);
-            kbastvisit_rec(astvisit, node->data.fun.rettype, depth + 1);
-            kbastvisit_rec(astvisit, node->data.fun.body, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.fun.id, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.fun.funparams, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.fun.rettype, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.fun.body, depth + 1);
             break;
         case NFunParam:
-            kbastvisit_rec(astvisit, node->data.funparam.id, depth + 1);
-            kbastvisit_rec(astvisit, node->data.funparam.type, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.funparam.id, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.funparam.type, depth + 1);
             break;
         case NCall:
-            kbastvisit_rec(astvisit, node->data.call.id, depth + 1);
-            kbastvisit_rec(astvisit, node->data.call.callparams, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.call.id, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.call.callparams, depth + 1);
             break;
         case NAssign:
             break;
         case NId:
             break;
         case NCallParam:
-            kbastvisit_rec(astvisit, node->data.callparam.expr, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.callparam.expr, depth + 1);
             break;
         case NIfBranch:
         case NElifBranch:
-            kbastvisit_rec(astvisit, node->data.ifbranch.cond, depth + 1);
-            kbastvisit_rec(astvisit, node->data.ifbranch.conseq, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.ifbranch.cond, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.ifbranch.conseq, depth + 1);
             break;
         case NElseBranch:
-            kbastvisit_rec(astvisit, node->data.ifbranch.conseq, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.ifbranch.conseq, depth + 1);
         default:
             break;
     }
@@ -91,16 +91,16 @@ int kbastvisit_rec(struct kbastvisit* astvisit, int nid, int depth) {
     return 1;
 }
 
-void kbastvisit_run(struct kbastvisit* astvisit) {
-    kbastvisit_rec(astvisit, 0, 0);
+void kl_astvisit_run(struct kl_astvisit* astvisit) {
+    kl_astvisit_rec(astvisit, 0, 0);
 }
 
-void kbastvisit_del(struct kbastvisit* astvisit) {
+void kl_astvisit_del(struct kl_astvisit* astvisit) {
     unused(astvisit);
 }
 
-static int del_aux(struct kbastvisit* astvisit) {
-    struct kbnode* node = &astvisit->ast->nodes.data[astvisit->cur.nid];
+static int del_aux(struct kl_astvisit* astvisit) {
+    struct kl_node* node = &astvisit->ast->nodes.data[astvisit->cur.nid];
     switch(node->kind) {
         case NCallParams:
         case NSeq:
@@ -108,33 +108,33 @@ static int del_aux(struct kbastvisit* astvisit) {
         case NProgram:
         case NIfElse:
             if(node->data.group.numitems) {
-                kbfree(node->data.group.items);
+                kl_free(node->data.group.items);
             }
             break;
         case NType:
-            kbfree(node->data.type.name);
+            kl_free(node->data.type.name);
             break;
         case NCall:
             break;
         case NStrLit:
-            kbfree(node->data.strlit.value);
+            kl_free(node->data.strlit.value);
             break;
         case NIntLit:
-            kbfree(node->data.intlit.value);
+            kl_free(node->data.intlit.value);
             break;
         case NFloatLit:
-            kbfree(node->data.floatlit.value);
+            kl_free(node->data.floatlit.value);
             break;
         case NCharLit:
-            kbfree(node->data.floatlit.value);
+            kl_free(node->data.floatlit.value);
             break;
         case NAssign:
             break;
         case NId:
-            kbfree(node->data.id.name);
+            kl_free(node->data.id.name);
             break;
         case NImport:
-            kbfree(node->data.import.path);
+            kl_free(node->data.import.path);
             break;
         default:
             break;
@@ -142,21 +142,21 @@ static int del_aux(struct kbastvisit* astvisit) {
     return 1;
 }
 
-int kbast_add(struct kbast* ast, enum kbnode_kind kind, int parent, struct kbloc loc) {
-    struct kbnode node = {
+int kl_ast_add(struct kl_ast* ast, enum kl_node_kind kind, int parent, struct kl_loc loc) {
+    struct kl_node node = {
         .kind = kind,
         .parent = parent,
         .loc = loc,
     };
     memset(&node.data, 0, sizeof(node.data));
-    kbvec_node_push(&ast->nodes, node);
+    kl_vec_node_push(&ast->nodes, node);
     return ast->nodes.size - 1;
 }
 
-void kbast_del(struct kbast* ast) {
-    struct kbastvisit visdel;
-    kbastvisit_new(ast, NULL, del_aux, &visdel, PostOrder);
-    kbastvisit_run(&visdel);
-    kbastvisit_del(&visdel);
-    kbvec_node_del(&ast->nodes);
+void kl_ast_del(struct kl_ast* ast) {
+    struct kl_astvisit visdel;
+    kl_astvisit_new(ast, NULL, del_aux, &visdel, PostOrder);
+    kl_astvisit_run(&visdel);
+    kl_astvisit_del(&visdel);
+    kl_vec_node_del(&ast->nodes);
 }

@@ -1,14 +1,14 @@
 #include "kobalt/mod.h"
 
-void kbmod_new(struct kbmod* mod, struct kbast* ast) {
-    kbastinfo_new(&mod->astinfo, ast);
-    kbvec_str_new(&mod->deps);
+void kl_mod_new(struct kl_mod* mod, struct kl_ast* ast) {
+    kl_astinfo_new(&mod->astinfo, ast);
+    kl_vec_str_new(&mod->deps);
 }
 
-void kbmod_del(struct kbmod* mod) {
-    kbastinfo_del(&mod->astinfo);
+void kl_mod_del(struct kl_mod* mod) {
+    kl_astinfo_del(&mod->astinfo);
     for(int i = 0; i < mod->deps.size; ++i) {
-        kbstr_del(&mod->deps.data[i]);
+        kl_str_del(&mod->deps.data[i]);
     }
-    kbvec_str_del(&mod->deps);
+    kl_vec_str_del(&mod->deps);
 }

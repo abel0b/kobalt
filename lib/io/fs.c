@@ -1,5 +1,5 @@
-#include "kobalt/fs.h"
-#include "kobalt/log.h"
+#include "klbase/fs.h"
+#include "klbase/log.h"
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -17,7 +17,7 @@ void ensuredir(char* path) {
 #else
         if (mkdir(path, 0700) == -1) {
 #endif
-            kbelog("couldn't create directory '%s'", path);
+            kl_elog("couldn't create directory '%s'", path);
             exit(1);
         }
     }
@@ -26,7 +26,7 @@ void ensuredir(char* path) {
 #else
     else if (S_ISREG(st.st_mode)) {
 #endif
-        kbelog("couldn't create directory %s, path already exists", path);
+        kl_elog("couldn't create directory %s, path already exists", path);
         exit(1);
     }
 }

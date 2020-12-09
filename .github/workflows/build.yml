@@ -96,12 +96,12 @@ jobs:
 
       - name: Compile
         run: |
-          .\tools\vsenv.ps1
+          .\dev\vsenv.ps1
           msbuild kobalt.sln -m -p:CLToolExe=${{ matrix.cc }} -p:Configuration=$env:CONFIG
 
       - name: Say hello world
         run: |
-          .\tools\vsenv.ps1
+          .\dev\vsenv.ps1
           & ".\bin\$env:CONFIG\kobalt" doc\examples\hello_world.kl
 
       - name: Create release archive

@@ -1,25 +1,25 @@
 #include "kobalt/modanal.h"
 #include "kobalt/modgraph.h"
 
-static int modanal_rec(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, int nid);
+static int modanal_rec(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid, int nid);
 
-static void modanal_program(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, int nid) { 
-    struct kbnode* node = &ast->nodes.data[nid];
+static void modanal_program(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid, int nid) { 
+    struct kl_node* node = &ast->nodes.data[nid];
     for(int i = 0; i < node->data.group.numitems; ++i) {
         modanal_rec(ast, modgraph, modid, node->data.group.items[i]);
     }
 }
 
-static void modanal_import(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, int nid) { 
-    struct kbnode_import* import = (struct kbnode_import*) &ast->nodes.data[nid].data;
-    struct kbstr modpath;
-    kbstr_new(&modpath);
-    kbstr_cat(&modpath, import->path);
-    kbmodgraph_depend(modgraph, modid, &modpath);
+static void modanal_import(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid, int nid) { 
+    struct kl_node_import* import = (struct kl_node_import*) &ast->nodes.data[nid].data;
+    struct kl_str modpath;
+    kl_str_new(&modpath);
+    kl_str_cat(&modpath, import->path);
+    kl_modgraph_depend(modgraph, modid, &modpath);
 }
 
-static int modanal_rec(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid, int nid) {
-    struct kbnode* node = &ast->nodes.data[nid];
+static int modanal_rec(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid, int nid) {
+    struct kl_node* node = &ast->nodes.data[nid];
 
     switch(node->kind) {
         case NProgram:
@@ -34,6 +34,6 @@ static int modanal_rec(struct kbast* ast, struct kbmodgraph* modgraph, struct kb
     return 1;
 }
 
-void kbmodanal(struct kbast* ast, struct kbmodgraph* modgraph, struct kbstr* modid) {
+void kl_modanal(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid) {
     modanal_rec(ast, modgraph, modid, 0);
 }

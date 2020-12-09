@@ -28,18 +28,18 @@ workspace "kobalt"
         defines { "DEBUG=0" }
         optimize "On"
 
-    project "kb"
+    project "kl"
         kind "StaticLib"
         language "C"
-        includedirs { "lib/include", "std/include" }
-        files { "lib/**.h", "lib/**.c" }
+        includedirs { "include" }
+        files { "include/**.h", "lib/**.h", "lib/**.c" }
 
     project "kobalt"
         kind "ConsoleApp"
         language "C"
-        includedirs { "lib/include", "extern/linenoise", "extern/sha-2", "extern/basenc", "std/include" }
-        files { "src/**.h", "src/**.c", "extern/linenoise/*.c", "extern/sha-2/*.c", "extern/basenc/*.c" }
-        links { "kb" }
+        includedirs { "include", "extern/linenoise", "extern/sha-2", "extern/basenc" }
+        files { "src/kobalt/**.h", "src/kobalt/**.c", "extern/linenoise/*.c", "extern/sha-2/*.c", "extern/basenc/*.c" }
+        links { "kl" }
 
 newoption {
     trigger = "prefix",
@@ -60,9 +60,9 @@ function install_action (prefix)
     os.mkdir(libdir)
     os.copyfile("bin/release/kobalt" .. exe, bindir)
     if os.host() == "windows" then
-        os.copyfile("bin/release/kb.lib" .. exe, libdir)
+        os.copyfile("bin/release/kl.lib" .. exe, libdir)
     else
-        os.copyfile("bin/release/libkb.a" .. exe, libdir)
+        os.copyfile("bin/release/libkl.a" .. exe, libdir)
     end
 
 end
@@ -89,7 +89,7 @@ newaction {
     trigger = "release",
     description = "Create release archive",
     execute = function ()
-        if os.host() == "macosx" then
+        if os.host() == "macosx " then
             slug = "kobalt-macos"
         else
             slug = "kobalt-" .. os.host()
@@ -120,8 +120,7 @@ newaction {
         flags:write("-Iextern/sha-2\n")
         flags:write("-Iextern/base85\n")
         flags:write("-Iextern/basenc\n")
-        flags:write("-Ilib/include\n")
-        flags:write("-Istd/include\n")
+        flags:write("-Iinclude\n")
         flags:close()
     end
 }

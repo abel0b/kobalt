@@ -31,5 +31,5 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: ./tools/docker/Dockerfile
+          file: ./support/docker/Dockerfile
           tags: ghcr.io/${{ github.repository }}:${{ github.sha }}

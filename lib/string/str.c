@@ -1,21 +1,21 @@
-#include "kobalt/str.h"
-#include "kobalt/log.h"
-#include "kobalt/memory.h"
+#include "klbase/str.h"
+#include "klbase/log.h"
+#include "klbase/mem.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
-kbvec_impl(struct kbstr, str)
+kl_vec_impl(struct kl_str, str)
 
-void kbstr_new(struct kbstr* str) {
+void kl_str_new(struct kl_str* str) {
     str->len = 0;
     str->cap = 8;
-    str->data = kbmalloc(sizeof(str->data[0]) * str->cap);
+    str->data = kl_malloc(sizeof(str->data[0]) * str->cap);
     str->data[0] = '\0';
 }
 
-void kbstr_catf(struct kbstr* str, char* fmt, ...) {
+void kl_str_catf(struct kl_str* str, char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
     int len = vsnprintf(NULL, 0, fmt, args);
@@ -23,7 +23,7 @@ void kbstr_catf(struct kbstr* str, char* fmt, ...) {
 
     while(str->cap < str->len + len + 1) {
         str->cap = (str->cap)? 2 * str->cap : 8;
-        str->data = kbrealloc(str->data, sizeof(str->data[0]) * str->cap);
+        str->data = kl_realloc(str->data, sizeof(str->data[0]) * str->cap);
     }
 
     va_start(args, fmt);
@@ -32,27 +32,27 @@ void kbstr_catf(struct kbstr* str, char* fmt, ...) {
     str->len += len;
 }
 
-void kbstr_cat(struct kbstr* str, char* src) {
+void kl_str_cat(struct kl_str* str, char* src) {
     int len = strlen(src);
     while(str->cap < str->len + len + 1) {
         str->cap = (str->cap)? 2 * str->cap : 8;
-        str->data = kbrealloc(str->data, sizeof(str->data[0]) * str->cap);
+        str->data = kl_realloc(str->data, sizeof(str->data[0]) * str->cap);
     }
     strcpy(&str->data[str->len], src);
     str->len += len;
 }
 
-void kbstr_resize(struct kbstr* str, long int len) {
+void kl_str_resize(struct kl_str* str, long int len) {
     if (len + 1 > str->cap) {
         str->cap = len + 1;
-        str->data = kbrealloc(str->data, sizeof(str->data[0]) * str->cap);
+        str->data = kl_realloc(str->data, sizeof(str->data[0]) * str->cap);
     }
     str->len = len;
     str->data[str->len] = '\0';
 }
 
-void kbstr_del(struct kbstr* str) {
+void kl_str_del(struct kl_str* str) {
     if (str->data) {
-        kbfree(str->data);
+        kl_free(str->data);
     }
 }

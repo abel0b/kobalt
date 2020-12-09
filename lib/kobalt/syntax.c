@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-char* kbnode_kind_str(enum kbnode_kind kind) {
+char* kl_node_kind_str(enum kl_node_kind kind) {
     switch(kind) {
         case NProgram:
             return "Program";
@@ -63,6 +63,6 @@ char* kbnode_kind_str(enum kbnode_kind kind) {
     return "UNDEFINED";
 }
 
-int isgroup(struct kbnode *node) {
+int isgroup(struct kl_node *node) {
     return node->kind == NProgram || node->kind == NFunParams || node->kind == NSeq || node->kind == NCallParams || node->kind == NIfElse || node->kind == NCase;
 }

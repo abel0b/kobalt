@@ -1,44 +1,44 @@
 #include "kobalt/type.h"
 #include <stdio.h>
 
-kbvec_impl(struct kbtype*, type)
+kl_vec_impl(struct kl_type*, type)
 
-void kbtype_new(struct kbtype* type, enum kbtypekind kind) {
+void kl_type_new(struct kl_type* type, enum kl_typekind kind) {
     type->kind = kind;
 }
 
-void kbtype_del(struct kbtype* type) {
+void kl_type_del(struct kl_type* type) {
       switch (type->kind) {
         case Fun:
-            kbfuntype_del(&type->data.fun);
+            kl_funtype_del(&type->data.fun);
             break;
         default:
             break;
       }
 }
 
-void kbfuntype_new(struct kbfuntype* funtype, struct kbtype* out_type) {
-    kbvec_type_new(&funtype->in_types);
+void kl_funtype_new(struct kl_funtype* funtype, struct kl_type* out_type) {
+    kl_vec_type_new(&funtype->in_types);
     funtype->out_type = out_type;
 }
 
-void kbfuntype_addparam(struct kbfuntype* funtype, struct kbtype* in_type) {
-    kbvec_type_push(&funtype->in_types, in_type);
+void kl_funtype_addparam(struct kl_funtype* funtype, struct kl_type* in_type) {
+    kl_vec_type_push(&funtype->in_types, in_type);
 }
 
-void kbfuntype_del(struct kbfuntype* funtype) {
-    kbvec_type_del(&funtype->in_types);
+void kl_funtype_del(struct kl_funtype* funtype) {
+    kl_vec_type_del(&funtype->in_types);
 }
 
-void kbarraytype_new(struct kbarraytype* arraytype, struct kbtype* elem_type) {
+void kl_arraytype_new(struct kl_arraytype* arraytype, struct kl_type* elem_type) {
     arraytype->elem_type = elem_type;
 }
 
-void kbarraytype_del(struct kbarraytype* arraytype) {
+void kl_arraytype_del(struct kl_arraytype* arraytype) {
     unused(arraytype);
 }
 
-void kbtype_display(struct kbtype* type) {
+void kl_type_display(struct kl_type* type) {
     if (type == NULL) {
         printf("NULL");
         return;
@@ -62,15 +62,15 @@ void kbtype_display(struct kbtype* type) {
                 if (i != 0) {
                     printf(" ");
                 }
-                kbtype_display(kbvec_type_get(&type->data.fun.in_types, i));
+                kl_type_display(kl_vec_type_get(&type->data.fun.in_types, i));
             }
             printf(")");
             printf(" -> ");
-            kbtype_display(type->data.fun.out_type);
+            kl_type_display(type->data.fun.out_type);
             break;
         case Array:
             printf("[]");
-            kbtype_display(type->data.array.elem_type);
+            kl_type_display(type->data.array.elem_type);
             break;
         case Str:
             printf("str");

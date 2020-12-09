@@ -1,53 +1,53 @@
-#include "kobalt/objpool.h"
-#include "kobalt/memory.h"
+#include "klbase/objpool.h"
+#include "klbase/mem.h"
 #include <assert.h>
 
 static const size_t CHUNK_SIZE = 4192;
 
-static void kbobjpool_chunk_new(struct kbobjpool_chunk* chunk) {
+static void kl_objpool_chunk_new(struct kl_objpool_chunk* chunk) {
     chunk->capacity = CHUNK_SIZE;
     chunk->cursor = 0;
-    chunk->data = (char*)kbmalloc(chunk->capacity);
+    chunk->data = (char*)kl_malloc(chunk->capacity);
 }
 
-static void kbobjpool_chunk_del(struct kbobjpool_chunk* chunk, size_t elem_size, void del(void*)) {
+static void kl_objpool_chunk_del(struct kl_objpool_chunk* chunk, size_t elem_size, void del(void*)) {
     if (del) {
         for(size_t i = 0; i * elem_size < (size_t)chunk->cursor; i++) {
             del((void*)&chunk->data[i * elem_size]);
         }
     }
-    kbfree(chunk->data);
+    kl_free(chunk->data);
 }
 
-void kbobjpool_new(struct kbobjpool* objpool, size_t elem_size, void del(void*)) {
+void kl_objpool_new(struct kl_objpool* objpool, size_t elem_size, void del(void*)) {
     assert(elem_size < CHUNK_SIZE);
     objpool->cap_chunks = 1;
     objpool->num_chunks = 1;
     objpool->elem_size = elem_size;
-    objpool->chunks = kbmalloc(sizeof(struct kbobjpool_chunk));
-    kbobjpool_chunk_new(&objpool->chunks[0]);
+    objpool->chunks = kl_malloc(sizeof(struct kl_objpool_chunk));
+    kl_objpool_chunk_new(&objpool->chunks[0]);
     objpool->del = del;
 }
 
-void kbobjpool_del(struct kbobjpool* objpool) {
+void kl_objpool_del(struct kl_objpool* objpool) {
     if (objpool->cap_chunks) {
         for(int i = 0; i < objpool->num_chunks; ++i) {
-            kbobjpool_chunk_del(&objpool->chunks[i], objpool->elem_size, objpool->del);
+            kl_objpool_chunk_del(&objpool->chunks[i], objpool->elem_size, objpool->del);
         }
-        kbfree(objpool->chunks);
+        kl_free(objpool->chunks);
     }
 }
 
-void* kbobjpool_alloc(struct kbobjpool* objpool) {
+void* kl_objpool_alloc(struct kl_objpool* objpool) {
     int chunk = objpool->num_chunks - 1;
     if (objpool->elem_size > CHUNK_SIZE - objpool->chunks[chunk].cursor) {
         if (objpool->cap_chunks == objpool->num_chunks) {
             objpool->cap_chunks *= 2;
-            objpool->chunks = (struct kbobjpool_chunk*) kbrealloc(objpool->chunks, objpool->cap_chunks * sizeof(struct kbobjpool_chunk));
+            objpool->chunks = (struct kl_objpool_chunk*) kl_realloc(objpool->chunks, objpool->cap_chunks * sizeof(struct kl_objpool_chunk));
         }
         ++ chunk;
         ++ objpool->num_chunks;
-        kbobjpool_chunk_new(&objpool->chunks[chunk]);
+        kl_objpool_chunk_new(&objpool->chunks[chunk]);
     }
 
     void* obj = (void*) (objpool->chunks[chunk].data + objpool->chunks[chunk].cursor);
@@ -55,17 +55,17 @@ void* kbobjpool_alloc(struct kbobjpool* objpool) {
     return obj;
 }
 
-void* kbobjpool_arralloc(struct kbobjpool* objpool, int count) {
+void* kl_objpool_arralloc(struct kl_objpool* objpool, int count) {
     assert(count * objpool->elem_size < CHUNK_SIZE);
     int chunk = objpool->num_chunks - 1;
     if (objpool->elem_size * count > CHUNK_SIZE - objpool->chunks[chunk].cursor) {
         if (objpool->cap_chunks == objpool->num_chunks) {
             objpool->cap_chunks *= 2;
-            objpool->chunks = (struct kbobjpool_chunk*) kbrealloc(objpool->chunks, objpool->cap_chunks * sizeof(struct kbobjpool_chunk));
+            objpool->chunks = (struct kl_objpool_chunk*) kl_realloc(objpool->chunks, objpool->cap_chunks * sizeof(struct kl_objpool_chunk));
         }
         ++ chunk;
         ++ objpool->num_chunks;
-        kbobjpool_chunk_new(&objpool->chunks[chunk]);
+        kl_objpool_chunk_new(&objpool->chunks[chunk]);
     }
 
     void* obj = (void*) (objpool->chunks[chunk].data + objpool->chunks[chunk].cursor);
@@ -73,7 +73,7 @@ void* kbobjpool_arralloc(struct kbobjpool* objpool, int count) {
     return obj;
 }
 
-void kbobjpool_pop(struct kbobjpool* objpool, int count) {
+void kl_objpool_pop(struct kl_objpool* objpool, int count) {
     int chunk = objpool->num_chunks - 1;
     assert((size_t)objpool->chunks[chunk].cursor >= count* objpool->elem_size);
     objpool->chunks[chunk].cursor -= count * objpool->elem_size;

@@ -82,10 +82,10 @@ jobs:
 
       - name: Compile
         run: |
-          .\tools\vsenv.ps1
+          .\dev\vsenv.ps1
           msbuild kobalt.sln -m -p:CLToolExe=${{ matrix.cc }} -p:Configuration=$env:CONFIG
 
       - name: Run examples
         run: |
-          .\tools\vsenv.ps1
+          .\dev\vsenv.ps1
           get-childitem .\doc\examples | foreach-object { & ".\bin\$env:CONFIG\kobalt.exe" $_.FullName }

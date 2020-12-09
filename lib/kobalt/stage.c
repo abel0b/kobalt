@@ -1,6 +1,6 @@
 #include "kobalt/stage.h"
 
-char* kbstage_to_str(enum kbstage_id id) {
+char* kl_stage_to_str(enum kl_stage_id id) {
     switch(id) {
         case LexingStage:
             return "lexing";

@@ -1,6 +1,6 @@
 #include "kobalt/symbol.h"
 
-void kbsymbol_new(struct kbsymbol* symbol, enum kbsymbol_kind kind, struct kbtype* type) {
+void kl_symbol_new(struct kl_symbol* symbol, enum kl_symbol_kind kind, struct kl_type* type) {
     symbol->kind = kind;
     symbol->type = type;
     switch(kind) {
@@ -12,11 +12,11 @@ void kbsymbol_new(struct kbsymbol* symbol, enum kbsymbol_kind kind, struct kbtyp
         case NoneSym:
             break;
         default:
-            kb_todo("handle symbol kind case %d", kind);
+            kl_todo("handle symbol kind case %d", kind);
             break;
     }
 }
 
-void kbsymbol_del(struct kbsymbol* symbol) {
-    kb_unused(symbol);
+void kl_symbol_del(struct kl_symbol* symbol) {
+    kl_unused(symbol);
 }
