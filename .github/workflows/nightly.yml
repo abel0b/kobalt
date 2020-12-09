@@ -50,12 +50,6 @@ jobs:
       - name: Install premake
         uses: abel0b/setup-premake@v1
 
-      - name: Configure workflow
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          for log in ${{ github.event.inputs.debug_logs }}; do echo "DEBUG_$log=1" >> $GITHUB_ENV; done
-          echo  "CONFIG=${{ github.event.inputs.config }}" >> $GITHUB_ENV
-
       - name: Generate project file
         run: premake5 gmake2
       
@@ -97,12 +91,6 @@ jobs:
 
       - name: Install premake
         uses: abel0b/setup-premake@v1
-
-      - name: Configure workflow
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          foreach($log in "${{ github.event.inputs.debug_logs }}".split(" ")) { echo "DEBUG_$log=1" >> $env:GITHUB_ENV }
-          echo  "CONFIG=${{ github.event.inputs.config }}" >> $env:GITHUB_ENV
 
       - name: Generate project file
         run: premake5 vs2019
