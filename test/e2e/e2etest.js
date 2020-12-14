@@ -1,7 +1,7 @@
 import { walk, exists, existsSync } from "https://deno.land/std@0.80.0/fs/mod.ts"
 import { assert, assertEquals, assertNotEquals } from "https://deno.land/std@0.80.0/testing/asserts.ts";
 
-const config = "debug"
+const config = Deno.env.get("CONFIG") || "debug"
 const exeExt = (Deno.build.os == 'windows') ? '.exe' : ''
 const kobaltBin = `./bin/${config}/kobalt${exeExt}`
 
