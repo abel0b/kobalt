@@ -56,10 +56,11 @@ jobs:
       - name: Say hello world
         run: ./bin/$CONFIG/kobalt doc/examples/hello_world.kl
 
-      - name: test
-        uses: denolib/setup-deno@v2
+      - uses: denolib/setup-deno@v2
         with:
           deno-version: v1.x
+
+      - name: Run tests
         run: deno test --unstable --allow-read --allow-env --allow-run test/**/*test.js
 
       - name: Create release archive
@@ -109,10 +110,11 @@ jobs:
           .\dev\vsenv.ps1
           & ".\bin\$env:CONFIG\kobalt" doc\examples\hello_world.kl
 
-      - name: test
-        uses: denolib/setup-deno@v2
+      - uses: denolib/setup-deno@v2
         with:
           deno-version: v1.x
+
+      - name: Run tests
         run: deno test --unstable --allow-read --allow-env --allow-run test/**/*test.js
 
       - name: Create release archive
