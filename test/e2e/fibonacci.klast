@@ -52,7 +52,7 @@ Program <1:1>
     Id <7:1> = printl
     CallParams <7:8>
       CallParam <7:8>
-        StrLit <7:8> = "fibo 8 ="
+        StrLit <7:8> = "fibo 6 ="
   Call <8:1>
     Id <8:1> = intprintl
     CallParams <8:11>
@@ -61,4 +61,4 @@ Program <1:1>
           Id <8:12> = fibo
           CallParams <8:17>
             CallParam <8:17>
-              IntLit <8:17> = 8
+              IntLit <8:17> = 6

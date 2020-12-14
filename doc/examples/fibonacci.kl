@@ -4,5 +4,5 @@ fun fibo (n :: int) :: int =
     else
         + (fibo (- n 1)) (fibo (- n 2))
 
-printl "fibo 8 ="
-intprintl (fibo 8)
+printl "fibo 6 ="
+intprintl (fibo 6)

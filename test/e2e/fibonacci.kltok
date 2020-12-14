@@ -44,12 +44,12 @@ LineFeed at 5:39
 Dedent at 7:1
 Dedent at 7:1
 Id="printl" at 7:1
-Str="fibo 8 =" at 7:8
+Str="fibo 6 =" at 7:8
 LineFeed at 7:17
 Id="intprintl" at 8:1
 LPar at 8:11
 Id="fibo" at 8:12
-Int="8" at 8:17
+Int="6" at 8:17
 RPar at 8:18
 LineFeed at 8:18
 EndFile at 9:0

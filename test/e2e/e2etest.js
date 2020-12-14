@@ -32,7 +32,6 @@ async function klrun(path, opt = []) {
 async function kltest(path) {
     const tokPath = `${path}tok`
     if (await exists(tokPath)) {
-        console.log("oklog " + path)
         Deno.test(`lex ${path}`, async () => {
             const report = await klrun(path, [LEX])
             assertEquals(report.code, 0)
@@ -62,13 +61,24 @@ async function kltest(path) {
     }
 
     const codePath = `${path}code`
+    const outPath = `${path}out`
+    const errPath = `${path}err`
+
     if (await exists(codePath)) {
         Deno.test(`run ${path}`, async () => {
             const report = await klrun(path)
             const expectedCode = Number(await Deno.readTextFile(codePath))
+            if (await exists(outPath)) {
+                assertEquals(report.stdout, await Deno.readTextFile(outPath))
+            }
+            if (await exists(errPath)) {
+                assertEquals(report.stderr, await Deno.readTextFile(errPath))
+            }
             assertEquals(report.code, expectedCode)
         })
     }
+
+
 }
 
 Deno.test("kobalt binary exists", async () => {
@@ -76,6 +86,5 @@ Deno.test("kobalt binary exists", async () => {
 })
 
 for await (const entry of walk("test/e2e", { exts: ['.kl'] })) {
-    console.log("run test " + entry.path)
     await kltest(entry.path)
 }
