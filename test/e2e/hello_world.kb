@@ -1,3 +1,0 @@
-fun main () : int =
-    print "Hello world!\n"
-    0

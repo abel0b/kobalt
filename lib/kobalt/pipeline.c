@@ -171,14 +171,14 @@ void kl_pipeline_run(struct kl_pipeline* pipeline, struct kl_compiland* input) {
     if ((pipeline->opts->stages & ParsingStage) && (pipeline->opts->stages >> 2 == 0)) {
         for(int i = 0; i < pipeline->pipes.size; ++ i) {
             struct kl_pipe* pipe = (struct kl_pipe*) kl_vec_get(&pipeline->pipes, i);
-            kl_ast_display(out, &pipe->ast, NULL);
+            kl_ast_display(pipeline->opts, out, &pipe->ast, NULL);
         }
     }
 
     if ((pipeline->opts->stages & ModAnalysisStage) && (pipeline->opts->stages >> 4 == 0)) {
         for(int i = 0; i < pipeline->pipes.size; ++ i) {
             struct kl_pipe* pipe = (struct kl_pipe*) kl_vec_get(&pipeline->pipes, i);
-            kl_ast_display(out, &pipe->ast, NULL);
+            kl_ast_display(pipeline->opts, out, &pipe->ast, NULL);
         }
     }
 
@@ -186,7 +186,7 @@ void kl_pipeline_run(struct kl_pipeline* pipeline, struct kl_compiland* input) {
         for(int i = 0; i < pipeline->pipes.size; ++ i) {
             struct kl_pipe* pipe = (struct kl_pipe*) kl_vec_get(&pipeline->pipes, i);
             struct kl_mod* mod = (struct kl_mod*) kl_modgraph_get(&pipeline->modgraph, &pipe->compiland.name);
-            kl_ast_display(out, &pipe->ast, &mod->astinfo);
+            kl_ast_display(pipeline->opts, out, &pipe->ast, &mod->astinfo);
         }
     }
 

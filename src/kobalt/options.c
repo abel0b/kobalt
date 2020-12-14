@@ -28,6 +28,8 @@ void kl_opts_new(struct kl_opts* opts, int argc, char* argv[]) {
     kl_vec_new(&opts->inputs, sizeof(struct kl_compiland));
     kl_vec_new(&opts->exe_argv, sizeof(char*));
 
+    opts->color = true;
+
     int i = 1;
     bool endopts = false;
     while (i < argc) {
@@ -53,7 +55,10 @@ void kl_opts_new(struct kl_opts* opts, int argc, char* argv[]) {
                         opts->stages = LexingStage | ParsingStage | ModAnalysisStage;
                         break;
                     case 'T':
-                        opts->stages = LexingStage | ParsingStage | ModAnalysisStage |TypeInferStage | TypeCheckStage;
+                        opts->stages = LexingStage | ParsingStage | ModAnalysisStage | TypeInferStage | TypeCheckStage;
+                        break;
+                    case 'n':
+                        opts->color = false;
                         break;
                     case 'v':
                         printf("Kobalt Language Compiler v%s\n\n", KLVERSION);
@@ -66,7 +71,7 @@ void kl_opts_new(struct kl_opts* opts, int argc, char* argv[]) {
                         printf("  -v  display version\n");
                         printf("  -L  lexing stage\n");
                         printf("  -P  parsing stage: produce ast\n");
-                        printf("  -I  type inference stage: produce typed ast\n");
+                        printf("  -T  type inference stage: produce typed ast\n");
                         exit(0);
                         break;
                     case 'o':

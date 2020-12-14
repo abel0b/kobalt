@@ -14,6 +14,7 @@ struct kl_opts {
     int optim;
     int verbosity;
     int stages;
+    bool color;
     struct kl_str cwd;
     struct kl_vec inputs;
     struct kl_str outpath;

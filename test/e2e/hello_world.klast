@@ -1,0 +1,7 @@
+Program <1:1>
+  Import <1:1> = std
+  Call <1:1>
+    Id <1:1> = printl
+    CallParams <1:8>
+      CallParam <1:8>
+        StrLit <1:8> = "Hello world!"

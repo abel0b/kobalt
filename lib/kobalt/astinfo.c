@@ -87,11 +87,12 @@ static void indent(FILE* out, int level) {
     }
 }
 
-static int display_aux(struct kl_astvisit* astvisit) {
+static int display_aux_color(struct kl_astvisit* astvisit) {
     struct kl_node* node = &astvisit->ast->nodes.data[astvisit->cur.nid];
     struct kl_ast_disp_ctx* ctx = (struct kl_ast_disp_ctx*)astvisit->ctx;
 
     indent(ctx->out, astvisit->cur.depth);
+
     fprintf(ctx->out, BWHT "%s" RESET " <%d:%d>", kl_node_kind_str(node->kind), node->loc.line, node->loc.col);
 
     switch(node->kind) {
@@ -131,13 +132,62 @@ static int display_aux(struct kl_astvisit* astvisit) {
     return 1;
 }
 
-void kl_ast_display(FILE* out, struct kl_ast* ast, struct kl_astinfo* astinfo) {
+static int display_aux(struct kl_astvisit* astvisit) {
+    struct kl_node* node = &astvisit->ast->nodes.data[astvisit->cur.nid];
+    struct kl_ast_disp_ctx* ctx = (struct kl_ast_disp_ctx*)astvisit->ctx;
+
+    indent(ctx->out, astvisit->cur.depth);
+
+    fprintf(ctx->out, "%s" " <%d:%d>", kl_node_kind_str(node->kind), node->loc.line, node->loc.col);
+
+    switch(node->kind) {
+        case NType:
+            fprintf(ctx->out, " = \"%s\"", node->data.type.name);
+            break;
+        case NStrLit:
+            fprintf(ctx->out, " = " "\"%s\"", node->data.strlit.value);
+            break;
+        case NIntLit:
+            fprintf(ctx->out, " = " "%s", node->data.intlit.value);
+            break;
+        case NFloatLit:
+            fprintf(ctx->out, " = " "%s", node->data.floatlit.value);
+            break;
+        case NCharLit:
+            fprintf(ctx->out, " = " "\'%s\'", node->data.charlit.value);
+            break;
+        case NId:
+            fprintf(ctx->out, " = %s", node->data.id.name);
+            break;
+        case NImport:
+            fprintf(ctx->out, " = %s", node->data.import.path);
+            break;
+        default:
+            break;
+    }
+    if (ctx->astinfo) {
+        struct kl_type* type = ctx->astinfo->types.data[astvisit->cur.nid];
+        if (type) {
+            fprintf(ctx->out, " :: ");
+            kl_type_display(ctx->astinfo->types.data[astvisit->cur.nid]);
+        }
+    }
+    fprintf(ctx->out, "\n");
+    return 1;
+}
+
+void kl_ast_display(struct kl_opts* opts, FILE* out, struct kl_ast* ast, struct kl_astinfo* astinfo) {
     struct kl_astvisit visdisp;
     struct kl_ast_disp_ctx ctx = {
         .out = out,
         .astinfo = astinfo,
     };
-    kl_astvisit_new(ast, &ctx, display_aux, &visdisp, PreOrder);
+    if (opts->color) {
+        kl_astvisit_new(ast, &ctx, display_aux_color, &visdisp, PreOrder);
+    }
+    else {
+        kl_astvisit_new(ast, &ctx, display_aux, &visdisp, PreOrder);
+    }
     kl_astvisit_run(&visdisp);
     kl_astvisit_del(&visdisp);
 }

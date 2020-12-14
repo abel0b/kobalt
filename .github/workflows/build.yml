@@ -56,6 +56,12 @@ jobs:
       - name: Say hello world
         run: ./bin/$CONFIG/kobalt doc/examples/hello_world.kl
 
+      - name: test
+        uses: denolib/setup-deno@v2
+        with:
+          deno-version: v1.x
+        run: deno test --unstable --allow-read --allow-env --allow-run test/**/*test.js
+
       - name: Create release archive
         run: premake5 release
 
@@ -64,7 +70,6 @@ jobs:
         with:
           name: kobalt-${{ matrix.osname }}
           path: dist/kobalt-${{ matrix.osname }}.tar.gz
-
 
   build-windows:
     runs-on: windows-latest
@@ -104,6 +109,12 @@ jobs:
           .\dev\vsenv.ps1
           & ".\bin\$env:CONFIG\kobalt" doc\examples\hello_world.kl
 
+      - name: test
+        uses: denolib/setup-deno@v2
+        with:
+          deno-version: v1.x
+        run: deno test --unstable --allow-read --allow-env --allow-run test/**/*test.js
+
       - name: Create release archive
         run: premake5 release
 
@@ -112,6 +123,7 @@ jobs:
         with:
           name: kobalt-windows
           path: dist/kobalt-windows.zip
+      
 
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')

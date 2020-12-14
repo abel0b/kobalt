@@ -5,6 +5,7 @@
 #include "klbase/vec.h"
 #include "klbase/objpool.h"
 #include "kobalt/type.h"
+#include "kobalt/options.h"
 #include "kobalt/symbol.h"
 #include "kobalt/ast.h"
 #include <stdint.h>
@@ -24,7 +25,7 @@ struct kl_astinfo {
     struct kl_vec_type types;
 };
 
-void kl_ast_display(FILE* out, struct kl_ast* ast, struct kl_astinfo* astinfo);
+void kl_ast_display(struct kl_opts* opts, FILE* out, struct kl_ast* ast, struct kl_astinfo* astinfo);
 
 struct kl_scope* kl_astinfo_alloc_scope(struct kl_astinfo* astinfo, struct kl_scope* pscope);
 

@@ -1,0 +1,8 @@
+fun fibo (n :: int) :: int =
+    if <= n 1 then
+        n
+    else
+        + (fibo (- n 1)) (fibo (- n 2))
+
+printl "fibo 8 ="
+intprintl (fibo 8)

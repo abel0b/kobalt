@@ -1,0 +1,64 @@
+Program <1:1>
+  Import <1:1> = std
+  Fun <1:1>
+    Id <1:5> = fibo
+    FunParams <1:10>
+      FunParam <1:10>
+        Id <1:11> = n
+        Type <1:16> = "int"
+    Type <1:24> = "int"
+    Seq <1:28>
+      IfElse <2:5>
+        IfBranch <2:5>
+          Call <2:9>
+            Id <2:9> = <=
+            CallParams <2:11>
+              CallParam <2:11>
+                Id <2:11> = n
+              CallParam <2:13>
+                IntLit <2:13> = 1
+          Seq <2:18>
+            Id <3:9> = n
+        ElseBranch <4:8>
+          Seq <4:8>
+            Call <5:9>
+              Id <5:9> = +
+              CallParams <5:11>
+                CallParam <5:11>
+                  Call <5:12>
+                    Id <5:12> = fibo
+                    CallParams <5:18>
+                      CallParam <5:18>
+                        Call <5:18>
+                          Id <5:18> = -
+                          CallParams <5:20>
+                            CallParam <5:20>
+                              Id <5:20> = n
+                            CallParam <5:22>
+                              IntLit <5:22> = 1
+                CallParam <5:26>
+                  Call <5:27>
+                    Id <5:27> = fibo
+                    CallParams <5:33>
+                      CallParam <5:33>
+                        Call <5:33>
+                          Id <5:33> = -
+                          CallParams <5:35>
+                            CallParam <5:35>
+                              Id <5:35> = n
+                            CallParam <5:37>
+                              IntLit <5:37> = 2
+  Call <7:1>
+    Id <7:1> = printl
+    CallParams <7:8>
+      CallParam <7:8>
+        StrLit <7:8> = "fibo 8 ="
+  Call <8:1>
+    Id <8:1> = intprintl
+    CallParams <8:11>
+      CallParam <8:11>
+        Call <8:12>
+          Id <8:12> = fibo
+          CallParams <8:17>
+            CallParam <8:17>
+              IntLit <8:17> = 8
