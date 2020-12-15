@@ -52,6 +52,13 @@ jobs:
       - name: Run examples
         run: for example in doc/examples/*.kl; do ./bin/$CONFIG/kobalt $example; done
 
+      - uses: denolib/setup-deno@v2
+        with:
+          deno-version: v1.x
+
+      - name: Run tests
+        run: deno test --unstable --allow-read --allow-env --allow-run test/e2e/e2etest.js
+
   test-windows:
     runs-on: windows-latest
 
@@ -89,3 +96,12 @@ jobs:
         run: |
           .\dev\vsenv.ps1
           get-childitem .\doc\examples | foreach-object { & ".\bin\$env:CONFIG\kobalt.exe" $_.FullName }
+
+      - uses: denolib/setup-deno@v2
+        with:
+          deno-version: v1.x
+
+      - name: Run tests
+        run: |
+          .\dev\vsenv.ps1
+          deno test --unstable --allow-read --allow-env --allow-run test/e2e/e2etest.js
