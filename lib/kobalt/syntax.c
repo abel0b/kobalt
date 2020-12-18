@@ -59,6 +59,8 @@ char* kl_node_kind_str(enum kl_node_kind kind) {
             return "Import";
         case NExport:
             return "Export";
+        case NForLoop:
+            return "ForLoop";
     }
     return "UNDEFINED";
 }

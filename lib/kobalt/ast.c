@@ -34,6 +34,7 @@ int kl_astvisit_rec(struct kl_astvisit* astvisit, int nid, int depth) {
     struct kl_node* node = &astvisit->ast->nodes.data[nid];
     astvisit->cur.nid = nid;
     astvisit->cur.depth = depth;
+    // kl_ilog("VISIT %s", kl_node_kind_str(node->kind));
 
     if(astvisit->order & PreOrder) {
         astvisit->curop = PreOrder;
@@ -49,6 +50,13 @@ int kl_astvisit_rec(struct kl_astvisit* astvisit, int nid, int depth) {
             for(int i = 0; i < node->data.group.numitems; ++i) {
                 kl_astvisit_rec(astvisit, node->data.group.items[i], depth + 1);
             }
+            break;
+        case NForLoop:
+            kl_astvisit_rec(astvisit, node->data.forloop.id, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.forloop.start, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.forloop.end, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.forloop.expr, depth + 1);
+
             break;
         case NFun:
             kl_astvisit_rec(astvisit, node->data.fun.id, depth + 1);
@@ -70,6 +78,10 @@ int kl_astvisit_rec(struct kl_astvisit* astvisit, int nid, int depth) {
             break;
         case NCallParam:
             kl_astvisit_rec(astvisit, node->data.callparam.expr, depth + 1);
+            break;
+        case NVal:
+            kl_astvisit_rec(astvisit, node->data.val.id, depth + 1);
+            kl_astvisit_rec(astvisit, node->data.val.expr, depth + 1);
             break;
         case NIfBranch:
         case NElifBranch:

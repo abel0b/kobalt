@@ -31,4 +31,6 @@ struct kl_symbol* kl_modgraph_try_resolve(struct kl_modgraph* modgraph, struct k
 
 struct kl_symbol* kl_modgraph_define(struct kl_modgraph* modgraph, struct kl_str* modid, int nid, struct kl_str* name);
 
+struct kl_symbol* kl_modgraph_try_resolve_local(struct kl_modgraph* modgraph, struct kl_str* modid, int nid, struct kl_str* name);
+
 #endif

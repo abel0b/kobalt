@@ -38,3 +38,26 @@ int isds(char c) {
     return c == '/';
 #endif
 }
+
+void read_to_str(char* path, struct kl_str* dest) {
+    FILE * file = fopen(path, "rb");
+    if (file == NULL) {
+        perror("fopen");
+        kl_elog("could not open file '%s'", path);
+        exit(1);
+    }
+
+    fseek(file, 0, SEEK_END);
+    long int filesize = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    kl_str_new(dest);
+
+    if (filesize) {
+        kl_str_resize(dest, filesize);
+        size_t r = fread(dest->data, filesize, 1, file);
+        assert(r == 1);
+    }
+   
+    fclose(file);
+}

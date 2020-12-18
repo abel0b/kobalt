@@ -14,3 +14,5 @@ name=$(basename $1)
 
 ./bin/debug/kobalt -n $1
 echo $? > test/e2e/${name}code
+
+./bin/debug/kobalt -n $1 > test/e2e/${name}out

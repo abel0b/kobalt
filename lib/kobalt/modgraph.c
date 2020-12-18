@@ -80,6 +80,13 @@ static struct kl_symbol* kl_modgraph_try_resolve_rec(struct kl_modgraph* modgrap
     return NULL;
 }
 
+struct kl_symbol* kl_modgraph_try_resolve_local(struct kl_modgraph* modgraph, struct kl_str* modid, int nid, struct kl_str* name) {
+    struct kl_mod* mod = (struct kl_mod*) kl_dict_get(&modgraph->mods, modid->data);
+    struct kl_scope* scope = mod->astinfo.scopes.data[nid];
+    struct kl_symbol* symbol = (struct kl_symbol*) kl_dict_get(&scope->data, name->data);
+    return symbol;
+}
+
 struct kl_symbol* kl_modgraph_try_resolve(struct kl_modgraph* modgraph, struct kl_str* modid, int nid, struct kl_str* name) {
     return kl_modgraph_try_resolve_rec(modgraph, modid, nid, name, 8);
 }

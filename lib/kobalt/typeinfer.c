@@ -16,10 +16,59 @@ struct kl_typeinfer_ctx {
 };
 
 static int has_scope(struct kl_node* node) {
-    return node->kind == NProgram || (node->kind == NFun) || node->kind == NIfBranch || node->kind == NCase;
+    return node->kind == NProgram || (node->kind == NFun) || node->kind == NIfBranch || node->kind == NCase || node->kind == NForLoop;
 }
 
 static int typeinfer_rec(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid, struct kl_typeinfer_ctx* ctx, struct kl_scope* scope, int nid);
+
+static void typeinfer_val(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid, struct kl_typeinfer_ctx* ctx, struct kl_scope* scope, int nid) {
+    struct kl_node* node = &ast->nodes.data[nid];
+    struct kl_mod* mod = kl_modgraph_get(modgraph, modid);
+    char* name = ast->nodes.data[node->data.val.id].data.id.name;
+    struct kl_str name_str;
+    kl_str_new(&name_str);
+    kl_str_cat(&name_str, name);
+
+    if (kl_modgraph_try_resolve_local(modgraph, modid, nid, &name_str)) {
+        kl_elog("redefinition of value '%s'", name);
+        exit(1);
+    }
+
+    struct kl_symbol* val_sym = kl_modgraph_define(modgraph, modid, nid, &name_str);
+    typeinfer_rec(ast, modgraph, modid, ctx, scope, node->data.val.expr);
+    struct kl_type* val_type = kl_vec_type_last(&ctx->types);
+    mod->astinfo.types.data[nid] = val_type;
+    val_sym->type = val_type;
+    val_sym->kind = ValSym;
+    kl_str_del(&name_str);
+}
+
+static void typeinfer_forloop(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid, struct kl_typeinfer_ctx* ctx, struct kl_scope* scope, int nid) {
+    struct kl_node* node = &ast->nodes.data[nid];
+    struct kl_mod* mod = kl_modgraph_get(modgraph, modid);
+    char* name = ast->nodes.data[node->data.forloop.id].data.id.name;
+    struct kl_str name_str;
+    kl_str_new(&name_str);
+    kl_str_cat(&name_str, name);
+
+    struct kl_symbol* val_sym = kl_modgraph_define(modgraph, modid, nid, &name_str);
+
+    struct kl_type* val_type = (struct kl_type *) kl_objpool_alloc(&mod->astinfo.type_pool);
+    kl_type_new(val_type, Int);
+    val_sym->type = val_type;
+    val_sym->kind = ValSym;
+
+    typeinfer_rec(ast, modgraph, modid, ctx, scope, node->data.forloop.expr);
+    
+    struct kl_type* last_type = kl_vec_type_pop(&ctx->types);
+    unused(last_type);
+
+    struct kl_type* for_type = (struct kl_type*)kl_objpool_alloc(&mod->astinfo.type_pool);
+    kl_type_new(for_type, Unit);
+    mod->astinfo.types.data[nid] = for_type;
+    kl_vec_type_push(&ctx->types, for_type);
+    kl_str_del(&name_str);
+}
 
 static void typeinfer_fun(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid, struct kl_typeinfer_ctx* ctx, struct kl_scope* scope, int nid) {
     struct kl_node* node = &ast->nodes.data[nid];
@@ -38,7 +87,7 @@ static void typeinfer_fun(struct kl_ast* ast, struct kl_modgraph* modgraph, stru
         if (funsym == NULL) {
             funsym = kl_modgraph_define(modgraph, modid, node->parent, &name_str);
             funsym->kind = FunSym;
-            funsym->type = (struct kl_type *) kl_objpool_alloc(&mod->astinfo.type_pool);
+            funsym->type = (struct kl_type*) kl_objpool_alloc(&mod->astinfo.type_pool);
         }
         mod->astinfo.types.data[nid] = funsym->type;
     }
@@ -208,6 +257,10 @@ static void typeinfer_call(struct kl_ast* ast, struct kl_modgraph* modgraph, str
     struct kl_type* type = kl_modgraph_resolve(modgraph, modid, nid, &name_str)->type;
     kl_str_del(&name_str);
 
+    for(int i = 0; i < ast->nodes.data[node->data.call.callparams].data.group.numitems; ++ i) {
+        kl_vec_type_pop(&ctx->types);
+    }
+
     assert(type->kind == Fun);
     kl_vec_type_push(&ctx->types, type->data.fun.out_type);
 
@@ -298,6 +351,12 @@ static int typeinfer_rec(struct kl_ast* ast, struct kl_modgraph* modgraph, struc
             break;
         case NCall:
 			typeinfer_call(ast, modgraph, modid, ctx, scope, nid);
+            break;
+        case NVal:
+			typeinfer_val(ast, modgraph, modid, ctx, scope, nid);
+            break;
+        case NForLoop:
+            typeinfer_forloop(ast, modgraph, modid, ctx, scope, nid);
             break;
         case NIfElse:
 			typeinfer_ifelse(ast, modgraph, modid, ctx, scope, nid);

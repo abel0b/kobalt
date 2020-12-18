@@ -12,7 +12,6 @@ enum kl_symbol_kind {
 
 struct kl_funsymbol {
     int defined;
-    struct kl_type* type;
 };
 
 struct kl_symbol {

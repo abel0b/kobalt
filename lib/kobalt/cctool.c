@@ -163,6 +163,7 @@ int kl_cmdcc_compile(struct kl_opts* opts, struct kl_cmdcc* cmdcc, struct kl_str
         fprintf(stderr, "%s\n", content);
         kl_free(content);
 #endif
+        kl_exit(1);
     }
     fclose(cclog);
     kl_vec_cstr_del(&args);

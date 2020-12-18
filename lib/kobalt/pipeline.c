@@ -162,8 +162,10 @@ void kl_pipeline_run(struct kl_pipeline* pipeline, struct kl_compiland* input) {
     if ((pipeline->opts->stages & LexingStage) && (pipeline->opts->stages >> 1 == 0)) {
         for(int i = 0; i < pipeline->pipes.size; ++ i) {
             struct kl_pipe* pipe = (struct kl_pipe*) kl_vec_get(&pipeline->pipes, i);
-            for(int j = 0; j < pipe->tokens.size; ++ j) {
-                kl_token_display(out, &pipe->tokens.data[j]);
+            if (strcmp(pipe->compiland.name.data, "std") != 0) {
+                for(int j = 0; j < pipe->tokens.size; ++ j) {
+                    kl_token_display(out, &pipe->tokens.data[j]);
+                }
             }
         }
     }
@@ -171,22 +173,28 @@ void kl_pipeline_run(struct kl_pipeline* pipeline, struct kl_compiland* input) {
     if ((pipeline->opts->stages & ParsingStage) && (pipeline->opts->stages >> 2 == 0)) {
         for(int i = 0; i < pipeline->pipes.size; ++ i) {
             struct kl_pipe* pipe = (struct kl_pipe*) kl_vec_get(&pipeline->pipes, i);
-            kl_ast_display(pipeline->opts, out, &pipe->ast, NULL);
+            if (strcmp(pipe->compiland.name.data, "std") != 0) {
+                kl_ast_display(pipeline->opts, out, &pipe->ast, NULL);
+            }
         }
     }
 
     if ((pipeline->opts->stages & ModAnalysisStage) && (pipeline->opts->stages >> 4 == 0)) {
         for(int i = 0; i < pipeline->pipes.size; ++ i) {
             struct kl_pipe* pipe = (struct kl_pipe*) kl_vec_get(&pipeline->pipes, i);
-            kl_ast_display(pipeline->opts, out, &pipe->ast, NULL);
+            if (strcmp(pipe->compiland.name.data, "std") != 0) {
+                kl_ast_display(pipeline->opts, out, &pipe->ast, NULL);
+            }
         }
     }
 
     if ((pipeline->opts->stages & (TypeInferStage | TypeCheckStage)) && (pipeline->opts->stages >> 8 == 0)) {
         for(int i = 0; i < pipeline->pipes.size; ++ i) {
             struct kl_pipe* pipe = (struct kl_pipe*) kl_vec_get(&pipeline->pipes, i);
-            struct kl_mod* mod = (struct kl_mod*) kl_modgraph_get(&pipeline->modgraph, &pipe->compiland.name);
-            kl_ast_display(pipeline->opts, out, &pipe->ast, &mod->astinfo);
+            if (strcmp(pipe->compiland.name.data, "std") != 0) {
+                struct kl_mod* mod = (struct kl_mod*) kl_modgraph_get(&pipeline->modgraph, &pipe->compiland.name);
+                kl_ast_display(pipeline->opts, out, &pipe->ast, &mod->astinfo);
+            }
         }
     }
 

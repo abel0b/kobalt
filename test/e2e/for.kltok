@@ -1,0 +1,14 @@
+Id="for" at 1:1
+Id="i" at 1:5
+Id="in" at 1:7
+Int="0" at 1:10
+DotDot at 1:12
+Int="5" at 1:15
+Id="do" at 1:17
+LineFeed at 1:18
+Indent at 2:1
+Id="intprintl" at 2:5
+Id="i" at 2:15
+LineFeed at 2:15
+Dedent at 3:0
+EndFile at 3:0

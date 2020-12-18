@@ -168,18 +168,26 @@ void kl_opts_new(struct kl_opts* opts, int argc, char* argv[]) {
     ensuredir(opts->cachepath.data);
 
     unsigned char data[32];
-    int bsize = base32_allocated_size(sizeof(data));
+    int bsize = base32_allocated_size(32) - 1;
 
     calc_sha_256(data, opts->cwd.data, opts->cwd.len);
 
-    int cachepathlen = opts->cachepath.len + bsize + 1;
+    int cachepathlen = opts->cachepath.len + 1 + bsize;
 
     kl_path_push(&opts->cachepath, "placeholder");
     kl_str_resize(&opts->cachepath, cachepathlen);
 
     base32_encode(data, 32, &opts->cachepath.data[opts->cachepath.len - bsize]);
-    
+
     kl_path_normalize(&opts->cachepath);
+
+    for(int i = 0; i < opts->cachepath.len; ++i) {
+        if (opts->cachepath.data[opts->cachepath.len - 1 - i] != '=') {
+            kl_str_resize(&opts->cachepath, opts->cachepath.len - i);
+            break;
+        }
+    }
+
     ensuredir(opts->cachepath.data);
 
     kl_str_new(&opts->manifest_path);

@@ -1,0 +1,12 @@
+Program <1:1>
+  Import <1:1> = std
+  ForLoop <1:1> :: ()
+    Id <1:5> = i
+    IntLit <1:10> = 0
+    IntLit <1:15> = 5
+    Seq <1:18> :: ()
+      Call <2:5> :: ()
+        Id <2:5> = intprintl
+        CallParams <2:15>
+          CallParam <2:15>
+            Id <2:15> = i :: int

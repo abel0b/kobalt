@@ -20,10 +20,16 @@ static void typecheck_group(struct kl_ast* ast, struct kl_modgraph* modgraph, st
     }
 }
 
+static void typecheck_forloop(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid, int nid) { 
+    struct kl_node* node = &ast->nodes.data[nid];
+    typecheck_rec(ast, modgraph, modid, node->data.forloop.expr);
+}
+
 static void typecheck_call(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid, int nid) { 
     struct kl_node* node = &ast->nodes.data[nid];
     struct kl_mod* mod = kl_modgraph_get(modgraph, modid);
     char* name = ast->nodes.data[node->data.call.id].data.id.name;
+
     struct kl_str name_str;
     kl_str_new(&name_str);
     kl_str_cat(&name_str, name);
@@ -88,6 +94,9 @@ static int typecheck_rec(struct kl_ast* ast, struct kl_modgraph* modgraph, struc
             break;
         case NFun:
             typecheck_fun(ast, modgraph, modid, nid);
+            break;
+        case NForLoop:
+            typecheck_forloop(ast, modgraph, modid, nid);
             break;
         case NCall:
 			typecheck_call(ast, modgraph, modid, nid);

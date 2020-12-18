@@ -69,6 +69,8 @@ defrule(val);
 defrule(funparam);
 defrule(funparams);
 defrule(ifelse);
+defrule(forloop);
+
 
 /* Look ahead token stream without consuming */
 static struct kl_token * lookahead(struct kl_parser* parser, int stride, enum kl_token_kind expected_kind) {
@@ -530,8 +532,14 @@ static int make_expr(struct kl_parser* parser) {
     else if (peek(parser, TLPar) || lookahead(parser, 1, TLineFeed) || lookahead(parser, 1, TDedent) || lookaheadid(parser, 1, "then") || lookaheadid(parser, 1, "else") || lookaheadid(parser, 1, "elif") || lookahead(parser, 1, TRPar)) {
         expr = make_term(parser);
     }
+    else if (peekid(parser, "val")) {
+        expr = make(parser, make_val(parser));
+    }
     else if (peekid(parser, "if")) {
         expr = make(parser, make_ifelse(parser));
+    }
+    else if (peekid(parser, "for")) {
+        expr = make(parser, make_forloop(parser));
     }
     else if (peekid(parser, "case")) {
         expr = make(parser, make_todo(parser));
@@ -558,24 +566,28 @@ static int make_callparams(struct kl_parser* parser) {
 }
 
 static int make_val(struct kl_parser* parser) {
-    int expr = kl_parser_addnode(parser, NVal);
+    int val = kl_parser_addnode(parser, NVal);
+    eatid(parser, "val");
 
-    if (peekid(parser, "val")) {
-        anyeat(parser);
-    }
+    attr(parser, val, id) = make(parser, make_id(parser));
+    eat(parser, TEq);
+    attr(parser, val, expr) = make(parser, make_expr(parser));
 
-    else if (lookahead(parser, 1, TLineFeed) || lookahead(parser, 1, TDedent)) {
-        attr(parser, expr, expr) = make(parser, make_lit(parser));
-    }
-    else if (peek(parser, TId) && lookahead(parser, 1, TLPar)) {
-        attr(parser, expr, expr) = make(parser, make_call(parser));
-    }
-    else {
-        make(parser, make_todo(parser));
-    }
-    
-    if (peek(parser, TLineFeed)) eat(parser, TLineFeed);
-    return bubble(parser, expr);
+    return bubble(parser, val);
+}
+
+static int make_forloop(struct kl_parser* parser) {
+    int forloop = kl_parser_addnode(parser, NForLoop);
+    eatid(parser, "for");
+    attr(parser, forloop, id) = make(parser, make_id(parser));
+    eatid(parser, "in");
+    attr(parser, forloop, start) = make(parser, make_intlit(parser));
+    eat(parser, TDotDot);
+    attr(parser, forloop, end) = make(parser, make_intlit(parser));
+    eatid(parser, "do");
+    attr(parser, forloop, expr) = make(parser, make_expr(parser));
+
+    return bubble(parser, forloop);
 }
 
 static int make_funparams(struct kl_parser* parser) {
@@ -682,18 +694,6 @@ static int make_program(struct kl_parser* parser) {
         if (peek(parser, TLineFeed)) {
             eat(parser, TLineFeed);
         }
-        // else {
-        //     struct kl_token* tok = &parser->tokens[parser->cursor];
-        //     int bufsize = 128;
-        //     char * strbuf = kl_malloc(128 * bufsize);
-        //     int size;
-        //     while ((size = snprintf(strbuf, bufsize, "Unexpected token %s at %s:%d:%d\n", kl_token_string(tok->kind), parser->compiland->path.data, parser->tokens[parser->cursor].loc.line, parser->tokens[parser->cursor].loc.col) > bufsize)) {
-        //         bufsize = size+1;
-        //         strbuf = kl_realloc(strbuf, (size+1) * sizeof(char));
-        //     }
-        //     kl_errvec_push(&parser->errvec, kl_err_make(ESYNTAX, strbuf));
-        //     return bubble(parser, -1);
-        // }
     }
     eat(parser, TEndFile);
     return bubble(parser, group);
@@ -723,7 +723,6 @@ void kl_parse(struct kl_vec_token* tokens, struct kl_compiland* compiland, struc
 }
 
 void kl_parser_run(struct kl_parser* parser) {
-    (void)make_val;
     int group = make_program(parser);
 #ifdef DEBUG
     if(getenv("DEBUG_PARSER")) {

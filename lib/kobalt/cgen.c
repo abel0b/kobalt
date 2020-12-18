@@ -16,6 +16,8 @@
 #include <assert.h>
 #include <ctype.h>
 
+struct kl_opts* gopts;
+
 struct kl_cgenctx {
     struct kl_compiland* compiland;
     struct kl_str headerpath;
@@ -276,6 +278,47 @@ static void cgen_call(struct kl_ast* ast, struct kl_modgraph* modgraph, struct k
     }
 }
 
+static void cgen_val(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid, struct kl_cgenctx* ctx, int nid) {
+	struct kl_node* node = &ast->nodes.data[nid];
+    char* name = ast->nodes.data[node->data.val.id].data.id.name;
+    struct kl_str name_str;
+    kl_str_new(&name_str);
+    kl_str_cat(&name_str, name);
+
+    cgen_rec(ast, modgraph, modid, ctx, node->data.val.expr);
+    char* val = kl_str_stack_pop(&ctx->vals);
+
+    struct kl_type* type = kl_modgraph_resolve(modgraph, modid, nid, &name_str)->type;
+    kl_str_del(&name_str);
+
+    kl_str_catf(ctx->cur_code, "%s%s %s = %s;\n", ctx->indent, kl_type_to_c(type), name, val);
+
+    kl_str_stack_pushf(&ctx->vals, "%s", name);
+}
+
+static void cgen_forloop(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid, struct kl_cgenctx* ctx, int nid) {
+	struct kl_node* node = &ast->nodes.data[nid];
+    char* name = ast->nodes.data[node->data.forloop.id].data.id.name;
+    struct kl_str name_str;
+    kl_str_new(&name_str);
+    kl_str_cat(&name_str, name);
+
+    struct kl_type* type = kl_modgraph_resolve(modgraph, modid, nid, &name_str)->type;
+
+    kl_str_catf(ctx->cur_code, "%sfor(%s %s = %d; %s < %d; ++ %s)\n", ctx->indent, kl_type_to_c(type), name, atoi(ast->nodes.data[node->data.forloop.start].data.intlit.value), name, atoi(ast->nodes.data[node->data.forloop.end].data.intlit.value), name);
+    kl_str_catf(ctx->cur_code, "%s{\n", ctx->indent);
+    indent(ctx);
+    cgen_rec(ast, modgraph, modid, ctx, node->data.forloop.expr);
+    dedent(ctx);
+    kl_str_catf(ctx->cur_code, "%s}\n", ctx->indent);
+
+    char* val = kl_str_stack_pop(&ctx->vals);
+    unused(val);
+    kl_str_del(&name_str);
+    kl_str_stack_push(&ctx->vals, "void");
+}
+
+
 static void cgen_ifelse(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid, struct kl_cgenctx* ctx, int nid) {
 	struct kl_node* node = &ast->nodes.data[nid];
     int val = ctx->valcount++;
@@ -325,10 +368,9 @@ static void cgen_elsebranch(struct kl_ast* ast, struct kl_modgraph* modgraph, st
 
 static int cgen_rec(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid, struct kl_cgenctx* ctx, int nid) {
     struct kl_node* node = &ast->nodes.data[nid];
-
 #if DEBUG
     if(getenv("DEBUG_CGEN")) {
-        kl_dlog("cgen %s valcount=%d", kl_node_kind_str(node->kind), ctx->valcount);
+        kl_dlog("cgen %s", kl_node_kind_str(node->kind));
     }
 #endif
     switch(node->kind) {
@@ -364,6 +406,12 @@ static int cgen_rec(struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_
             break;
         case NCall:
 			cgen_call(ast, modgraph, modid, ctx, nid);
+            break;
+        case NVal:
+			cgen_val(ast, modgraph, modid, ctx, nid);
+            break;
+        case NForLoop:
+			cgen_forloop(ast, modgraph, modid, ctx, nid);
             break;
         case NIfElse:
 			cgen_ifelse(ast, modgraph, modid, ctx, nid);
@@ -429,6 +477,8 @@ void kl_cgenctx_del(struct kl_cgenctx* cgenctx) {
 }
 
 int kl_cgen(struct kl_opts* opts, struct kl_compiland* compiland, struct kl_ast* ast, struct kl_modgraph* modgraph, struct kl_str* modid) {
+    gopts = opts;
+
     struct kl_cgenctx cgenctx;
     kl_cgenctx_new(opts, compiland, &cgenctx);
     struct kl_mod* mod = kl_modgraph_get(modgraph, modid);

@@ -78,6 +78,18 @@ struct kl_node_call {
     int callparams;
 };
 
+struct kl_node_val {
+    int id;
+    int expr;
+};
+
+struct kl_node_forloop {
+    int id;
+    int start;
+    int end;
+    int expr;
+};
+
 struct kl_node_ifbranch {
     int cond;
     int conseq;
@@ -107,6 +119,8 @@ struct kl_node {
         struct kl_node_strlit strlit;
         struct kl_node_charlit charlit;
         struct kl_node_call call;
+        struct kl_node_val val;
+        struct kl_node_forloop forloop;
         struct kl_node_callparam callparam;
         struct kl_node_id id;
         struct kl_node_sym sym;
