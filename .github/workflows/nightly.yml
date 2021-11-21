@@ -53,7 +53,7 @@ jobs:
       - name: Install premake
         uses: abel0b/setup-premake@v2
         with:
-          version: $PREMAKE_VERSION
+          version: ${{ env.PREMAKE_VERSION }}
 
       - name: Generate project file
         run: premake5 gmake2
@@ -97,9 +97,9 @@ jobs:
        - name: Install premake
          uses: abel0b/setup-premake@v2
          with:
-           version: $env:PREMAKE_VERSION
+           version: ${{ env.PREMAKE_VERSION }}
 
-      - name: Generate project file
+       - name: Generate project file
         run: premake5 vs2019
 
       - name: Compile

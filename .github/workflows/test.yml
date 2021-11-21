@@ -38,7 +38,7 @@ jobs:
       - name: Install premake
         uses: abel0b/setup-premake@v2
         with:
-          version: $PREMAKE_VERSION
+          version: ${{ env.PREMAKE_VERSION }}
 
       - name: Configure workflow
         if: github.event_name == 'workflow_dispatch'
@@ -81,7 +81,7 @@ jobs:
       - name: Install premake
         uses: abel0b/setup-premake@v2
         with:
-          version: $env:PREMAKE_VERSION
+          version: ${{ env.PREMAKE_VERSION }}
 
       - name: Configure workflow
         if: github.event_name == 'workflow_dispatch'
