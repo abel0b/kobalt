@@ -51,7 +51,7 @@ jobs:
           lua-version: "5.3.5"
 
       - name: Install premake
-        uses: abel0b/setup-premake@v2
+        uses: abel0b/setup-premake@v2.1
         with:
           version: ${{ env.PREMAKE_VERSION }}
 
@@ -95,7 +95,7 @@ jobs:
           lua-version: "5.3.5"
 
        - name: Install premake
-         uses: abel0b/setup-premake@v2
+         uses: abel0b/setup-premake@v2.1
          with:
            version: ${{ env.PREMAKE_VERSION }}
 
