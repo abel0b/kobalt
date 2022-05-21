@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:abel0b/inut.git
+	branch = master
+	commit = a5db3cb8a2e6a0d135a72e790082d76ff39d0590
+	parent = 8af20476de848c831b099f1114049acac69928d0
+	method = merge
+	cmdver = 0.4.3
