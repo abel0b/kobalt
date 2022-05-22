@@ -78,7 +78,6 @@ ABL_API void abl_vec_##NAME##_push(struct abl_vec_##NAME* vec, TYPE elem) {\
     ++ vec->size;\
 }\
 ABL_API TYPE abl_vec_##NAME##_pop(struct abl_vec_##NAME* vec) {\
-    assert(vec->size > 0);\
     -- vec->size;\
     return vec->data[vec->size];\
 }\

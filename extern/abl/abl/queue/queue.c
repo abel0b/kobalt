@@ -1,6 +1,8 @@
 #include "abl/queue.h"
 #include <string.h>
 
+abl_queue_impl(int, int)
+
 ABL_API void abl_queue_new(struct abl_queue* queue, size_t elem_size) {
     queue->front = 0;
     queue->capacity = 8;
