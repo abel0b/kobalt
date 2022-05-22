@@ -1,6 +1,6 @@
 cat << END
 #include "kobalt/error.h"
-#include "klbase/mem.h"
+#include "abl/mem.h"
 #include <stdio.h>
 
 char * kl_err_kind_str(enum kl_err_kind kind) {
@@ -36,20 +36,20 @@ struct kl_err kl_err_make(enum kl_err_kind kind, char * msg) {
 }
 
 void kl_err_del(struct kl_err * err) {
-    kl_free(err->msg);
+    abl_free(err->msg);
 }
 
 void kl_errvec_push(struct kl_errvec * errvec, struct kl_err err) {
     if (errvec->numerrs == errvec->capacity) {
         errvec->capacity = errvec->capacity*2 + 2*(errvec->capacity == 0);
-        errvec->errs = kl_realloc(errvec->errs, sizeof(struct kl_err) * errvec->capacity);
+        errvec->errs = abl_realloc(errvec->errs, sizeof(struct kl_err) * errvec->capacity);
     }
     errvec->errs[errvec->numerrs++] = err;
 }
 
 void kl_errvec_del(struct kl_errvec * errvec) {
     for(int ii=0; ii<errvec->numerrs; ++ii) kl_err_del(&errvec->errs[ii]);
-    if (errvec->errs) kl_free(errvec->errs);
+    if (errvec->errs) abl_free(errvec->errs);
 }
 
 void kl_errvec_shrink(struct kl_errvec * errvec, int diffsize) {

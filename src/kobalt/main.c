@@ -44,7 +44,7 @@ int main(int argc, char * argv[]) {
     kl_pipeline_new(&pipeline, &opts);
 
     for(int i = 0; i < opts.inputs.size; ++ i) {
-        struct kl_compiland* input = (struct kl_compiland*) kl_vec_get(&opts.inputs, i);
+        struct kl_compiland* input = (struct kl_compiland*) abl_vec_get(&opts.inputs, i);
         kl_pipeline_run(&pipeline, input);
     }
     

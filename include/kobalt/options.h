@@ -2,10 +2,10 @@
 #define KLOPTIONS__H
 
 #include "kobalt/kobalt.h"
-#include "klbase/vec.h"
-#include "klbase/queue.h"
+#include "abl/vec.h"
+#include "abl/queue.h"
 #include "kobalt/compiland.h"
-#include "klbase/str.h"
+#include "abl/str.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include "kobalt/stage.h"
@@ -15,12 +15,12 @@ struct kl_opts {
     int verbosity;
     int stages;
     bool color;
-    struct kl_str cwd;
-    struct kl_vec inputs;
-    struct kl_str outpath;
-    struct kl_str cachepath;
-    struct kl_vec exe_argv;
-    struct kl_str manifest_path;
+    struct abl_str cwd;
+    struct abl_vec inputs;
+    struct abl_str outpath;
+    struct abl_str cachepath;
+    struct abl_vec exe_argv;
+    struct abl_str manifest_path;
     FILE* manifest;
 };
 

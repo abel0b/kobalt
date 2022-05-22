@@ -8,6 +8,6 @@
 #include "kobalt/compiland.h"
 #include "kobalt/ast.h"
 
-void kl_parse(struct kl_vec_token* tokens, struct kl_compiland* compiland, struct kl_ast* ast);
+void kl_parse(struct abl_vec_token* tokens, struct kl_compiland* compiland, struct kl_ast* ast);
 
 #endif

@@ -3,15 +3,16 @@
 
 #include "kobalt/kobalt.h"
 #include "kobalt/syntax.h"
-#include "klbase/dict.h"
-#include "klbase/objpool.h"
-#include "klbase/vec.h"
+#include "abl/dict.h"
+#include "abl/objpool.h"
+#include "abl/vec.h"
+#include "abl/vec.h"
 #include <stdio.h>
 
-kl_vec_decl(struct kl_node, node)
+abl_vec_decl(struct kl_node, node)
 
 struct kl_ast {
-    struct kl_vec_node nodes;
+    struct abl_vec_node nodes;
 };
 
 enum kl_astorder {
@@ -46,7 +47,7 @@ void kl_astvisit_run(struct kl_astvisit* astvisit);
 
 void kl_astvisit_del(struct kl_astvisit* astvisit);
 
-struct kl_dict* kl_scope_get(struct kl_ast* ast, int nid);
+struct abl_dict* kl_scope_get(struct kl_ast* ast, int nid);
 
 int kl_scope_isdef(struct kl_ast* ast, int nid, char* name);
 

@@ -7,7 +7,7 @@
 #endif
 
 #include <stdlib.h>
-#include "klbase/log.h"
+#include "abl/log.h"
 
 #if WINDOWS
 #define DS '\\'
@@ -23,7 +23,7 @@
 
 #define todo() do { fprintf(stderr, "TODO at %s:%d\n", __FILE__, __LINE__); exit(1); } while(0)
 
-#define kl_todo(...) do { kl_elog("TODO feature at %s:%s:%d", __FILE__, __func__, __LINE__); kl_elog(__VA_ARGS__); exit(1); } while(0)
+#define kl_todo(...) do { abl_elog("TODO feature at %s:%s:%d", __FILE__, __func__, __LINE__); abl_elog(__VA_ARGS__); exit(1); } while(0)
 
 #define unused(X) do { (void)(X); } while(0)
 

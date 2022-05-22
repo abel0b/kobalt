@@ -3,8 +3,8 @@
 
 #include "kobalt/kobalt.h"
 #include "kobalt/options.h"
-#include "klbase/str.h"
-#include "klbase/vec.h"
+#include "abl/str.h"
+#include "abl/vec.h"
 
 enum kl_cc {
     CCGcc = 0,
@@ -20,14 +20,14 @@ struct kl_cmdcc {
 
 void kl_cmdcc_new(struct kl_cmdcc* cmdcc);
 
-int kl_cmdcc_compile(struct kl_opts* opts, struct kl_cmdcc* cmdcc, struct kl_str* src);
+int kl_cmdcc_compile(struct kl_opts* opts, struct kl_cmdcc* cmdcc, struct abl_str* src);
 
-int kl_cmdcc_link(struct kl_opts* opts, struct kl_cmdcc* cmdcc, struct kl_vec_str* objs, struct kl_str* bin);
+int kl_cmdcc_link(struct kl_opts* opts, struct kl_cmdcc* cmdcc, struct abl_vec_str* objs, struct abl_str* bin);
 
 void kl_cmdcc_del(struct kl_cmdcc* cmdcc);
 
-int kl_cc(struct kl_opts* opts, struct kl_str* src);
+int kl_cc(struct kl_opts* opts, struct abl_str* src);
 
-int kl_link(struct kl_opts* opts, struct kl_vec_str* objs, struct kl_str* bin);
+int kl_link(struct kl_opts* opts, struct abl_vec_str* objs, struct abl_str* bin);
 
 #endif

@@ -2,9 +2,9 @@
 #define KLTYPE__H
 
 #include "kobalt/kobalt.h"
-#include "klbase/vec.h"
+#include "abl/vec.h"
 
-kl_vec_decl(struct kl_type*, type)
+abl_vec_decl(struct kl_type*, type)
 
 enum kl_typekind {
     Unit = 0,
@@ -22,7 +22,7 @@ struct kl_arraytype {
 };
 
 struct kl_funtype {
-    struct kl_vec_type in_types;
+    struct abl_vec_type in_types;
     struct kl_type* out_type;
 };
 

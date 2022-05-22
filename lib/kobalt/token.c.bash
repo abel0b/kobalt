@@ -2,12 +2,12 @@ set -f
 
 cat << END
 #include "kobalt/token.h"
-#include "klbase/mem.h"
+#include "abl/mem.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-kl_vec_impl(struct kl_token, token)
+abl_vec_impl(struct kl_token, token)
 
 char * specials[NUM_SPECIALS] = {
     "",
@@ -34,7 +34,7 @@ struct kl_token kl_token_make(enum kl_token_kind kind, char * value, int line, i
         token.value = NULL;
     }
     else {
-        token.value = kl_malloc(strlen(value) + 1);
+        token.value = abl_malloc(strlen(value) + 1);
         strcpy(token.value, value);
     }
     token.loc.line = line;

@@ -1,7 +1,7 @@
 #include "kobalt/type.h"
 #include <stdio.h>
 
-kl_vec_impl(struct kl_type*, type)
+abl_vec_impl(struct kl_type*, type)
 
 void kl_type_new(struct kl_type* type, enum kl_typekind kind) {
     type->kind = kind;
@@ -18,16 +18,16 @@ void kl_type_del(struct kl_type* type) {
 }
 
 void kl_funtype_new(struct kl_funtype* funtype, struct kl_type* out_type) {
-    kl_vec_type_new(&funtype->in_types);
+    abl_vec_type_new(&funtype->in_types);
     funtype->out_type = out_type;
 }
 
 void kl_funtype_addparam(struct kl_funtype* funtype, struct kl_type* in_type) {
-    kl_vec_type_push(&funtype->in_types, in_type);
+    abl_vec_type_push(&funtype->in_types, in_type);
 }
 
 void kl_funtype_del(struct kl_funtype* funtype) {
-    kl_vec_type_del(&funtype->in_types);
+    abl_vec_type_del(&funtype->in_types);
 }
 
 void kl_arraytype_new(struct kl_arraytype* arraytype, struct kl_type* elem_type) {
@@ -62,7 +62,7 @@ void kl_type_display(struct kl_type* type) {
                 if (i != 0) {
                     printf(" ");
                 }
-                kl_type_display(kl_vec_type_get(&type->data.fun.in_types, i));
+                kl_type_display(abl_vec_type_get(&type->data.fun.in_types, i));
             }
             printf(")");
             printf(" -> ");

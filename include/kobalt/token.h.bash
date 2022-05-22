@@ -3,7 +3,7 @@ cat << END
 #define KLTOKEN__H
 
 #include "kobalt/kobalt.h"
-#include "klbase/vec.h"
+#include "abl/vec.h"
 #include <stdio.h>
 
 #define NUM_SPECIALS $(($(wc -l lib/kobalt/token.csv | awk '{printf $1}')+2))
@@ -38,7 +38,7 @@ struct kl_token {
     struct kl_loc loc;
 };
 
-kl_vec_decl(struct kl_token, token)
+abl_vec_decl(struct kl_token, token)
 
 int is_builtin_fun(enum kl_token_kind tok_kind);
 

@@ -1,14 +1,14 @@
 #include "kobalt/parser.h"
-#include "klbase/mem.h"
+#include "abl/mem.h"
 #include "kobalt/ast.h"
-#include "klbase/log.h"
+#include "abl/log.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
 struct kl_parser {
-    struct kl_vec_token* tokens;
+    struct abl_vec_token* tokens;
     int curnode;
     struct kl_ast* ast;
     struct kl_errvec errvec;
@@ -20,7 +20,7 @@ struct kl_parser {
 
 struct kl_parser kl_parser_make(struct kl_token* tokens, struct kl_compiland* compiland);
 
-void kl_parser_new(struct kl_parser* parser, struct kl_vec_token* tokens, struct kl_compiland* compiland, struct kl_ast* ast);
+void kl_parser_new(struct kl_parser* parser, struct abl_vec_token* tokens, struct kl_compiland* compiland, struct kl_ast* ast);
 
 void kl_parser_run(struct kl_parser* parser);
 
@@ -82,10 +82,10 @@ static struct kl_token * lookahead(struct kl_parser* parser, int stride, enum kl
 #ifdef DEBUG
     if(getenv("DEBUG_PARSER") && tok) {
         if (tok->value) {
-            kl_dlog(RED "lookahead" RESET " %d %s? %s:\"%s\"", stride, kl_token_string(expected_kind), kl_token_string(actual_kind), tok->value);
+            abl_dlog(RED "lookahead" RESET " %d %s? %s:\"%s\"", stride, kl_token_string(expected_kind), kl_token_string(actual_kind), tok->value);
         }
         else {
-            kl_dlog(RED "lookahead" RESET " %d %s? %s", stride, kl_token_string(expected_kind), kl_token_string(actual_kind));
+            abl_dlog(RED "lookahead" RESET " %d %s? %s", stride, kl_token_string(expected_kind), kl_token_string(actual_kind));
         }
     }
 #endif
@@ -98,7 +98,7 @@ static struct kl_token * anylookahead(struct kl_parser* parser, int stride) {
         ++ parser->cursor;
     }
     if (parser->cursor + stride >= parser->tokens->size) {
-        kl_elog("parser: bad cursor");
+        abl_elog("parser: bad cursor");
         exit(1);
     }
     struct kl_token* tok = (parser->cursor + stride < parser->tokens->size)? &parser->tokens->data[parser->cursor + stride] : NULL;
@@ -106,10 +106,10 @@ static struct kl_token * anylookahead(struct kl_parser* parser, int stride) {
 #ifdef DEBUG
     if(getenv("DEBUG_PARSER") && tok) {
         if (tok->value) {
-            kl_dlog(RED "lookahead" RESET " %d %s:\"%s\"", stride, kl_token_string(actual_kind), tok->value);
+            abl_dlog(RED "lookahead" RESET " %d %s:\"%s\"", stride, kl_token_string(actual_kind), tok->value);
         }
         else {
-            kl_dlog(RED "lookahead" RESET " %d %s", stride, kl_token_string(actual_kind));
+            abl_dlog(RED "lookahead" RESET " %d %s", stride, kl_token_string(actual_kind));
         }
     }
 #endif
@@ -136,13 +136,13 @@ static struct kl_token * peekid(struct kl_parser* parser, char* id) {
 
 static struct kl_token * anyeat(struct kl_parser* parser) {
     if (parser->cursor >= parser->tokens->size) {
-        kl_elog("unexpected state");
+        abl_elog("unexpected state");
         exit(1);
     }
     struct kl_token* tok = &parser->tokens->data[parser->cursor++];
 #ifdef DEBUG
         if(getenv("DEBUG_PARSER")) {
-            kl_dlog(RED "consume" RESET " %s", kl_token_string(tok->kind));
+            abl_dlog(RED "consume" RESET " %s", kl_token_string(tok->kind));
         }
 #endif
     return tok;
@@ -158,13 +158,13 @@ static struct kl_token * unchecked_eat(struct kl_parser* parser, enum kl_token_k
         tok = &parser->tokens->data[parser->cursor];
 #ifdef DEBUG
         if(getenv("DEBUG_PARSER")) {
-            kl_dlog(RED "consume" RESET " %s", kl_token_string(kind));
+            abl_dlog(RED "consume" RESET " %s", kl_token_string(kind));
         }
 #endif
     }
     else {
         int bufsize = 128;
-        char * strbuf = kl_malloc(128 * bufsize);
+        char * strbuf = abl_malloc(128 * bufsize);
         int size;
 #if DEBUG
     while ((size = snprintf(strbuf, bufsize, "(%s:%d) Unexpected token at %s:%d:%d\nExpected %s but got %s\n", file, line, parser->compiland->path.data, parser->tokens->data[parser->cursor].loc.line, parser->tokens->data[parser->cursor].loc.col, kl_token_string(kind), kl_token_string(parser->tokens->data[parser->cursor].kind))) > bufsize) {
@@ -172,12 +172,12 @@ static struct kl_token * unchecked_eat(struct kl_parser* parser, enum kl_token_k
     while ((size = snprintf(strbuf, bufsize, "Unexpected token at %s:%d:%d\nExpected %s but got %s\n", parser->compiland->path.data, parser->tokens->data[parser->cursor].loc.line, parser->tokens->data[parser->cursor].loc.col, kl_token_string(kind), kl_token_string(parser->tokens->data[parser->cursor].kind))) > bufsize) {
 #endif
             bufsize = size+1;
-            strbuf = kl_realloc(strbuf, (size+1) * sizeof(char));
+            strbuf = abl_realloc(strbuf, (size+1) * sizeof(char));
         }
         kl_errvec_push(&parser->errvec, kl_err_make(ESYNTAX, strbuf));
 #ifdef DEBUG
     if(getenv("DEBUG_PARSER")) {
-        kl_dlog(RED "consume" RESET " expected:%s actual:%s", kl_token_string(kind), kl_token_string(parser->tokens->data[parser->cursor].kind));
+        abl_dlog(RED "consume" RESET " expected:%s actual:%s", kl_token_string(kind), kl_token_string(parser->tokens->data[parser->cursor].kind));
     }
 #endif
     }
@@ -198,30 +198,30 @@ static struct kl_token * unchecked_eatid(struct kl_parser* parser, char * id) {
             tok = &parser->tokens->data[parser->cursor];
 #if DEBUG
             if(getenv("DEBUG_PARSER")) {
-                kl_dlog(RED "consumeid" RESET " ID:%s", id);
+                abl_dlog(RED "consumeid" RESET " ID:%s", id);
             }
 #endif
         }
 #if DEBUG
         else {
             if(getenv("DEBUG_PARSER")) {
-                kl_dlog(RED "consumeid" RESET " expected:%s actual:%s", id, parser->tokens->data[parser->cursor].value);
+                abl_dlog(RED "consumeid" RESET " expected:%s actual:%s", id, parser->tokens->data[parser->cursor].value);
             }
         }
 #endif
     }
     if(!tok) {
         int bufsize = 128;
-        char * strbuf = kl_malloc(128 * bufsize);
+        char * strbuf = abl_malloc(128 * bufsize);
         int size;
         while ((size = snprintf(strbuf, bufsize, "Unexpected identifier at %s:%d:%d\nExpected %s but got %s\n", parser->compiland->path.data, parser->tokens->data[parser->cursor].loc.line, parser->tokens->data[parser->cursor].loc.col, id, parser->tokens->data[parser->cursor].value)) > bufsize) {
             bufsize = size+1;
-            strbuf = kl_realloc(strbuf, (size+1) * sizeof(char));
+            strbuf = abl_realloc(strbuf, (size+1) * sizeof(char));
         }
         kl_errvec_push(&parser->errvec, kl_err_make(ESYNTAX, strbuf));
 #ifdef DEBUG
         if(getenv("DEBUG_PARSER")) {
-            kl_dlog(RED "consumeid" RESET " expected:%s=%s actual:%s", kl_token_string(TId), id, kl_token_string(parser->tokens->data[parser->cursor].kind));
+            abl_dlog(RED "consumeid" RESET " expected:%s=%s actual:%s", kl_token_string(TId), id, kl_token_string(parser->tokens->data[parser->cursor].kind));
         }
 #endif
     }
@@ -236,7 +236,7 @@ static int unchecked_make(struct kl_parser* parser, int nid) {
     (void)parser;
 #if DEBUG
     if (nid != -1 && getenv("DEBUG_PARSER")) {
-        kl_dlog(RED "<<< make" RESET " %s", kl_node_kind_str(parser->ast->nodes.data[nid].kind));
+        abl_dlog(RED "<<< make" RESET " %s", kl_node_kind_str(parser->ast->nodes.data[nid].kind));
     }
 #endif
     return nid;
@@ -247,14 +247,14 @@ static int unchecked_make(struct kl_parser* parser, int nid) {
 static void unchecked_push_make(struct kl_parser* parser, int group, int recres) {
 #if DEBUG
     if(getenv("DEBUG_PARSER")) {
-        kl_dlog(RED "<<< push_make" RESET " %s", kl_node_kind_str(parser->ast->nodes.data[group].kind));
+        abl_dlog(RED "<<< push_make" RESET " %s", kl_node_kind_str(parser->ast->nodes.data[group].kind));
     }
     assert(isgroup(&parser->ast->nodes.data[group]) );
 #endif
     if (recres == -1) return;
     if (attr(parser, group, numitems) == attr(parser, group, itemscap)) {
         attr(parser, group, itemscap) = (attr(parser, group, itemscap) > 0)? attr(parser, group, itemscap) * 2 : 1;
-        attr(parser, group, items) = kl_realloc(attr(parser, group, items), sizeof(attr(parser, group, items)[0]) * attr(parser, group, itemscap));
+        attr(parser, group, items) = abl_realloc(attr(parser, group, items), sizeof(attr(parser, group, items)[0]) * attr(parser, group, itemscap));
     }
     attr(parser, group, items)[attr(parser, group, numitems)] = recres;
     ++ attr(parser, group, numitems);
@@ -266,7 +266,7 @@ static void unchecked_push_make(struct kl_parser* parser, int group, int recres)
 static int kl_parser_addnode(struct kl_parser* parser, enum kl_node_kind kind) {
 #if DEBUG
     if(getenv("DEBUG_PARSER")) {
-        kl_dlog(RED ">>> newnode" RESET " %s", kl_node_kind_str(kind));
+        abl_dlog(RED ">>> newnode" RESET " %s", kl_node_kind_str(kind));
     }
 #endif
     struct kl_token* token = anypeek(parser);
@@ -334,14 +334,14 @@ static int make_id(struct kl_parser* parser) {
 #ifdef DEBUG
     assert(tokid->value);
 #endif
-    attr(parser, id, name) = kl_malloc((strlen(tokid->value) + 1) * sizeof(char));
+    attr(parser, id, name) = abl_malloc((strlen(tokid->value) + 1) * sizeof(char));
     strcpy(attr(parser, id, name), tokid->value);
     return bubble(parser, id);
 }
 
 static int make_id_str(struct kl_parser* parser, char* str) {
     int id = kl_parser_addnode(parser, NId);
-    attr(parser, id, name) = kl_malloc((strlen(str) + 1) * sizeof(char));
+    attr(parser, id, name) = abl_malloc((strlen(str) + 1) * sizeof(char));
     strcpy(attr(parser, id, name), str);
     return bubble(parser, id);
 }
@@ -351,11 +351,11 @@ static int make_sym(struct kl_parser* parser) {
     struct kl_token* tok = anypeek(parser);
     if (is_sym(tok)) {
         anyeat(parser);
-        attr(parser, id, name) = kl_malloc((strlen(specials[tok->kind]) + 1) * sizeof(attr(parser, id, name)[0]));
+        attr(parser, id, name) = abl_malloc((strlen(specials[tok->kind]) + 1) * sizeof(attr(parser, id, name)[0]));
         strcpy(attr(parser, id, name), specials[tok->kind]);
     }
     else {
-        kl_elog("expected sym");
+        abl_elog("expected sym");
         exit(1);
         return bubble(parser, -1);
     }
@@ -364,7 +364,7 @@ static int make_sym(struct kl_parser* parser) {
 
 static int make_type_str(struct kl_parser* parser, char* str) {
     int  type = kl_parser_addnode(parser, NType);
-    attr(parser, type, name) = kl_malloc((strlen(str) + 1) * sizeof(char));
+    attr(parser, type, name) = abl_malloc((strlen(str) + 1) * sizeof(char));
     strcpy(attr(parser, type, name), str);
     return bubble(parser, type);
 }
@@ -404,12 +404,12 @@ static int make_type(struct kl_parser* parser) {
     
     if (peek(parser, TUnit)) {
         eat(parser, TUnit);
-        attr(parser, type, name) = kl_malloc((strlen("()") + 1) * sizeof(char));
+        attr(parser, type, name) = abl_malloc((strlen("()") + 1) * sizeof(char));
         strcpy(attr(parser, type, name), "()");
     }
     else {
         struct kl_token * tokid = eat(parser, TId);
-        attr(parser, type, name) = kl_malloc((strlen(tokid->value) + 1) * sizeof(char));
+        attr(parser, type, name) = abl_malloc((strlen(tokid->value) + 1) * sizeof(char));
         strcpy(attr(parser, type, name), tokid->value);
     }
 
@@ -419,7 +419,7 @@ static int make_type(struct kl_parser* parser) {
 static int make_strlit(struct kl_parser* parser) {
     int strlit = kl_parser_addnode(parser, NStrLit);
     struct kl_token * tok = eat(parser, TStr);
-    attr(parser, strlit, value) = kl_malloc(strlen(tok->value) + 1);
+    attr(parser, strlit, value) = abl_malloc(strlen(tok->value) + 1);
     strcpy(attr(parser, strlit, value), tok->value);
     return bubble(parser, strlit);
 }
@@ -427,7 +427,7 @@ static int make_strlit(struct kl_parser* parser) {
 static int make_intlit(struct kl_parser* parser) {
     int intlit = kl_parser_addnode(parser, NIntLit);
     struct kl_token * tok = eat(parser, TInt);
-    attr(parser, intlit, value) = kl_malloc(strlen(tok->value) + 1);
+    attr(parser, intlit, value) = abl_malloc(strlen(tok->value) + 1);
     strcpy(attr(parser, intlit, value), tok->value);
     return bubble(parser, intlit);
 }
@@ -435,7 +435,7 @@ static int make_intlit(struct kl_parser* parser) {
 static int make_floatlit(struct kl_parser* parser) {
     int floatlit = kl_parser_addnode(parser, NFloatLit);
     struct kl_token * tok = eat(parser, TFloat);
-    attr(parser, floatlit, value) = kl_malloc(strlen(tok->value) + 1);
+    attr(parser, floatlit, value) = abl_malloc(strlen(tok->value) + 1);
     strcpy(attr(parser, floatlit, value), tok->value);
     return bubble(parser, floatlit);
 }
@@ -443,7 +443,7 @@ static int make_floatlit(struct kl_parser* parser) {
 static int make_charlit(struct kl_parser* parser) {
     int charlit = kl_parser_addnode(parser, NCharLit);
     struct kl_token * tok = eat(parser, TChar);
-    attr(parser, charlit, value) = kl_malloc(strlen(tok->value) + 1);
+    attr(parser, charlit, value) = abl_malloc(strlen(tok->value) + 1);
     strcpy(attr(parser, charlit, value), tok->value);
     return bubble(parser, charlit);
 }
@@ -468,7 +468,7 @@ static int make_import(struct kl_parser* parser) {
     int import = kl_parser_addnode(parser, NImport);
     eat(parser, TId);
     struct kl_token * tok = eat(parser, TId);
-    attr(parser, import, path) = kl_malloc(strlen(tok->value) + 1);
+    attr(parser, import, path) = abl_malloc(strlen(tok->value) + 1);
     strcpy(attr(parser, import, path), tok->value);
     return bubble(parser, import);
 }
@@ -511,7 +511,7 @@ static int make_seq(struct kl_parser* parser) {
 
     if (peek(parser, TDedent)) {
         // TODO: handle error
-        kl_elog("empty sequence");
+        abl_elog("empty sequence");
         exit(1);
     }
     
@@ -668,7 +668,7 @@ static int make_ifelse(struct kl_parser* parser) {
 
 static int make_boilerplate(struct kl_parser* parser, int group) {
     int import = kl_parser_addnode(parser, NImport);
-    attr(parser, import, path) = kl_malloc(strlen("std") + 1);
+    attr(parser, import, path) = abl_malloc(strlen("std") + 1);
     strcpy(attr(parser, import, path), "std");
     push_make(parser, group, import);
     return 1;
@@ -699,7 +699,7 @@ static int make_program(struct kl_parser* parser) {
     return bubble(parser, group);
 }
 
-void kl_parser_new(struct kl_parser* parser, struct kl_vec_token* tokens, struct kl_compiland* compiland, struct kl_ast* ast) {
+void kl_parser_new(struct kl_parser* parser, struct abl_vec_token* tokens, struct kl_compiland* compiland, struct kl_ast* ast) {
     parser->curnode = -1;
     parser->capacity = 0;
     parser->numnodes = 0;
@@ -715,7 +715,7 @@ void kl_parser_del(struct kl_parser* parser) {
     kl_errvec_del(&parser->errvec);
 }
 
-void kl_parse(struct kl_vec_token* tokens, struct kl_compiland* compiland, struct kl_ast* ast) {
+void kl_parse(struct abl_vec_token* tokens, struct kl_compiland* compiland, struct kl_ast* ast) {
     struct kl_parser parser;
     kl_parser_new(&parser, tokens, compiland, ast);
     kl_parser_run(&parser);
@@ -726,7 +726,7 @@ void kl_parser_run(struct kl_parser* parser) {
     int group = make_program(parser);
 #ifdef DEBUG
     if(getenv("DEBUG_PARSER")) {
-        kl_dlog(RED "DONE " RESET "%d nodes", parser->numnodes);
+        abl_dlog(RED "DONE " RESET "%d nodes", parser->numnodes);
     }
 #endif
     if (group) {

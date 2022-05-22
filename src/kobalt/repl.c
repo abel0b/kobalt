@@ -3,7 +3,7 @@
 #include <string.h>
 #include "kobalt/kobalt.h"
 #include "linenoise.h"
-#include "klbase/log.h"
+#include "abl/log.h"
 
 int eval(char* prog) {
     unused(prog);
@@ -13,7 +13,7 @@ int eval(char* prog) {
 
 int kl_repl() {
     printf("Kobalt %s\n", KLVERSION);
-    kl_ilog("the REPL is not currently implemented");
+    abl_ilog("the REPL is not currently implemented");
     const char *prompt = "> ";
     char *line;
     int loop = 1;

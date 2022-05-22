@@ -1,16 +1,17 @@
 #include "kobalt/ast.h"
-#include "klbase/mem.h"
+#include "abl/mem.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 #include "kobalt/type.h"
-#include "klbase/log.h"
+#include "abl/log.h"
+#include "abl/vec.h"
 
-kl_vec_impl(struct kl_node, node)
+abl_vec_impl(struct kl_node, node)
 
 void kl_ast_new(struct kl_ast* ast) {
-    kl_vec_node_new(&ast->nodes);
+    abl_vec_node_new(&ast->nodes);
 }
 
 void kl_astvisit_new(struct kl_ast* ast, void* ctx, int (*visit)(struct kl_astvisit *), struct kl_astvisit* astvisit, enum kl_astorder order) {
@@ -34,7 +35,7 @@ int kl_astvisit_rec(struct kl_astvisit* astvisit, int nid, int depth) {
     struct kl_node* node = &astvisit->ast->nodes.data[nid];
     astvisit->cur.nid = nid;
     astvisit->cur.depth = depth;
-    // kl_ilog("VISIT %s", kl_node_kind_str(node->kind));
+    // abl_ilog("VISIT %s", kl_node_kind_str(node->kind));
 
     if(astvisit->order & PreOrder) {
         astvisit->curop = PreOrder;
@@ -120,33 +121,33 @@ static int del_aux(struct kl_astvisit* astvisit) {
         case NProgram:
         case NIfElse:
             if(node->data.group.numitems) {
-                kl_free(node->data.group.items);
+                abl_free(node->data.group.items);
             }
             break;
         case NType:
-            kl_free(node->data.type.name);
+            abl_free(node->data.type.name);
             break;
         case NCall:
             break;
         case NStrLit:
-            kl_free(node->data.strlit.value);
+            abl_free(node->data.strlit.value);
             break;
         case NIntLit:
-            kl_free(node->data.intlit.value);
+            abl_free(node->data.intlit.value);
             break;
         case NFloatLit:
-            kl_free(node->data.floatlit.value);
+            abl_free(node->data.floatlit.value);
             break;
         case NCharLit:
-            kl_free(node->data.floatlit.value);
+            abl_free(node->data.floatlit.value);
             break;
         case NAssign:
             break;
         case NId:
-            kl_free(node->data.id.name);
+            abl_free(node->data.id.name);
             break;
         case NImport:
-            kl_free(node->data.import.path);
+            abl_free(node->data.import.path);
             break;
         default:
             break;
@@ -161,7 +162,7 @@ int kl_ast_add(struct kl_ast* ast, enum kl_node_kind kind, int parent, struct kl
         .loc = loc,
     };
     memset(&node.data, 0, sizeof(node.data));
-    kl_vec_node_push(&ast->nodes, node);
+    abl_vec_node_push(&ast->nodes, node);
     return ast->nodes.size - 1;
 }
 
@@ -170,5 +171,5 @@ void kl_ast_del(struct kl_ast* ast) {
     kl_astvisit_new(ast, NULL, del_aux, &visdel, PostOrder);
     kl_astvisit_run(&visdel);
     kl_astvisit_del(&visdel);
-    kl_vec_node_del(&ast->nodes);
+    abl_vec_node_del(&ast->nodes);
 }

@@ -1,9 +1,9 @@
 #ifndef KLASTINFO__H
 #define KLASTINFO__H
 
-#include "klbase/dict.h"
-#include "klbase/vec.h"
-#include "klbase/objpool.h"
+#include "abl/dict.h"
+#include "abl/vec.h"
+#include "abl/objpool.h"
 #include "kobalt/type.h"
 #include "kobalt/options.h"
 #include "kobalt/symbol.h"
@@ -11,18 +11,18 @@
 #include <stdint.h>
 
 struct kl_scope {
-    struct kl_dict data;
+    struct abl_dict data;
     struct kl_scope* parent; 
 };
 
-kl_vec_decl(struct kl_scope*, scope)
+abl_vec_decl(struct kl_scope*, scope)
 
 struct kl_astinfo {
-    struct kl_objpool type_pool;
-    struct kl_objpool scope_pool;
-    struct kl_objpool symbol_pool;
-    struct kl_vec_scope scopes;
-    struct kl_vec_type types;
+    struct abl_objpool type_pool;
+    struct abl_objpool scope_pool;
+    struct abl_objpool symbol_pool;
+    struct abl_vec_scope scopes;
+    struct abl_vec_type types;
 };
 
 void kl_ast_display(struct kl_opts* opts, FILE* out, struct kl_ast* ast, struct kl_astinfo* astinfo);

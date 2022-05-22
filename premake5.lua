@@ -1,5 +1,7 @@
 workspace "kobalt"
     configurations { "debug", "release", "debug-vg" }
+
+    include "extern/abl/abl.lua"
     
     if os.host() == "windows" then
         defines { "WINDOWS=1", "_CRT_SECURE_NO_WARNINGS", "_CRT_NONSTDC_NO_WARNINGS" }
@@ -10,8 +12,10 @@ workspace "kobalt"
     filter { "configurations:release", "toolset:clang or gcc" }
         buildoptions { "-Wall -Wextra" }
 
+    cdialect "C99"
+
     filter { "configurations:debug", "toolset:clang or gcc" }
-        buildoptions { "-std=c99", "-pedantic" }
+        buildoptions { "-pedantic" }
         
     if os.host() == "linux" then
         filter { "configurations:debug", "toolset:clang" }
@@ -32,15 +36,15 @@ workspace "kobalt"
     project "kl"
         kind "StaticLib"
         language "C"
-        includedirs { "include" }
+        includedirs { "include", "extern/abl/include" }
         files { "include/**.h", "lib/**.h", "lib/**.c" }
 
     project "kobalt"
         kind "ConsoleApp"
         language "C"
-        includedirs { "include", "extern/linenoise", "extern/sha-2", "extern/basenc" }
+        includedirs { "include", "extern/linenoise", "extern/sha-2", "extern/basenc", "extern/abl/include" }
         files { "src/kobalt/**.h", "src/kobalt/**.c", "extern/linenoise/*.c", "extern/sha-2/*.c", "extern/basenc/*.c" }
-        links { "kl" }
+        links { "kl", "abl" }
 
 newoption {
     trigger = "prefix",

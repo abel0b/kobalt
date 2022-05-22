@@ -1,7 +1,7 @@
 #include "kobalt/cctool.h"
-#include "klbase/mem.h"
-#include "klbase/proc.h"
-#include "klbase/log.h"
+#include "abl/mem.h"
+#include "abl/proc.h"
+#include "abl/log.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,12 +38,12 @@ void kl_cmdcc_new(struct kl_cmdcc* cmdcc) {
         // TODO: use CreateProcess
         char command[64];
         if (snprintf(command, 32, "%s /help", ccs[icc]) >= 32) {
-            kl_elog("unexpected error");
+            abl_elog("unexpected error");
             exit(1);
         }
         FILE* vpipe = _popen(command, "r");
         if (vpipe == NULL) {
-            kl_elog("spawn failed");
+            abl_elog("spawn failed");
             exit(1);
         }
         
@@ -52,7 +52,7 @@ void kl_cmdcc_new(struct kl_cmdcc* cmdcc) {
         // fseek(vpipe, 0, SEEK_END);
         // len = ftell(vpipe);
         // fseek(vpipe, 0, SEEK_SET);
-        // cmdcc->version = kl_malloc((len + 1) * sizeof(cmdcc->version[0]));
+        // cmdcc->version = abl_malloc((len + 1) * sizeof(cmdcc->version[0]));
         // cmdcc->version[len] = '\0';
         // assert(fread(cmdcc->version, len, 1, vpipe  ) == (unsigned long)1); 
     
@@ -87,139 +87,139 @@ void kl_cmdcc_new(struct kl_cmdcc* cmdcc) {
         int exitstatus = WEXITSTATUS(status);
 #endif
 	    if (exitstatus == 0) {
-	        // kl_ilog("found C compiler '%s'", ccs[icc]);
+	        // abl_ilog("found C compiler '%s'", ccs[icc]);
             cmdcc->cc = icc;
             return;
         }
     }
 
-    kl_elog("could not find C compiler");
+    abl_elog("could not find C compiler");
     exit(1);
 }
 
-int kl_cmdcc_compile(struct kl_opts* opts, struct kl_cmdcc* cmdcc, struct kl_str* src) {
-    struct kl_str obj;
-    kl_str_new(&obj);
-    kl_str_cat(&obj, src->data);
+int kl_cmdcc_compile(struct kl_opts* opts, struct kl_cmdcc* cmdcc, struct abl_str* src) {
+    struct abl_str obj;
+    abl_str_new(&obj);
+    abl_str_cat(&obj, src->data);
     obj.data[obj.len - 1] = 'o';
 #if WINDOWS
-    kl_str_cat(&obj, "bj");
+    abl_str_cat(&obj, "bj");
 #endif
     
 
-    struct kl_str logfilepath;
-    kl_str_new(&logfilepath);
-    kl_str_catf(&logfilepath, "%s/cc.log", opts->cachepath.data);
+    struct abl_str logfilepath;
+    abl_str_new(&logfilepath);
+    abl_str_catf(&logfilepath, "%s/cc.log", opts->cachepath.data);
     FILE* cclog = fopen(logfilepath.data, "w+");
     if (cclog == NULL) {
-        kl_elog("could not open file '%s/cc.log'", opts->cachepath.data);
+        abl_elog("could not open file '%s/cc.log'", opts->cachepath.data);
         exit(1);
     }
-    kl_str_del(&logfilepath);
+    abl_str_del(&logfilepath);
 
-    struct kl_vec_cstr args;
-    kl_vec_cstr_new(&args);
-    kl_vec_cstr_push(&args, ccopt1[cmdcc->cc]);
-    kl_vec_cstr_push(&args, ccopt2[cmdcc->cc]);
-    kl_vec_cstr_push(&args, ccoptobj[cmdcc->cc]);
+    struct abl_vec_cstr args;
+    abl_vec_cstr_new(&args);
+    abl_vec_cstr_push(&args, ccopt1[cmdcc->cc]);
+    abl_vec_cstr_push(&args, ccopt2[cmdcc->cc]);
+    abl_vec_cstr_push(&args, ccoptobj[cmdcc->cc]);
 
 #if WINDOWS
     // TODO: remove static path size limit
     char binopt[1024];
     int ret = snprintf(binopt, 1024, "%s%s", ccoptobjout[cmdcc->cc], obj.data);
     if (ret < 0 || ret > 1024) {
-        kl_elog("unexpected error, probably because of too long path");
+        abl_elog("unexpected error, probably because of too long path");
         exit(1);
     }
-    kl_vec_cstr_push(&args, binopt);
+    abl_vec_cstr_push(&args, binopt);
 #else
-    kl_vec_cstr_push(&args, ccoptobjout[cmdcc->cc]);
-    kl_vec_cstr_push(&args, obj.data);
+    abl_vec_cstr_push(&args, ccoptobjout[cmdcc->cc]);
+    abl_vec_cstr_push(&args, obj.data);
 #endif
 
-    kl_vec_cstr_push(&args, src->data);
-    kl_vec_cstr_push(&args, NULL);
+    abl_vec_cstr_push(&args, src->data);
+    abl_vec_cstr_push(&args, NULL);
 
-    int exitstatus = kl_spawn(ccs[cmdcc->cc], args.data, cclog);
+    int exitstatus = abl_spawn(ccs[cmdcc->cc], args.data, cclog);
     if (exitstatus == 0) {
-        // kl_ilog("succesfully compiled %s", obj.data);
+        // abl_ilog("succesfully compiled %s", obj.data);
     }
     else {
-        kl_elog("C compilation exited with %d status. See logs saved in '%s/cc.log'", exitstatus, opts->cachepath.data);
+        abl_elog("C compilation exited with %d status. See logs saved in '%s/cc.log'", exitstatus, opts->cachepath.data);
 #if DEBUG
-        // struct kl_str logpath;
-        // kl_str_new(&logpath);
-        // kl_str_cat(&logpath, opts->cachepath.data);
-        // kl_path_push(&logpath, "cc.log");
+        // struct abl_str logpath;
+        // abl_str_new(&logpath);
+        // abl_str_cat(&logpath, opts->cachepath.data);
+        // abl_path_push(&logpath, "cc.log");
         // FILE* cclog = fopen(logpath.data, "r");
-        // kl_str_del(&logpath),
+        // abl_str_del(&logpath),
         fseek(cclog, 0, SEEK_END);
         long int filesize = ftell(cclog);
         fseek(cclog, 0, SEEK_SET);
         
-        char* content = kl_malloc(sizeof(char) * (filesize + 1));
+        char* content = abl_malloc(sizeof(char) * (filesize + 1));
         content[filesize] = '\0';
         fread(content, filesize, 1, cclog);
         fprintf(stderr, "%s\n", content);
-        kl_free(content);
+        abl_free(content);
 #endif
         kl_exit(1);
     }
     fclose(cclog);
-    kl_vec_cstr_del(&args);
-    kl_str_del(&obj);
+    abl_vec_cstr_del(&args);
+    abl_str_del(&obj);
     return exitstatus;
 }
 
-int kl_cmdcc_link(struct kl_opts* opts, struct kl_cmdcc* cmdcc, struct kl_vec_str* objs, struct kl_str* bin) {
-    struct kl_str logfilepath;
-    kl_str_new(&logfilepath);
-    kl_str_catf(&logfilepath, "%s/link.log", opts->cachepath.data);
+int kl_cmdcc_link(struct kl_opts* opts, struct kl_cmdcc* cmdcc, struct abl_vec_str* objs, struct abl_str* bin) {
+    struct abl_str logfilepath;
+    abl_str_new(&logfilepath);
+    abl_str_catf(&logfilepath, "%s/link.log", opts->cachepath.data);
     FILE* linklog = fopen(logfilepath.data, "w+");
     if (linklog == NULL) {
-        kl_elog("could not open file '%s/cc.log'", opts->cachepath.data);
+        abl_elog("could not open file '%s/cc.log'", opts->cachepath.data);
         exit(1);
     }
-    kl_str_del(&logfilepath);
+    abl_str_del(&logfilepath);
 
-    struct kl_vec_cstr args;
-    kl_vec_cstr_new(&args);
+    struct abl_vec_cstr args;
+    abl_vec_cstr_new(&args);
 #if WINDOWS
     // TODO: remove static path size limit
     char binopt[1024];
     int ret = snprintf(binopt, 1024, "%s%s", ccoptout[cmdcc->cc], bin->data);
     if (ret < 0 || ret > 1024) {
-        kl_elog("unexpected error, probably because of too long path");
+        abl_elog("unexpected error, probably because of too long path");
         exit(1);
     }
-    kl_vec_cstr_push(&args, binopt);
+    abl_vec_cstr_push(&args, binopt);
 #else
-    kl_vec_cstr_push(&args, ccoptout[cmdcc->cc]);
-    kl_vec_cstr_push(&args, bin->data);
+    abl_vec_cstr_push(&args, ccoptout[cmdcc->cc]);
+    abl_vec_cstr_push(&args, bin->data);
 #endif
 
     for (int i = 0; i < objs->size; ++ i) {
-        kl_vec_cstr_push(&args, objs->data[i].data);
+        abl_vec_cstr_push(&args, objs->data[i].data);
     }
-    kl_vec_cstr_push(&args, NULL);
+    abl_vec_cstr_push(&args, NULL);
 
-    int exitstatus = kl_spawn(ccs[cmdcc->cc], args.data, linklog);
+    int exitstatus = abl_spawn(ccs[cmdcc->cc], args.data, linklog);
     if (exitstatus) {
-        kl_elog("Linking exited with %d status. See logs saved in '%s/link.log'", exitstatus, opts->cachepath.data);
+        abl_elog("Linking exited with %d status. See logs saved in '%s/link.log'", exitstatus, opts->cachepath.data);
 #if DEBUG
         fseek(linklog, 0, SEEK_END);
         long int filesize = ftell(linklog);
         fseek(linklog, 0, SEEK_SET);
         
-        char* content = kl_malloc(sizeof(char) * (filesize + 1));
+        char* content = abl_malloc(sizeof(char) * (filesize + 1));
         content[filesize] = '\0';
         fread(content, filesize, 1, linklog);
         fprintf(stderr, "%s\n", content);
-        kl_free(content);
+        abl_free(content);
 #endif
     }
     fclose(linklog);
-    kl_vec_cstr_del(&args);
+    abl_vec_cstr_del(&args);
     return exitstatus;
 }
 
@@ -227,7 +227,7 @@ void kl_cmdcc_del(struct kl_cmdcc* cmdcc) {
     (void)cmdcc;
 }
 
-int kl_cc(struct kl_opts* opts, struct kl_str* src) {
+int kl_cc(struct kl_opts* opts, struct abl_str* src) {
     struct kl_cmdcc cmdcc;
     kl_cmdcc_new(&cmdcc);
     int status = kl_cmdcc_compile(opts, &cmdcc, src);
@@ -235,7 +235,7 @@ int kl_cc(struct kl_opts* opts, struct kl_str* src) {
     return status;
 }
 
-int kl_link(struct kl_opts* opts, struct kl_vec_str* objs, struct kl_str* bin) {
+int kl_link(struct kl_opts* opts, struct abl_vec_str* objs, struct abl_str* bin) {
     struct kl_cmdcc cmdcc;
     kl_cmdcc_new(&cmdcc);
     int status = kl_cmdcc_link(opts, &cmdcc, objs, bin);

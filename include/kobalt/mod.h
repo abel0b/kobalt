@@ -2,12 +2,12 @@
 #define KLMOD__H
 
 #include "kobalt/astinfo.h"
-#include "klbase/str.h"
+#include "abl/str.h"
 #include "kobalt/ast.h"
 
 struct kl_mod {
     struct kl_astinfo astinfo;
-    struct kl_vec_str deps;
+    struct abl_vec_str deps;
 };
 
 void kl_mod_new(struct kl_mod* mod, struct kl_ast* ast);

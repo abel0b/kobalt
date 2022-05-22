@@ -1,6 +1,6 @@
 #include "kobalt/lexer.h"
-#include "klbase/mem.h"
-#include "klbase/log.h"
+#include "abl/mem.h"
+#include "abl/log.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -94,12 +94,12 @@ static void kl_lexer_new(struct kl_lexer* lexer) {
     kl_lexer_int_init(lexer);
     kl_lexer_float_init(lexer);
     lexer->buffer_size = 16;
-    lexer->buffer = kl_malloc(lexer->buffer_size * sizeof (char));
+    lexer->buffer = abl_malloc(lexer->buffer_size * sizeof (char));
     lexer->cursor = 0;
 }
 
 static void kl_lexer_del(struct kl_lexer * lexer) {
-    kl_free(lexer->buffer);
+    abl_free(lexer->buffer);
 }
 
 static void kl_lexer_special_next(struct kl_lexer * lexer, char ch) {
@@ -146,8 +146,8 @@ static void kl_lexer_int_next(struct kl_lexer * lexer, char ch) {
     }
 }
 
-static void kl_lexer_push_token(struct kl_lexer* lexer, struct kl_vec_token* tokens, struct kl_token token) {
-    kl_vec_token_push(tokens, token);
+static void kl_lexer_push_token(struct kl_lexer* lexer, struct abl_vec_token* tokens, struct kl_token token) {
+    abl_vec_token_push(tokens, token);
     if (lexer->incomment && token.kind != TComment) {
         lexer->incomment = 0;
     }
@@ -159,7 +159,7 @@ static void kl_lexer_push_token(struct kl_lexer* lexer, struct kl_vec_token* tok
 static void kl_lexer_push_char(struct kl_lexer * lexer, char ch) {
     if (lexer->cursor == lexer->buffer_size) {
         lexer->buffer_size = 2 * lexer->buffer_size;
-        lexer->buffer = kl_realloc(lexer->buffer, lexer->buffer_size * sizeof(char));
+        lexer->buffer = abl_realloc(lexer->buffer, lexer->buffer_size * sizeof(char));
     }
     lexer->buffer[lexer->cursor] = ch;
     lexer->cursor++;
@@ -195,14 +195,14 @@ static char * kl_lexer_state_str(struct kl_lexer * lexer) {
 
 static void unexpectedchar(char ch, int line, int col) {
     if (isprint(ch)) {
-        kl_elog("unexpected character '%c' at %d:%d", ch, line, col);
+        abl_elog("unexpected character '%c' at %d:%d", ch, line, col);
     }
     else {
-        kl_elog("unexpected character '\\x%x' at %d:%d", ch, line, col);
+        abl_elog("unexpected character '\\x%x' at %d:%d", ch, line, col);
     }
 }
 
-static void kl_lexer_next(struct kl_lexer* lexer, struct kl_vec_token* tokens, char ch) {
+static void kl_lexer_next(struct kl_lexer* lexer, struct abl_vec_token* tokens, char ch) {
 #if DEBUG
     if(getenv("DEBUG_LEXER")) {
         printf("lex cursor=%c state=%s\n", ch, kl_lexer_state_str(lexer));
@@ -211,13 +211,13 @@ static void kl_lexer_next(struct kl_lexer* lexer, struct kl_vec_token* tokens, c
     switch(lexer->state) {
         case LEXER_NEWLINE:
             {
-                if(tokens->size && kl_vec_token_last(tokens).kind != TLineFeed && !lexer->incomment) {
+                if(tokens->size && abl_vec_token_last(tokens).kind != TLineFeed && !lexer->incomment) {
                     kl_lexer_push_token(lexer, tokens, kl_token_make(TLineFeed, NULL, lexer->line - 1, lexer->prev_col));
                 }
 
                 if (ch == ' ') {
                     if (!lexer->first_indent_char && lexer->use_tabs_indent) {
-                        kl_elog("inconsistent use of tabs and space in indentation");
+                        abl_elog("inconsistent use of tabs and space in indentation");
                         exit(1);
                     }
                     lexer->first_indent_char = 0;
@@ -228,7 +228,7 @@ static void kl_lexer_next(struct kl_lexer* lexer, struct kl_vec_token* tokens, c
                         lexer->use_tabs_indent = 1;
                     }
                     else if (!lexer->use_tabs_indent) {
-                        kl_elog("inconsistent use of tabs and space in indentation");
+                        abl_elog("inconsistent use of tabs and space in indentation");
                         exit(1);
                     }
                     lexer->first_indent_char = 0;
@@ -245,7 +245,7 @@ static void kl_lexer_next(struct kl_lexer* lexer, struct kl_vec_token* tokens, c
                         }
                     }
                     else if(lexer->indent_counter % lexer->space_indent != 0) {
-                        kl_elog("unexpected indentation at %d:%d", lexer->line, lexer->col);
+                        abl_elog("unexpected indentation at %d:%d", lexer->line, lexer->col);
                         exit(1);
                     }
 
@@ -494,7 +494,7 @@ static void kl_lexer_next(struct kl_lexer* lexer, struct kl_vec_token* tokens, c
                 else {
                     // TODO: check valid characters
                     if (lexer->cursor && lexer->buffer[0] != '\\') {
-                        kl_elog("multi-character constant");
+                        abl_elog("multi-character constant");
                         exit(1);
                     }
                     kl_lexer_push_char(lexer, ch);
@@ -519,7 +519,7 @@ static void kl_lexer_next(struct kl_lexer* lexer, struct kl_vec_token* tokens, c
     }
 }
 
-static void kl_lexer_run(struct kl_lexer* lexer, struct kl_compiland* compiland, struct kl_vec_token* tokens) {
+static void kl_lexer_run(struct kl_lexer* lexer, struct kl_compiland* compiland, struct abl_vec_token* tokens) {
     for (int i = 0; i < compiland->content.len; ++ i) {
         if (compiland->content.data[i] == '\r' && i < compiland->content.len - 1 && compiland->content.data[i + 1] == '\n') {
             continue;
@@ -547,10 +547,10 @@ static void kl_lexer_run(struct kl_lexer* lexer, struct kl_compiland* compiland,
     kl_lexer_push_token(lexer, tokens, kl_token_make(TEndFile, NULL, lexer->line, lexer->col));
 }
 
-void kl_lex(struct kl_compiland* compiland, struct kl_vec_token* tokens) {
+void kl_lex(struct kl_compiland* compiland, struct abl_vec_token* tokens) {
     struct kl_lexer lexer;
     kl_lexer_new(&lexer);
-    kl_vec_token_new(tokens);
+    abl_vec_token_new(tokens);
     kl_lexer_run(&lexer, compiland, tokens);
     kl_lexer_del(&lexer);
 }

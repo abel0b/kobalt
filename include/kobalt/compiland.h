@@ -3,16 +3,16 @@
 
 #include "kobalt/kobalt.h"
 #include "kobalt/options.h"
-#include "klbase/path.h"
+#include "abl/path.h"
 #include <stdbool.h>
 
 struct kl_compiland {
     bool virtual;
     bool boilerplate;
-    struct kl_str path;
-    struct kl_str name;
-    struct kl_str basename;
-    struct kl_str content;
+    struct abl_str path;
+    struct abl_str name;
+    struct abl_str basename;
+    struct abl_str content;
     bool entry;
 };
 
