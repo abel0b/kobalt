@@ -7,37 +7,33 @@ workspace "abl"
         defines { "UNIX=1", "_POSIX_C_SOURCE=200809L" }
     end
 
-    include "extern/inut/inut.lua"
-
-    filter { "configurations:release", "toolset:clang or gcc" }
-        buildoptions { "-Wall -Wextra" }
-	visibility "Hidden"
-
-    filter { "configurations:debug", "toolset:clang or gcc" }
-        buildoptions { "-std=c99", "-pedantic" }
-        
-    if os.host() == "linux" then
-        filter { "configurations:debug", "toolset:clang" }
-            buildoptions { "-funwind-tables", "-fasynchronous-unwind-tables", "-fno-omit-frame-pointer", "-fno-optimize-sibling-calls" }
-            linkoptions { "-fsanitize=address,leak,undefined", "-Wl,--export-dynamic" }
-            defines { "DEBUG_SAN=1" }
-        filter { "configurations:debug or debug-vg", "toolset:clang or gcc" }
-            buildoptions { "-ggdb3" }
-    end
-
     filter "configurations:debug or debug-vg"
-        defines { "DEBUG=1" }
+ 	defines { "DEBUG=1" }
 
     filter "configurations:release"
-        defines { "DEBUG=0" }
-        optimize "On"
+ 	defines { "DEBUG=0" }
+	optimize "On"
 
-    project "abl"
-        kind "SharedLib"
-        language "C"
-        includedirs { "include" }
-	defines { "ABL_DLL", "ABL_DLL_EXPORTS" }
-        files { "include/**.h", "abl/**.h", "abl/**.c" }
+    filter { "configurations:release", "toolset:clang or gcc" }
+ 	buildoptions { "-Wall -Wextra" }
+	visibility "Hidden"
+
+    cdialect "C99"
+
+    filter { "configurations:debug", "toolset:clang or gcc" }
+ 	buildoptions { "-pedantic" }
+
+    if os.host() == "linux" then
+ 	filter { "configurations:debug", "toolset:clang" }
+        buildoptions { "-funwind-tables", "-fasynchronous-unwind-tables", "-fno-omit-frame-pointer", "-fno-optimize-sibling-calls" }
+	linkoptions { "-fsanitize=address,leak,undefined", "-Wl,--export-dynamic" }
+	defines { "DEBUG_SAN=1" }
+	filter { "configurations:debug or debug-vg", "toolset:clang or gcc" }
+	buildoptions { "-ggdb3" }
+    end
+
+    include "extern/inut/inut.lua"
+    include "abl.lua"
 
     project "test"
         kind "ConsoleApp"
@@ -45,7 +41,7 @@ workspace "abl"
         language "C"
         includedirs { "include", "extern/inut/include" }
 	defines { "ABL_DLL" }
-	links { "abl" }
+	libabl {}
 	libinut {}
         files { "include/**.h", "test/**.c" }
 
